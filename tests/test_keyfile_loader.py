@@ -17,7 +17,7 @@ def check(name, cond, detail=""):
 
 def main():
     text = """MVR internal Enterprise testing key
-Label: mark-mvr-1997-internal-enterprise
+Label: mvr-enterprise-label-not-a-key
 X-API-Key: mvr_internal_actual_key_abcdefghijklmnopqrstuvwxyz1234567890
 Authorization: Bearer mvr_internal_actual_key_abcdefghijklmnopqrstuvwxyz1234567890
 KV key hash: key:abc123
@@ -27,14 +27,14 @@ KV key hash: key:abc123
         extract_mvr_api_key(text) == "mvr_internal_actual_key_abcdefghijklmnopqrstuvwxyz1234567890",
     )
 
-    text = "Label: mark-mvr-1997-internal-enterprise\nAuthorization: Bearer bearer_value_abcdefghijklmnopqrstuvwxyz123456\n"
+    text = "Label: mvr-enterprise-label-not-a-key\nAuthorization: Bearer bearer_value_abcdefghijklmnopqrstuvwxyz123456\n"
     check("falls back to bearer field", extract_mvr_api_key(text) == "bearer_value_abcdefghijklmnopqrstuvwxyz123456")
 
     text = "MVR_API_KEY=mvr-demo-key-2026\n"
     check("accepts env-style sandbox key", extract_mvr_api_key(text) == "mvr-demo-key-2026")
 
     try:
-        extract_mvr_api_key("Label: mark-mvr-1997-internal-enterprise\nKV key hash: key:abc123\n")
+        extract_mvr_api_key("Label: mvr-enterprise-label-not-a-key\nKV key hash: key:abc123\n")
         check("rejects label-only file", False)
     except ValueError:
         check("rejects label-only file", True)

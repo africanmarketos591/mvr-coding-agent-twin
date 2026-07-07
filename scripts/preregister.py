@@ -60,9 +60,30 @@ def preregistration_header_count(path):
     return text.count(HEADER_MARKER)
 
 
+def write_in_place(path, digest):
+    """Rewrite the single header line with the canonical hash, then self-verify.
+
+    Eliminates the manual-embed step that caused the original rehearsal hash-mismatch
+    incident. Anchors stay 'pending' until ledger_audit.py records >=2 real ones."""
+    raw = open(path, "rb").read()
+    text = raw.decode("utf-8-sig").replace("\r\n", "\n").replace("\r", "\n")
+    lines = []
+    for line in text.split("\n"):
+        if HEADER_MARKER in line:
+            prefix = line.split(HEADER_MARKER, 1)[0]
+            line = f"{prefix}{HEADER_MARKER} {digest} (anchors: pending; see mvr/decision-log.json)"
+        lines.append(line)
+    open(path, "w", encoding="utf-8", newline="\n").write("\n".join(lines).rstrip() + "\n")
+    if embedded_hash(path) != digest_for(path):
+        print("FAIL: in-place embed did not self-verify - file left as written for inspection.")
+        sys.exit(1)
+    print(f"PASS: hash embedded in place and self-verified: {digest}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--verify", action="store_true", help="Verify embedded hash against canonical hash.")
+    parser.add_argument("--in-place", action="store_true", help="Compute the hash and write it into the charter header in one step, then self-verify.")
     parser.add_argument("charter", help="Path to Build Charter markdown file.")
     args = parser.parse_args()
 
@@ -76,6 +97,10 @@ def main():
         sys.exit(2)
 
     digest = digest_for(path)
+
+    if args.in_place:
+        write_in_place(path, digest)
+        # fall through to print the registration block + skeleton for the log
 
     if args.verify:
         embedded = embedded_hash(path)

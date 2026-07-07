@@ -155,6 +155,17 @@ def call(path, body=None, method=None, profile="full_advisory", timeout=120, ide
             return round(time.time() - t0, 2), e.code, json.loads(raw)
         except Exception:
             return round(time.time() - t0, 2), e.code, {"error": "non_json_response", "raw": raw[:500]}
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        # OFFLINE / OUTAGE: never crash the host. Status 0 = no HTTP response.
+        # Doctrine (CLAUDE.md Section 7, Outage Rule): building proceeds, charters are
+        # marked provisional, claims stay default-denied (no fresh log entry = gate
+        # fails closed, which is correct). NEVER simulate a verdict locally - an
+        # offline spine that invents answers is a counterfeit spine.
+        return round(time.time() - t0, 2), 0, {
+            "error": "kernel_unreachable",
+            "detail": str(getattr(e, "reason", e))[:200],
+            "outage_rule": "Build proceeds; charter provisional; claim authorization impossible until the kernel is reachable. Do not simulate verdicts locally.",
+        }
 
 
 # ---- Checkpoint calls (see checkpoints.md for when each is MANDATORY) ----

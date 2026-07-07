@@ -1,7 +1,7 @@
 """Safe local key-file parsing for internal rehearsals.
 
 Only explicit key-bearing fields are accepted. This prevents a human label such
-as `mark-mvr-...` from being mistaken for the actual enterprise credential.
+as human-readable enterprise labels from being mistaken for actual credentials.
 """
 import re
 

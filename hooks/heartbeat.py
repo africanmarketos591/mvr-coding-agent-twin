@@ -55,7 +55,8 @@ def main():
             emit("[MVR TWIN] Installed; no case on file. If this session is building a product "
                  "for a real market, convene the pre-charter committee (CLAUDE.md §3) before "
                  "feature-level code - judgment before code is Law 1. This reminder appears at most once per day.")
-        s = json.load(open(state_path, encoding="utf-8-sig"))
+        state_raw = open(state_path, "rb").read()
+        s = json.loads(state_raw.decode("utf-8-sig"))
 
         age_days = None
         try:
@@ -87,6 +88,34 @@ def main():
             lines.append(f"Track record: {s['settled_summary']}")
         if len(lines) == 1:
             sys.exit(0)
+
+        # DIFFERENTIAL MODE: identical full digests every turn cost tokens AND train
+        # the host to ignore the channel (banner blindness). If state is unchanged
+        # since the last FULL injection and that injection was recent (<2h - full
+        # digests survive context compaction only briefly), emit a one-line tag that
+        # still carries the load-bearing minimums. Expired state ALWAYS gets the full
+        # digest - safety lines are never compressed.
+        import hashlib
+        state_sha = hashlib.sha256(state_raw).hexdigest()[:16]
+        marker_path = os.path.join(project_dir, "mvr", ".heartbeat-last")
+        expired = age_days is not None and age_days > STALE_DEAD_DAYS
+        if not expired:
+            try:
+                m = json.load(open(marker_path, encoding="utf-8-sig"))
+                last_full = datetime.fromisoformat(m.get("last_full", ""))
+                fresh = (datetime.now(timezone.utc) - last_full).total_seconds() < 7200
+                if m.get("state_sha") == state_sha and fresh:
+                    v_tag = s.get("verdict", "?")
+                    auth_tag = ",".join((s.get("authorized_use") or ["none"])[:2])
+                    emit(f"[MVR TWIN] state unchanged ({state_sha[:8]}): verdict={v_tag}; authorized={auth_tag}; full digest on change or 2h.")
+            except Exception:
+                pass  # unreadable marker -> emit full digest below
+        try:
+            with open(marker_path, "w", encoding="utf-8") as mh:
+                json.dump({"state_sha": state_sha,
+                           "last_full": datetime.now(timezone.utc).isoformat()}, mh)
+        except Exception:
+            pass  # marker write failure never blocks the digest
         emit("\n".join(lines))
     except Exception:
         sys.exit(0)  # counsel channel: fail silent, always

@@ -1,5 +1,14 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.12 - 2026-07-07 (field-report fixes from the first developer simulation)
+- **Offline degradation (real crash bug fixed):** the spine client caught only HTTPError; a network-down URLError crashed uncaught. `call()` now returns status 0 + `kernel_unreachable` + the Outage Rule text. REJECTED the proposed local-verdict fallback: an offline spine that invents answers is a counterfeit spine; offline = build proceeds, charters provisional, claims stay default-denied.
+- **Differential heartbeat:** unchanged state within 2h emits a one-line tag (verdict + authorization) instead of the full digest - fixes token cost AND banner blindness. Expired state is NEVER compressed; safety lines always ship full. Marker `mvr/.heartbeat-last`, fail-silent.
+- **`preregister.py --in-place`:** hash computed, embedded, and self-verified in one command - closes the manual-embed error class that caused the original rehearsal hash-mismatch incident. Anchors written as `pending`, never fabricated.
+- **`scripts/install.py`:** one-command setup (mvr/.gitignore, sh-shebang pre-commit shim Windows-safe, idempotent, `--verify` runs all offline suites). An installer that does not verify is a liability.
+- **Pivot Explanation rule (CLAUDE.md Section 4):** every redirect leads with <=3 plain-language sentences (binding constraint, what was preserved, what stays legal today) before the charter. Field finding: an unexplained pivot is experienced as theft, not judgment. REJECTED the /v1/committee-digest server route: the pivot narrative is composed from local context the kernel cannot see; this is lens doctrine, not a kernel feature.
+- Kernel-team roadmap note (not in package): machine-readable constraint descriptors in category-playbook output (accepted essence of the "blueprint scaffolding" request; code-stub generation rejected - the host generates better code than any template, the kernel's job is constraints).
+- New suite `tests/test_install_and_inplace.py`; heartbeat suite extended to 14 checks.
+
 ## 1.1.0-beta.11 - 2026-07-07 (public discovery surface)
 - **Root `llms.txt`:** machine-readable pointer for AI agents, with controlled-beta boundaries, key route, primary files, and host-agent instruction.
 - **`REPLICATION_RECEIPTS.md`:** public-safe evidence file preserving the strict run near-pass, controlled-beta pass, defect ledger, and remaining human gates.
@@ -24,7 +33,7 @@
 - Key-scope mystery closed with evidence: direct client probe returned sparring 200 with the same keyfile - the earlier 401 was label-line parsing, exactly what keyfile_loader.py fixed. No key rotation occurred.
 
 ## 1.1.0-beta.6 - 2026-07-07 (enterprise rehearsal hardening)
-- **Safe internal key-file loading:** added `scripts/keyfile_loader.py` and `scripts/run_smoke_from_keyfile.py`. Internal rehearsal key files are parsed only from explicit `X-API-Key:`, `MVR_API_KEY=`, `API_KEY=`, or `Authorization: Bearer` fields. Human labels such as `mark-mvr-...` are deliberately ignored.
+- **Safe internal key-file loading:** added `scripts/keyfile_loader.py` and `scripts/run_smoke_from_keyfile.py`. Internal rehearsal key files are parsed only from explicit `X-API-Key:`, `MVR_API_KEY=`, `API_KEY=`, or `Authorization: Bearer` fields. Human-readable labels are deliberately ignored.
 - **Key parsing regression tests:** `tests/test_keyfile_loader.py` verifies the loader prefers the explicit key field, accepts env-style sandbox keys, and rejects label-only files.
 - **Preregistration regression tests:** `tests/test_preregister.py` verifies the canonical hash survives insertion into the charter header and changes when prediction body text changes.
 

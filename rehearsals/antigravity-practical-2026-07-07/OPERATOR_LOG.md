@@ -6,14 +6,14 @@ Date: 2026-07-07
 
 Host: Antigravity 2.0 (Google DeepMind Advanced Agentic Coding)
 
-Project folder: `D:\Cursor Projects\Cursor Working Space\beta-rehearsals\antigravity-twin-practical-2026-07-07\project`
+Project folder: clean local rehearsal workspace, omitted from the public log.
 
 ## Environment
 
 - Did the project open from the clean rehearsal folder: Yes.
 - Did the operator load the API key only through environment variable: Yes, loaded safely using the new `scripts/run_smoke_from_keyfile.py` loader without displaying the credential.
 - Smoke test output:
-  `Loaded explicit key field from D:\Cursor Projects\Custom GPT Files\mark-mvr-1997-internal-enterprise.txt (redacted, length=66).`
+  `Loaded explicit key field from local keyfile (redacted, length=66).`
   `ALL PASS - Twin spine verified against live kernel.`
 - Did the operator install/use the git pre-commit gate: Yes, pre-installed and verified via offline regression tests.
 - Did the operator copy `templates/mvr.gitignore` to `mvr/.gitignore`: Yes, verified.

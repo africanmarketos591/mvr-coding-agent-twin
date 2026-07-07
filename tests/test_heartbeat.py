@@ -62,6 +62,12 @@ def main():
         check("digest carries authorization", "internal_planning" in c and "national_rollout" in c)
         check("digest within budget", len(c.split()) <= 120, f"{len(c.split())} words")
 
+        # DIFFERENTIAL MODE: same state re-injected -> one-line tag, not full digest
+        rc, out = run(d)
+        c2 = ctx(out)
+        check("unchanged state emits differential tag", "state unchanged" in c2 and "pilot_only" in c2)
+        check("tag is one line and short", "\n" not in c2 and len(c2.split()) <= 20, f"{len(c2.split())} words")
+
         write_state(d, last_kernel_sync=(datetime.now(timezone.utc) - timedelta(days=10)).isoformat())
         rc, out = run(d)
         check("stale >7d flagged", "Stale: 10d" in ctx(out))
@@ -69,6 +75,8 @@ def main():
         write_state(d, last_kernel_sync=(datetime.now(timezone.utc) - timedelta(days=40)).isoformat())
         rc, out = run(d)
         check("expired >30d declares authorization void", "STATE EXPIRED" in ctx(out) and "void" in ctx(out))
+        rc, out = run(d)
+        check("expired state NEVER compressed to tag (safety lines full, always)", "STATE EXPIRED" in ctx(out))
 
         write_state(d, calibrated_market=False)
         rc, out = run(d)
