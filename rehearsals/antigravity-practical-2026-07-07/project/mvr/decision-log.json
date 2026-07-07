@@ -1,0 +1,119 @@
+[
+  {
+    "entry_id": "DL-e804d701-84ed-4208-bba4-7c82fbd544a7",
+    "timestamp": "2026-07-07T08:30:20.560385+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "..\\outputs\\twin_case_01.md",
+    "charter_hash": "5886c11ae7fa600006a82927d49c5e5cbf2a2d2574d7b1c9e8fa6c87e3050ca1",
+    "charter_hash_mode": "canonical-charter-v2",
+    "kernel_receipts": {
+      "decision_check_id": "4ee9ff443b1cae7df0cdb6623480b82092efdbda2495947293210ef146884afe",
+      "semantic_decision_hash": "e22945d572130d74ffffdc6dc16301a09283b2cd945f868b68e3804393eb9adc",
+      "routes_called": [
+        "/v1/category-playbook/fintech_platform",
+        "/v1/strategy-sparring",
+        "/v1/decision-check"
+      ]
+    },
+    "verdict": "permission_not_yet_earned",
+    "confidence": 0.0,
+    "abstention_reason_codes": [
+      "zero_geo_matches",
+      "telemetry_proxy_pack_missing",
+      "guardian_or_regulatory_evidence"
+    ],
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting"
+      ]
+    },
+    "evidence_gaps": [
+      "public_reality_pack",
+      "telemetry_proxy_pack",
+      "localized_observed_pack_or_survey_pack",
+      "guardian_or_regulatory_evidence"
+    ],
+    "operator_passport_status": "self_reported",
+    "settlement": {
+      "preregistered": false,
+      "anchor_refs": [],
+      "checkpoints": [
+        {
+          "at": "2026-10-05",
+          "criterion": "Concierge pilot active with >=10 retailers making >=3 cash orders per week; order fulfillment rate >= 85%."
+        },
+        {
+          "at": "2027-07-07",
+          "criterion": "Partner with a licensed financial institution/PSP to run a credit pilot, or obtain necessary agency licenses, with transaction logs acting as the primary data feed."
+        }
+      ],
+      "note": "Set preregistered true only after >=2 external anchors exist."
+    },
+    "human_review": {
+      "required": false,
+      "reviewer": null,
+      "signature_ref": null
+    },
+    "notes_for_settlement_reader": "Redirected to cash concierge ordering model over WhatsApp to prevent unlicensed digital credit underwriting."
+  },
+  {
+    "entry_id": "DL-c7d94b9c-2978-4b86-93b6-ecadde24f8ae",
+    "timestamp": "2026-07-07T08:30:21.625920+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "..\\outputs\\twin_case_02_positive_control.md",
+    "charter_hash": "344afabbc374e36a7cccc5b355ac4d001eeefc2049e241a8e186b9afd377852e",
+    "charter_hash_mode": "canonical-charter-v2",
+    "kernel_receipts": {
+      "decision_check_id": "384ef176d01d7935fe97aba2d94b660f06d8b0a292390bbd9156feb7e13586ab",
+      "semantic_decision_hash": "c2fed2350c7319cae8f02de177994abd160fab4adb656dbc4e652ef452c806a8",
+      "routes_called": [
+        "/v1/strategy-sparring",
+        "/v1/decision-check"
+      ]
+    },
+    "verdict": "pilot_only",
+    "confidence": 0.25,
+    "abstention_reason_codes": [],
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning",
+        "pilot_design"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation"
+      ]
+    },
+    "evidence_gaps": [
+      "public_reality_pack",
+      "guardian_or_regulatory_evidence"
+    ],
+    "operator_passport_status": "partially_attested",
+    "settlement": {
+      "preregistered": false,
+      "anchor_refs": [],
+      "checkpoints": [
+        {
+          "at": "2026-10-05",
+          "criterion": "Simple dashboard in use by the team, with >=15 of the 38 researchers submitting or viewing notes, and >=2 monthly private PDF digests successfully exported."
+        },
+        {
+          "at": "2027-07-07",
+          "criterion": "Tool remains active for internal team reporting with zero data leak incidents."
+        }
+      ],
+      "note": "Set preregistered true only after >=2 external anchors exist."
+    },
+    "human_review": {
+      "required": false,
+      "reviewer": null,
+      "signature_ref": null
+    },
+    "notes_for_settlement_reader": "Authorized for internal team reporting dashboard since researcher contributor consents are held."
+  }
+]
