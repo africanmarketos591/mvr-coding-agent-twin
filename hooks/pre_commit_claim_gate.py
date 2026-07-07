@@ -19,7 +19,7 @@ mvr/gate-events.jsonl (fail-silent auditing).
 import json, os, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from claim_gate import MAX_LOG_AGE_DAYS, audit, authorization_result, classify_path  # noqa: E402
+from claim_gate import MAX_LOG_AGE_DAYS, audit, authorization_result, classify_content, classify_path  # noqa: E402
 
 from datetime import datetime, timezone, timedelta  # noqa: E402
 
@@ -42,6 +42,17 @@ def staged_paths():
         return []
 
 
+def read_text_for_scan(root, path):
+    full = os.path.join(root, path)
+    try:
+        if os.path.getsize(full) > 512 * 1024:
+            return ""
+        with open(full, "r", encoding="utf-8-sig") as handle:
+            return handle.read(50000)
+    except (UnicodeDecodeError, OSError):
+        return ""
+
+
 def fail(root, claim_class, path, reason_code, msg):
     audit(root, {"event": "block", "claim_class": claim_class, "path": path,
                  "reason": reason_code, "tool": "git-pre-commit"})
@@ -51,7 +62,18 @@ def fail(root, claim_class, path, reason_code, msg):
 
 def main():
     root = repo_root()
-    claim_files = [(p, classify_path(p)) for p in staged_paths()]
+    paths = staged_paths()
+    for path in paths:
+        if classify_path(path):
+            continue
+        claim_class, reason = classify_content(path, read_text_for_scan(root, path))
+        if claim_class:
+            fail(root, claim_class, path, "claim_content_outside_claims",
+                 f"staged '{path}' appears claim-bearing ({claim_class}) but is outside claims/. "
+                 f"Detector: {reason}. Move it under claims/ with an explicit name and run PRE-CLAIM; "
+                 "writing claim-shaped content elsewhere is path evasion.")
+
+    claim_files = [(p, classify_path(p)) for p in paths]
     claim_files = [(p, c) for p, c in claim_files if c]
     if not claim_files:
         sys.exit(0)  # no claim artifacts staged - commits of code are never gated

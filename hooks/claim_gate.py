@@ -25,6 +25,18 @@ CLAIM_CLASS_BY_PATTERN = [
     (re.compile(r"claims[\\/].*?(grant|donor|dfi)", re.I), "capital_allocation"),
     (re.compile(r"claims[\\/]", re.I), "unclassified_claim"),
 ]
+CONTENT_SCAN_EXTENSIONS = {".md", ".txt", ".html", ".htm", ".rst"}
+CONTENT_SCAN_SKIP_SEGMENTS = {
+    ".git", ".venv", "node_modules", "__pycache__",
+    "mvr-coding-agent-twin", "mvr-twin", "twin",
+    "mvr", "src", "tests", "hooks", "scripts", "memory", "adapters",
+    "release-manifests", "rehearsals",
+}
+CONTENT_SCAN_SAFE_FILENAMES = {
+    "charter.md", "mirror.md", "transcript.md", "transcript_report.md",
+    "operator_log.md", "scorer_sheet.md", "readme.md", "changelog.md",
+    "security.md", "license",
+}
 MAX_LOG_AGE_DAYS = 30
 
 
@@ -63,6 +75,61 @@ def tool_paths(tool_input):
                         if value:
                             paths.append(str(value))
     return paths
+
+
+def tool_text(tool_input):
+    if not isinstance(tool_input, dict):
+        return ""
+    chunks = []
+    for key in ("content", "new_string", "old_string", "text"):
+        value = tool_input.get(key)
+        if isinstance(value, str):
+            chunks.append(value)
+    edits = tool_input.get("edits")
+    if isinstance(edits, list):
+        for item in edits:
+            if isinstance(item, dict):
+                for key in ("new_string", "old_string", "content", "text"):
+                    value = item.get(key)
+                    if isinstance(value, str):
+                        chunks.append(value)
+    return "\n".join(chunks)
+
+
+def should_scan_content(path):
+    normalized = path.replace("\\", "/").lower()
+    parts = [p for p in normalized.split("/") if p]
+    if any(part in CONTENT_SCAN_SKIP_SEGMENTS for part in parts):
+        return False
+    name = parts[-1] if parts else normalized
+    if name in CONTENT_SCAN_SAFE_FILENAMES:
+        return False
+    if "." in name:
+        ext = "." + name.rsplit(".", 1)[-1]
+        if ext not in CONTENT_SCAN_EXTENSIONS:
+            return False
+    return "claims/" not in normalized
+
+
+def classify_content(path, text):
+    if not text or not should_scan_content(path):
+        return None, ""
+    haystack = (path + "\n" + text[:50000]).lower()
+    if any(term in haystack for term in ("pitch deck", "investor memo", "investment memo", "fundraising", "series a", "valuation", "grant application", "dfi funding", "capital allocation")):
+        return "capital_allocation", "capital/funding claim language outside claims/"
+    if any(term in haystack for term in ("board pack", "board memo", "board report")):
+        return "board_reporting", "board-reporting claim language outside claims/"
+    regulated_money = any(term in haystack for term in ("wallet", "escrow", "e-money", "deposit", "savings", "custody of funds", "customer funds"))
+    rollout_terms = any(term in haystack for term in ("terms", "launch", "rollout", "go-to-market", "scale", "nationwide", "national"))
+    if regulated_money and rollout_terms:
+        return "national_rollout", "regulated money/launch claim language outside claims/"
+    if any(term in haystack for term in ("launch plan", "rollout plan", "ready to scale", "scale nationally", "national rollout")):
+        return "national_rollout", "rollout claim language outside claims/"
+    partner_terms = any(term in haystack for term in ("distributor", "supplier", "partner", "wholesaler", "certified", "regulatory clearance"))
+    claim_terms = any(term in haystack for term in ("terms", "approval", "certification", "pitch", "launch"))
+    if partner_terms and claim_terms:
+        return "partnership_claims", "partnership/distributor claim language outside claims/"
+    return None, ""
 
 
 def classify_path(path):
@@ -166,14 +233,29 @@ def main():
         sys.exit(0)
     path = ""
     claim_class = None
-    for candidate in tool_paths(payload.get("tool_input") or {}):
+    tool_input = payload.get("tool_input") or {}
+    candidates = tool_paths(tool_input)
+    text = tool_text(tool_input)
+    for candidate in candidates:
         candidate_class = classify_path(candidate)
         if candidate_class:
             path = candidate
             claim_class = candidate_class
             break
     if claim_class is None:
-        sys.exit(0)  # not a claim artifact — building is always allowed
+        for candidate in candidates:
+            candidate_class, reason = classify_content(candidate, text)
+            if candidate_class:
+                project_dir = os.environ.get("CLAUDE_PROJECT_DIR", ".")
+                audit(project_dir, {"event": "block", "claim_class": candidate_class,
+                                    "path": candidate, "reason": "claim_content_outside_claims",
+                                    "detail": reason, "tool": tool})
+                block(
+                    f"'{candidate}' appears claim-bearing ({candidate_class}) but is outside claims/. "
+                    f"Detector: {reason}. Move the artifact under claims/ with an explicit name and run PRE-CLAIM; "
+                    "writing claim-shaped content elsewhere is path evasion."
+                )
+        sys.exit(0)  # not a claim artifact - building is always allowed
 
     project_dir = os.environ.get("CLAUDE_PROJECT_DIR", ".")
 

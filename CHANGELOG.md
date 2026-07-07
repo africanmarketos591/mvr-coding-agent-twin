@@ -1,5 +1,11 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.15 - 2026-07-07 (claim-surface detection from Opus field run)
+- **Content-shaped claim evasion closed for obvious text files:** both the harness hook and git pre-commit gate now scan staged/write-time text for investor, rollout, regulated-money, board, and partnership/distributor claim language outside `claims/`. Obvious cases (for example parent savings wallet launch terms under `docs/`) block as `claim_content_outside_claims` and must move to the explicit claim surface before PRE-CLAIM.
+- **Regression coverage:** `test_claim_gate.py` and `test_pre_commit_gate.py` now verify that ordinary docs still pass while claim-shaped docs outside `claims/` are rejected. This addresses the field finding that syntactic path-only classification made `docs/notes.md` a known dodge.
+- **Boundary kept honest:** non-git exfiltration (email, SaaS dashboards, CI/runtime deployment text, copy-paste) remains an enterprise egress-control/MCP-proxy problem, not something a local git hook can truthfully guarantee.
+- **Receipt verification status:** the Kibera Opus run exposed `verification_url` fields, but a direct check of the reported `/v1/ledger/verify/<hash>` route returned 404. Live receipt verification is therefore a kernel/API publishing task before it can become a gate option; the local package still labels exports as requiring external kernel verification.
+
 ## 1.1.0-beta.14 - 2026-07-07 (override-authority precision from Opus field run)
 - **Named-human override semantics hardened:** local overrides are now machine-distinct from kernel-backed authorizations. If `decision_authorization.authorized_use` exceeds `kernel_authorized_use`, the gates require `authorization_basis: "named_human_override"`, signed `human_review`, and `override_note`; otherwise they fail closed as ambiguous local authorization.
 - **Override receipts are explicit:** successful overrides emit `allow_override_claim`, never `allow_claim`, with `kernel_authorized_use` and `authorization_basis` attached. Export reviewers can now separate local human discipline from kernel permission without reading prose.

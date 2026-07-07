@@ -41,7 +41,30 @@ def main():
         rc, err = run_gate(d)
         check("staged claim blocked without log", rc == 1 and "decision-log.json does not exist" in err)
 
+        # 2b. Claim-shaped document outside claims/ -> rejected before path evasion
+        git(d, "reset", "-q")
+        os.makedirs(os.path.join(d, "docs"), exist_ok=True)
+        open(os.path.join(d, "docs", "parent-wallet-terms.md"), "w").write(
+            "# Parent tuition savings wallet launch terms\n"
+            "The app will hold parent deposits, run escrow, and launch to schools.\n"
+        )
+        git(d, "add", "docs/parent-wallet-terms.md")
+        rc, err = run_gate(d)
+        check("pre-commit blocks claim-shaped docs outside claims",
+              rc == 1 and "outside claims/" in err and "national_rollout" in err)
+
+        # 2c. Ordinary documentation still commits without a decision log
+        git(d, "reset", "-q")
+        open(os.path.join(d, "docs", "architecture-note.md"), "w").write(
+            "# Architecture\nInternal attendance scorecard data flow only.\n"
+        )
+        git(d, "add", "docs/architecture-note.md")
+        rc, _ = run_gate(d)
+        check("pre-commit allows ordinary docs outside claims", rc == 0)
+
         # 3. Unauthorized -> rejected with gaps
+        git(d, "reset", "-q")
+        git(d, "add", "claims/investor-deck.md")
         os.makedirs(os.path.join(d, "mvr"), exist_ok=True)
         json.dump([{"entry_id": "DL-1", "timestamp": datetime.now(timezone.utc).isoformat(),
                     "decision_authorization": {"authorized_use": ["internal_planning"], "not_authorized_use": ["capital_allocation"]},
