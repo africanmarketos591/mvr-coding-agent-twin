@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local Twin runtime state. Public audit logs and charters are committed deliberately.
+mvr/passport.json
+mvr/state.json
+mvr/.twin-nudge-*

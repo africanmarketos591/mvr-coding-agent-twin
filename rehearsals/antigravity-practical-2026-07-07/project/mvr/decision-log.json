@@ -115,5 +115,33 @@
       "signature_ref": null
     },
     "notes_for_settlement_reader": "Authorized for internal team reporting dashboard since researcher contributor consents are held."
+  },
+  {
+    "entry_id": "AU-5729879b-5d7b-410c-8669-a999de3fb9bb",
+    "timestamp": "2026-07-07T11:34:58.748217+00:00",
+    "checkpoint": "anchor_update",
+    "references": "DL-e804d701-84ed-4208-bba4-7c82fbd544a7",
+    "anchor_ref": "https://github.com/africanmarketos591/mvr-coding-agent-twin/blob/07bc78584302065a94699a81d17c21e6adbb3b21/rehearsals/antigravity-practical-2026-07-07/outputs/twin_case_01.md"
+  },
+  {
+    "entry_id": "AU-4ac12d1e-198a-4d53-b2f3-48fc0747c30a",
+    "timestamp": "2026-07-07T11:34:59.607624+00:00",
+    "checkpoint": "anchor_update",
+    "references": "DL-e804d701-84ed-4208-bba4-7c82fbd544a7",
+    "anchor_ref": "https://web.archive.org/web/20260707113312/https://raw.githubusercontent.com/africanmarketos591/mvr-coding-agent-twin/main/rehearsals/antigravity-practical-2026-07-07/outputs/twin_case_01.md"
+  },
+  {
+    "entry_id": "AU-7b9cad30-da5c-494f-86b6-f323487fdbfe",
+    "timestamp": "2026-07-07T11:35:01.286751+00:00",
+    "checkpoint": "anchor_update",
+    "references": "DL-c7d94b9c-2978-4b86-93b6-ecadde24f8ae",
+    "anchor_ref": "https://github.com/africanmarketos591/mvr-coding-agent-twin/blob/07bc78584302065a94699a81d17c21e6adbb3b21/rehearsals/antigravity-practical-2026-07-07/outputs/twin_case_02_positive_control.md"
+  },
+  {
+    "entry_id": "AU-aefb89d9-f901-4257-b6ea-d7e0d4096002",
+    "timestamp": "2026-07-07T11:35:02.246589+00:00",
+    "checkpoint": "anchor_update",
+    "references": "DL-c7d94b9c-2978-4b86-93b6-ecadde24f8ae",
+    "anchor_ref": "https://web.archive.org/web/20260707113430/https://raw.githubusercontent.com/africanmarketos591/mvr-coding-agent-twin/main/rehearsals/antigravity-practical-2026-07-07/outputs/twin_case_02_positive_control.md"
   }
 ]
