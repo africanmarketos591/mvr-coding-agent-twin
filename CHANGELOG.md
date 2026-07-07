@@ -1,5 +1,11 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.13 - 2026-07-07 (second field report: rulings + stale-renewal UX)
+- **Stale-block renewal path (accepted essence of "renew_claims.py", built smaller):** both gates' stale messages now carry the full renewal path AND the last known evidence gaps from the expired entry - the developer returning after a month sees exactly what was outstanding, in the block message itself. A separate renewal script was rejected: it would be a third wrapper around two spine calls the checkpoint already makes.
+- **Interception-layers note in install.py:** until the host's write-tool hook is wired, claim interception is commit-time only; write-time interception (the "Silent Bypass" fix) ALREADY EXISTS as the harness-level claim gate (settings-hooks.json / adapters) - the installer now says so explicitly so no host skips wiring it.
+- **Ghost-Decision-Log ruling (doctrine, no code):** cryptographic receipt signing accepted as KERNEL roadmap (raises tamper cost, enables offline third-party verification) but rejected as a local-bypass fix - a developer who can edit the log can also patch the hook; the trusted-client fallacy has no local solution. The enforcement boundary remains export-time kernel-receipt verification (Tamper Honesty, CLAUDE.md Section 7).
+- Symbiosis-document corrections on record: the heartbeat injects CASE state, never market telemetry feeds (MVR is not market data - standing positioning constraint); the Outage Rule governs the Twin's own conduct, not application architecture directives.
+
 ## 1.1.0-beta.12 - 2026-07-07 (field-report fixes from the first developer simulation)
 - **Offline degradation (real crash bug fixed):** the spine client caught only HTTPError; a network-down URLError crashed uncaught. `call()` now returns status 0 + `kernel_unreachable` + the Outage Rule text. REJECTED the proposed local-verdict fallback: an offline spine that invents answers is a counterfeit spine; offline = build proceeds, charters provisional, claims stay default-denied.
 - **Differential heartbeat:** unchanged state within 2h emits a one-line tag (verdict + authorization) instead of the full digest - fixes token cost AND banner blindness. Expired state is NEVER compressed; safety lines always ship full. Marker `mvr/.heartbeat-last`, fail-silent.

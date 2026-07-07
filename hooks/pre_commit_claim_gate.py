@@ -78,8 +78,11 @@ def main():
             fail(root, claim_class, path, "timestamp_invalid",
                  "Latest decision-log entry has no valid ISO timestamp. Rerun PRE-CLAIM.")
         if age > timedelta(days=MAX_LOG_AGE_DAYS):
+            stale_gaps = latest.get("evidence_gaps") or latest.get("abstention_reason_codes") or []
             fail(root, claim_class, path, "authorization_stale",
-                 f"Latest decision-log entry is {age.days} days old (max {MAX_LOG_AGE_DAYS}). Rerun PRE-CLAIM.")
+                 f"Latest decision-log entry is {age.days} days old (max {MAX_LOG_AGE_DAYS}). "
+                 f"Renewal path: refresh evidence (last known gaps: {stale_gaps or 'none recorded'}), "
+                 "rerun PRE-CLAIM on the current pack, append the new entry, then commit.")
         authorization = latest.get("decision_authorization") or {}
         authorized = as_list(authorization.get("authorized_use") if isinstance(authorization, dict) else None)
         if claim_class == "unclassified_claim":

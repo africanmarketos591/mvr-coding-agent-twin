@@ -77,6 +77,9 @@ def main():
     # 3. Harness hooks instruction (cannot be merged automatically without clobber risk)
     print("NEXT  Claude Code hosts: merge the 'hooks' block from settings-hooks.json into .claude/settings.json")
     print("      Other hosts: see adapters/ for your host's wiring; the git gate above already enforces claims.")
+    print("NOTE  Interception layers: until your host's write-tool hook is wired (settings-hooks.json / adapters/),")
+    print("      claim interception happens at COMMIT time only. Write-time interception (the claim gate firing the")
+    print("      moment a claims/ file is drafted) requires the harness hook - wire it for the full partner experience.")
 
     # 4. Optional verification
     if args.verify:

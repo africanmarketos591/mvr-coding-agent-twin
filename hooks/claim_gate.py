@@ -133,8 +133,15 @@ def main():
     try:
         age = datetime.now(timezone.utc) - datetime.fromisoformat(ts.replace("Z", "+00:00"))
         if age > timedelta(days=MAX_LOG_AGE_DAYS):
-            deny(f"Latest decision-log entry is {age.days} days old (max {MAX_LOG_AGE_DAYS}). Rerun PRE-CLAIM against the current pack.",
-                 "authorization_stale")
+            stale_gaps = latest.get("evidence_gaps") or latest.get("abstention_reason_codes") or []
+            deny(
+                f"Latest decision-log entry is {age.days} days old (max {MAX_LOG_AGE_DAYS}). "
+                f"Renewal path: (1) refresh the evidence pack - last known outstanding gaps: {stale_gaps or 'none recorded'}; "
+                "(2) rerun PRE-CLAIM (decision_check + evidence_completeness on the CURRENT pack); "
+                "(3) append the new entry via the decision-log skeleton. Old evidence may have aged out too - "
+                "the kernel's freshness rules decide, not this hook.",
+                "authorization_stale",
+            )
     except Exception:
         deny("Latest decision-log entry has no valid ISO timestamp. Rerun PRE-CLAIM.", "timestamp_invalid")
 

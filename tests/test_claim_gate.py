@@ -58,11 +58,13 @@ def main():
         rc, _ = run_hook({"file_path": os.path.join(d, "claims", "investor-deck.md")}, d)
         check("authorized claim allowed", rc == 0)
 
-        # 5. Stale log (>30d) -> block even if authorized
+        # 5. Stale log (>30d) -> block even if authorized, with renewal path + last known gaps
         old = (datetime.now(timezone.utc) - timedelta(days=45)).isoformat()
         write_log(d, ["capital_allocation"], ts=old)
         rc, err = run_hook({"file_path": os.path.join(d, "claims", "investor-deck.md")}, d)
         check("stale authorization blocked", rc == 2 and "days old" in err)
+        check("stale block carries renewal path + last known gaps",
+              "Renewal path" in err and "sample 67" in err)
 
         # 6. Unclassified claims/ artifact -> block with naming instruction
         write_log(d, ["capital_allocation"])
