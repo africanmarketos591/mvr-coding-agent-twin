@@ -132,6 +132,89 @@ def classify_content(path, text):
     return None, ""
 
 
+SEMANTIC_CLAIM_PATTERNS = [
+    (
+        re.compile(
+            r"hold(?:s|ing)?\s+(?:the\s+)?(?:members?|farmers?|buyers?|customers?|clients?|cooperative)['’]?s?\s+"
+            r"(?:money|funds|cash|contributions?)",
+            re.I,
+        ),
+        "national_rollout",
+        "custody-of-funds paraphrase (semantic tier)",
+    ),
+    (
+        re.compile(r"keep(?:s|ing)?\s+.{0,25}\b(?:money|funds|cash)\b.{0,25}\buntil\b", re.I),
+        "national_rollout",
+        "conditional fund-holding paraphrase (semantic tier)",
+    ),
+    (
+        re.compile(r"(?:members?|cooperative)\s+contributions?\s+(?:held\s+)?in\s+trust", re.I),
+        "national_rollout",
+        "trust-account paraphrase (semantic tier)",
+    ),
+    (
+        re.compile(r"pooled\s+(?:cooperative\s+)?(?:float|funds?)", re.I),
+        "national_rollout",
+        "pooled-float paraphrase (semantic tier)",
+    ),
+    (
+        re.compile(r"(?:lend|advance|finance)(?:s|ing)?\s+.{0,25}(?:fertili[sz]er|inputs?|to\s+(?:farmers?|cooperatives?))", re.I),
+        "national_rollout",
+        "credit-provision paraphrase (semantic tier)",
+    ),
+    (
+        re.compile(r"(?:tunashikilia|kushikilia|kuhifadhi)\s+.{0,20}(?:pesa|fedha|akiba)", re.I),
+        "national_rollout",
+        "Swahili fund-custody language (semantic tier)",
+    ),
+    (
+        re.compile(r"akiba\s+ya\s+wanachama", re.I),
+        "national_rollout",
+        "Swahili members-savings language (semantic tier)",
+    ),
+    (
+        re.compile(r"\bmkopo\b.{0,20}(?:mbolea|wakulima)", re.I),
+        "national_rollout",
+        "Swahili loan language for fertilizer/farmers (semantic tier)",
+    ),
+    (
+        re.compile(r"(?:tukuuma|okukuuma)\s+.{0,20}(?:ssente|ensimbi)", re.I),
+        "national_rollout",
+        "Luganda fund-custody language (semantic tier)",
+    ),
+    (
+        re.compile(r"ssente\s+z['’]?\s*abalimi", re.I),
+        "national_rollout",
+        "Luganda farmers-money language (semantic tier)",
+    ),
+]
+
+
+def classify_semantic_content(path, text):
+    if not text or not should_scan_content(path):
+        return None, ""
+    haystack = f"{path}\n{text[:50000]}"
+    for pattern, claim_class, reason in SEMANTIC_CLAIM_PATTERNS:
+        if pattern.search(haystack):
+            return claim_class, reason
+    return None, ""
+
+
+def classify_escalating_content(path, text):
+    """Return (claim_class, reason, tier).
+
+    The keyword classifier is the deterministic floor. The semantic tier runs only
+    when the floor is silent and can only add a claim class, never downgrade one.
+    """
+    claim_class, reason = classify_content(path, text)
+    if claim_class:
+        return claim_class, reason, "keyword"
+    claim_class, reason = classify_semantic_content(path, text)
+    if claim_class:
+        return claim_class, reason, "semantic"
+    return None, "", "none"
+
+
 def classify_path(path):
     for pattern, cls in CLAIM_CLASS_BY_PATTERN:
         if pattern.search(path):
@@ -244,15 +327,15 @@ def main():
             break
     if claim_class is None:
         for candidate in candidates:
-            candidate_class, reason = classify_content(candidate, text)
+            candidate_class, reason, tier = classify_escalating_content(candidate, text)
             if candidate_class:
                 project_dir = os.environ.get("CLAUDE_PROJECT_DIR", ".")
                 audit(project_dir, {"event": "block", "claim_class": candidate_class,
                                     "path": candidate, "reason": "claim_content_outside_claims",
-                                    "detail": reason, "tool": tool})
+                                    "detail": reason, "detector_tier": tier, "tool": tool})
                 block(
                     f"'{candidate}' appears claim-bearing ({candidate_class}) but is outside claims/. "
-                    f"Detector: {reason}. Move the artifact under claims/ with an explicit name and run PRE-CLAIM; "
+                    f"Detector ({tier}): {reason}. Move the artifact under claims/ with an explicit name and run PRE-CLAIM; "
                     "writing claim-shaped content elsewhere is path evasion."
                 )
         sys.exit(0)  # not a claim artifact - building is always allowed

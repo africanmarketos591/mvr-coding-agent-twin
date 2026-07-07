@@ -1,5 +1,6 @@
 """Offline tests for canonical preregistration hashing."""
 import os
+import subprocess
 import sys
 import tempfile
 
@@ -55,6 +56,13 @@ def main():
             "Body claim.\n",
         )
         check("duplicate hash headers counted as ambiguous", preregister.preregistration_header_count(dup) == 2)
+
+        skeleton = os.path.join(d, "skeleton.md")
+        write(skeleton, template)
+        proc = subprocess.run([sys.executable, preregister.__file__, skeleton], capture_output=True, text=True)
+        check("decision-log skeleton carries priors dimensions", all(
+            key in proc.stdout for key in ('"archetype"', '"market_scope"', '"redirect_pattern"')
+        ))
 
     print()
     if FAILS:

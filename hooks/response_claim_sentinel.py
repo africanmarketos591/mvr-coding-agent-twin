@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from claim_gate import classify_content  # noqa: E402
+from claim_gate import classify_escalating_content  # noqa: E402
 
 
 TEXT_KEYS = {
@@ -70,19 +70,20 @@ def main():
         return
     project_dir = os.environ.get("CLAUDE_PROJECT_DIR") or os.environ.get("CURSOR_PROJECT_DIR") or os.getcwd()
     text = "\n".join(collect_text(payload))[:50000]
-    claim_class, reason = classify_content("assistant-response.md", text)
+    claim_class, reason, tier = classify_escalating_content("assistant-response.md", text)
     if not claim_class:
         return
     record = {
         "event": "response_claim_warning",
         "claim_class": claim_class,
         "reason": reason,
+        "detector_tier": tier,
         "action": "advisory_only_run_pre_claim_before_external_use",
     }
     write_receipt(project_dir, record)
     emit_context(
         f"[MVR TWIN RESPONSE SENTINEL] Your draft response appears claim-bearing "
-        f"({claim_class}: {reason}). This is advisory only, not a block. Before any "
+        f"({claim_class}, {tier}: {reason}). This is advisory only, not a block. Before any "
         "external artifact or user-facing market claim, move the claim into claims/ "
         "and run PRE-CLAIM; do not treat chat prose as authorization."
     )

@@ -19,7 +19,7 @@ mvr/gate-events.jsonl (fail-silent auditing).
 import json, os, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from claim_gate import MAX_LOG_AGE_DAYS, audit, authorization_result, classify_content, classify_path  # noqa: E402
+from claim_gate import MAX_LOG_AGE_DAYS, audit, authorization_result, classify_escalating_content, classify_path  # noqa: E402
 
 from datetime import datetime, timezone, timedelta  # noqa: E402
 
@@ -66,11 +66,11 @@ def main():
     for path in paths:
         if classify_path(path):
             continue
-        claim_class, reason = classify_content(path, read_text_for_scan(root, path))
+        claim_class, reason, tier = classify_escalating_content(path, read_text_for_scan(root, path))
         if claim_class:
             fail(root, claim_class, path, "claim_content_outside_claims",
                  f"staged '{path}' appears claim-bearing ({claim_class}) but is outside claims/. "
-                 f"Detector: {reason}. Move it under claims/ with an explicit name and run PRE-CLAIM; "
+                 f"Detector ({tier}): {reason}. Move it under claims/ with an explicit name and run PRE-CLAIM; "
                  "writing claim-shaped content elsewhere is path evasion.")
 
     claim_files = [(p, classify_path(p)) for p in paths]

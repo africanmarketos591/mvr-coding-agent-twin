@@ -146,6 +146,9 @@ def main():
                 "charter_ref": path,
                 "charter_hash": digest,
                 "charter_hash_mode": "canonical-charter-v2",
+                "archetype": None,
+                "market_scope": None,
+                "redirect_pattern": None,
                 "settlement": {
                     "preregistered": False,
                     "anchor_refs": [],

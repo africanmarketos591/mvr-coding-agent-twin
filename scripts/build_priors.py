@@ -51,10 +51,10 @@ def base_entry_for(entries, settlement):
 
 def prior_key(base):
     return {
-        "archetype": normalize(base.get("archetype") or base.get("calibration_scope"), "unknown_archetype"),
+        "archetype": normalize(base.get("archetype") or base.get("entity_archetype") or base.get("calibration_scope"), "unknown_archetype"),
         "market": normalize(base.get("market_scope") or base.get("country") or base.get("geo_scope"), "unknown_market"),
         "verdict": normalize(base.get("verdict"), "unknown_verdict"),
-        "redirect_pattern": normalize(base.get("redirect_pattern"), "unknown_redirect"),
+        "redirect_pattern": normalize(base.get("redirect_pattern") or base.get("redirect_slug"), "unknown_redirect"),
     }
 
 

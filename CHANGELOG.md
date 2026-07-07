@@ -1,5 +1,13 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.18 - 2026-07-08 (receipt verification, semantic tier, settlement pulses)
+- **PRE-EXPORT receipt verification:** added `scripts/verify_receipts.py` now that `/v1/ledger/verify/<hash>` is live on the kernel. Authority hashes must verify against the kernel ledger before export; content-derived hashes remain informational. This supersedes the beta.15-beta.17 "kernel-pending" note.
+- **Draft-only settlement daemon:** added `adapters/pulse_collectors.py` and `scripts/settlement_daemon.py` for schedulable public-signal collection. It writes settlement drafts only, never `settled=true`, and never records hit/partial/miss without human countersign.
+- **Escalate-only semantic tier:** added `hooks/claim_semantic_tier.py` and wired the gates/sentinel to `classify_escalating_content()`. The keyword classifier remains the floor; the semantic/multilingual tier can only add a block when the floor is silent.
+- **Outcome priors made bucketable:** preregistration skeletons and the decision-log schema now include advisory `archetype`, `market_scope`, and `redirect_pattern` fields consumed by `scripts/build_priors.py`. Missing values remain safe and bucket as `unknown_*`.
+- **Regression coverage:** added tests for receipt verification, settlement daemon draft-only behavior, and semantic-tier escalation; expanded preregistration tests for prior dimensions.
+- **Deferred intentionally:** kernel-side calibration ingestion, enterprise egress control, and prose-level blocking remain outside the local package boundary.
+
 ## 1.1.0-beta.17 - 2026-07-08 (response sentinel and advisory outcome priors)
 - **Advisory response sentinel:** added `hooks/response_claim_sentinel.py` for hosts that expose final-response/Stop hooks. It detects obvious claim-shaped assistant prose, writes `mvr/response-sentinel.jsonl`, and injects advisory context. It is counsel only: fail-open, never blocks, never authorizes, and never replaces PRE-CLAIM for external artifacts.
 - **Advisory outcome priors:** added `scripts/build_priors.py` to summarize settled `mvr/decision-log.json` entries into `governance/outcome_priors.json`. Priors are explicitly `advisory_only_no_kernel_mutation_no_claim_authorization`; cold-start buckets stay `insufficient_prior` until the configured minimum sample size.

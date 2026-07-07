@@ -12,6 +12,9 @@ Each entry (append on every PRE-CHARTER and PRE-CLAIM checkpoint):
   "charter_ref": "charters/CH-....md",
   "charter_hash": "<canonical sha256 from scripts/preregister.py>",
   "charter_hash_mode": "canonical-charter-v2",
+  "archetype": "agritech_aggregator",
+  "market_scope": "UG-KE",
+  "redirect_pattern": "coordination_over_wallet | null",
   "kernel_receipts": {
     "decision_check_id": "...",
     "semantic_decision_hash": "...",
@@ -46,6 +49,7 @@ Each entry (append on every PRE-CHARTER and PRE-CLAIM checkpoint):
 Rules:
 - Entries are never edited or deleted; corrections are new entries referencing the old `entry_id`.
 - The charter hash MUST verify with `python scripts/preregister.py --verify <charter.md>`. A pasted hash that does not verify is not preregistration evidence.
+- `archetype`, `market_scope`, and `redirect_pattern` are advisory dimensions consumed only by `scripts/build_priors.py`. They never affect claim authorization. Absent values bucket as `unknown_*` and are safe, just uninformative.
 - `settlement.settled` is written ONLY by the settlement process (scripts/settle.py output or instrumentation silence detection) — never by the authoring agent.
 - If `human_review.required` is true and unsigned, the claim gate treats the entry as non-authorizing regardless of `authorized_use`.
 - `kernel_authorized_use` is the live kernel baseline copied from the receipt. If local `decision_authorization.authorized_use` exceeds it, the entry MUST be a signed `named_human_override` with `override_note`; otherwise the gate fails closed as ambiguous local authorization.
