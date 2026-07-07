@@ -28,8 +28,24 @@ def main():
         check("pre-commit shim installed with sh shebang",
               os.path.exists(hook) and open(hook).read().startswith("#!/bin/sh"))
         check("shim wires the claim gate", "pre_commit_claim_gate.py" in open(hook).read())
+        cursor_rule = os.path.join(d, ".cursor", "rules", "mvr-twin.mdc")
+        cursor_hooks = os.path.join(d, ".cursor", "hooks.json")
+        cursor_mcp = os.path.join(d, ".cursor", "mcp.json")
+        check("Cursor rule installed", os.path.exists(cursor_rule) and "MVR Twin" in open(cursor_rule, encoding="utf-8").read())
+        hooks = json.load(open(cursor_hooks, encoding="utf-8"))
+        check("Cursor preToolUse hook installed",
+              any("pretooluse_claim_gate.py" in h.get("command", "") for h in hooks.get("hooks", {}).get("preToolUse", [])))
+        check("Cursor heartbeat hook installed",
+              any("before_submit_heartbeat.py" in h.get("command", "") for h in hooks.get("hooks", {}).get("beforeSubmitPrompt", [])))
+        mcp = json.load(open(cursor_mcp, encoding="utf-8"))
+        check("Cursor MCP config installed", mcp.get("mcpServers", {}).get("mvr", {}).get("url") == "https://africanmarketos.com/mcp")
         rc2, _ = run([os.path.join(PKG, "scripts", "install.py"), "--root", d])
-        check("install is idempotent", rc2 == 0 and open(hook).read().count("pre_commit_claim_gate.py") == 1)
+        hooks2 = json.load(open(cursor_hooks, encoding="utf-8"))
+        cursor_hook_count = sum(
+            1 for entries in hooks2.get("hooks", {}).values() for h in entries
+            if "mvr-coding-agent-twin" in h.get("command", "")
+        )
+        check("install is idempotent", rc2 == 0 and open(hook).read().count("pre_commit_claim_gate.py") == 1 and cursor_hook_count == 2)
 
     # --- preregister --in-place ---
     with tempfile.TemporaryDirectory() as d:

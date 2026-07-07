@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python mvr-coding-agent-twin/adapters/cursor-hooks/pretooluse_claim_gate.py"
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "python mvr-coding-agent-twin/adapters/cursor-hooks/before_submit_heartbeat.py"
+      }
+    ]
+  }
+}

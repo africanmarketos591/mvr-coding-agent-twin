@@ -7,13 +7,15 @@ Does, idempotently and Windows-safely:
   1. mvr/.gitignore from templates/mvr.gitignore (passport-leak prevention, REQUIRED).
   2. .git/hooks/pre-commit shim (sh shebang; correct on Git-for-Windows and POSIX)
      invoking hooks/pre_commit_claim_gate.py - host-agnostic claim authority.
-  3. Prints the Claude Code settings-hooks merge instruction (harness-level channel).
-  4. --verify: runs the offline suite set and reports PASS/FAIL per suite.
+  3. Cursor artifacts: .cursor/rules/mvr-twin.mdc, .cursor/hooks.json, .cursor/mcp.json.
+  4. Prints the Claude Code settings-hooks merge instruction (harness-level channel).
+  5. --verify: runs the offline suite set and reports PASS/FAIL per suite.
 
 An installer that does not verify is a liability; use --verify on first install.
 Never touches keys. Never contacts the network.
 """
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -27,6 +29,46 @@ def rel_to_root(path, root):
         return os.path.relpath(path, root)
     except ValueError:
         return path  # different drive - absolute path is fine in the shim
+
+
+def load_json(path, fallback):
+    try:
+        with open(path, encoding="utf-8-sig") as handle:
+            return json.load(handle)
+    except Exception:
+        return fallback
+
+
+def write_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(data, handle, indent=2)
+        handle.write("\n")
+
+
+def ensure_hook(config, event_name, command):
+    hooks = config.setdefault("hooks", {})
+    entries = hooks.setdefault(event_name, [])
+    if not isinstance(entries, list):
+        entries = []
+        hooks[event_name] = entries
+    for entry in entries:
+        if isinstance(entry, dict) and entry.get("command") == command:
+            return False
+    entries.append({"command": command})
+    return True
+
+
+def ensure_mcp(config):
+    servers = config.setdefault("mcpServers", {})
+    if "mvr" in servers:
+        return False
+    servers["mvr"] = {
+        "type": "http",
+        "url": "https://africanmarketos.com/mcp",
+        "headers": {"X-API-Key": "${MVR_API_KEY}"},
+    }
+    return True
 
 
 def main():
@@ -74,9 +116,35 @@ def main():
                 pass  # Windows: git honors the shebang regardless
             print("DONE  .git/hooks/pre-commit installed (sh shebang, Windows-safe)")
 
-    # 3. Harness hooks instruction (cannot be merged automatically without clobber risk)
+    # 3. Cursor project artifacts (safe, no keys; merge instead of clobber)
+    cursor_dir = os.path.join(root, ".cursor")
+    rules_dir = os.path.join(cursor_dir, "rules")
+    os.makedirs(rules_dir, exist_ok=True)
+    rule_src = os.path.join(PKG, "adapters", "cursor-rules.md")
+    rule_dst = os.path.join(rules_dir, "mvr-twin.mdc")
+    shutil.copy2(rule_src, rule_dst)
+    print("DONE  .cursor/rules/mvr-twin.mdc installed")
+
+    hooks_path = os.path.join(cursor_dir, "hooks.json")
+    hooks_config = load_json(hooks_path, {"version": 1, "hooks": {}})
+    hooks_config.setdefault("version", 1)
+    hook_cmd_base = rel_to_root(os.path.join(PKG, "adapters", "cursor-hooks"), root).replace("\\", "/")
+    changed_hooks = False
+    changed_hooks |= ensure_hook(hooks_config, "preToolUse", f'python "{hook_cmd_base}/pretooluse_claim_gate.py"')
+    changed_hooks |= ensure_hook(hooks_config, "beforeSubmitPrompt", f'python "{hook_cmd_base}/before_submit_heartbeat.py"')
+    write_json(hooks_path, hooks_config)
+    print(("DONE" if changed_hooks else "OK  ") + "  .cursor/hooks.json wires MVR Twin hooks")
+
+    mcp_path = os.path.join(cursor_dir, "mcp.json")
+    mcp_config = load_json(mcp_path, {"mcpServers": {}})
+    changed_mcp = ensure_mcp(mcp_config)
+    write_json(mcp_path, mcp_config)
+    print(("DONE" if changed_mcp else "OK  ") + "  .cursor/mcp.json includes AfricanMarketOS MCP (uses ${MVR_API_KEY})")
+
+    # 4. Harness hooks instruction (cannot be merged automatically without clobber risk)
     print("NEXT  Claude Code hosts: merge the 'hooks' block from settings-hooks.json into .claude/settings.json")
     print("      Other hosts: see adapters/ for your host's wiring; the git gate above already enforces claims.")
+    print("NEXT  Cursor hosts: verify your Cursor version fires preToolUse/beforeSubmitPrompt; git pre-commit remains the hard floor.")
     print("NOTE  Interception layers: until your host's write-tool hook is wired (settings-hooks.json / adapters/),")
     print("      claim interception happens at COMMIT time only. Write-time interception (the claim gate firing the")
     print("      moment a claims/ file is drafted) requires the harness hook - wire it for the full partner experience.")

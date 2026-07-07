@@ -22,14 +22,18 @@ Built 2026-07-06 by Claude Fable 5 as its own mirror: the instruction layer enco
 - **Judge before code. Never interrogate. Never judge after the build.**
 - The user sees the Build Charter and the Mirror — never the fight.
 
-## Install (Claude Code host)
+## Install
 
 1. Copy this directory into the project root (or reference it).
-2. Merge `settings-hooks.json` into `.claude/settings.json` (claim gate + checkpoint enforcement).
-3. `.mcp.json` wires the live MVR MCP server. Set env `MVR_API_KEY` (sandbox eval key: `mvr-demo-key-2026`, non-commercial STANDARD scope; production/evaluation keys via https://africanmarketos.com/get-api-key).
+2. Run `python mvr-coding-agent-twin/scripts/install.py --root .` from the project root.
+   - Universal: installs `mvr/.gitignore` and the git pre-commit claim gate.
+   - Cursor: installs `.cursor/rules/mvr-twin.mdc`, merges `.cursor/hooks.json`, and adds `.cursor/mcp.json`.
+   - Claude Code: merge `settings-hooks.json` into `.claude/settings.json` for full write-time claim gate + heartbeat.
+3. Set env `MVR_API_KEY` (sandbox eval key: `mvr-demo-key-2026`, non-commercial STANDARD scope; production/evaluation keys via https://africanmarketos.com/get-api-key). Never paste keys into repo files.
 4. The host agent reads `CLAUDE.md` (Claude Code does this natively; for Codex/others, load it as the system/project instruction).
-5. Run `python tests/smoke_test.py` — must print `ALL PASS` before first use with a PRO/ENTERPRISE-scope evaluation key. The public sandbox key verifies `/v1/schema`, category playbooks, and `/v1/decision-check`, but `/v1/strategy-sparring` is correctly plan-gated and will return `403` on STANDARD scope. (Note: the kernel edge rejects default Python user agents; the client in `spine/mvr_client.py` sets a proper UA. Do not bypass it.)
-6. **REQUIRED before first commit:** copy `templates/mvr.gitignore` to `mvr/.gitignore` — the Operator Passport is personal data and must never reach a shared or public repo (SECURITY.md, Repository hygiene).
+5. Run `python mvr-coding-agent-twin/scripts/install.py --root . --verify` for offline suites.
+6. Run `python mvr-coding-agent-twin/tests/smoke_test.py` - must print `ALL PASS` before first use with a PRO/ENTERPRISE-scope evaluation key. The public sandbox key verifies `/v1/schema`, category playbooks, and `/v1/decision-check`, but `/v1/strategy-sparring` is correctly plan-gated and will return `403` on STANDARD scope. (Note: the kernel edge rejects default Python user agents; the client in `spine/mvr_client.py` sets a proper UA. Do not bypass it.)
+7. **REQUIRED before first commit:** verify `mvr/.gitignore` exists - the Operator Passport is personal data and must never reach a shared or public repo (SECURITY.md, Repository hygiene).
 
 Internal rehearsal key files: use `python scripts/run_smoke_from_keyfile.py <keyfile>` instead of regex-scanning for `mvr-...`. The helper only accepts explicit `X-API-Key:`, `MVR_API_KEY=`, `API_KEY=`, or `Authorization: Bearer` fields and never prints the key.
 
@@ -82,8 +86,8 @@ Release boundary:
 |---|---|---|---|---|
 | LENS (CLAUDE.md doctrine) | native | via `adapters/antigravity-knowledge.md` | via `adapters/AGENTS.md` | via `adapters/cursor-rules.md` |
 | SPINE client + checkpoints | full | full | full | full |
-| Heartbeat (per-turn ambient state) | hook-native | hook-wire (adapter notes) | read `mvr/state.json` per turn (doctrine) | read `mvr/state.json` per turn (doctrine) |
-| Claim gate (harness-level) | hook-native | hook-wire (adapter notes) | limited | limited |
+| Heartbeat (per-turn ambient state) | hook-native | hook-wire (adapter notes) | read `mvr/state.json` per turn (doctrine) | generated `beforeSubmitPrompt` hook where supported; otherwise read `mvr/state.json` |
+| Claim gate (harness-level) | hook-native | hook-wire (adapter notes) | limited | generated `preToolUse` hook where supported; version-dependent |
 | **Claim gate (git pre-commit — universal)** | ✔ | ✔ | ✔ | ✔ |
 | Settlement daemon (`settle.py` on any scheduler) | ✔ | ✔ (scheduled tasks) | ✔ (cron) | ✔ (cron) |
 | Memory (passport, decision log, charters, receipts) | ✔ files | ✔ files | ✔ files | ✔ files |

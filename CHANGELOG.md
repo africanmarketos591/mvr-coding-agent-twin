@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.16 - 2026-07-07 (Cursor adapter and one-command install)
+- **Cursor harness artifacts:** added `adapters/cursor-hooks/` with a `hooks.json` template plus `pretooluse_claim_gate.py` and `before_submit_heartbeat.py` wrappers. Cursor hook coverage is version-dependent, so these are write-time/heartbeat best-effort layers; git pre-commit remains the hard universal floor.
+- **One-command Cursor install:** `scripts/install.py --root .` now installs `.cursor/rules/mvr-twin.mdc`, merges `.cursor/hooks.json`, and adds `.cursor/mcp.json` with the AfricanMarketOS MCP server using `${MVR_API_KEY}`. Existing Cursor config is merged, not clobbered, and no keys are written.
+- **Cursor browser research protocol:** added `adapters/cursor-browser-research.md` for source-ledger discipline when Cursor browser tooling is available. Unsupported facts remain `UNKNOWN - not verified`.
+- **Install regression coverage:** `tests/test_install_and_inplace.py` now verifies Cursor rules, hooks, MCP config, and idempotency.
+- **Deferred intentionally:** live receipt verification, TWIN/sparring-lite key class, edtech-specific archetype, settlement-to-calibration, and enterprise egress proxy remain kernel/product roadmap items, not local package guarantees.
+
 ## 1.1.0-beta.15 - 2026-07-07 (claim-surface detection from Opus field run)
 - **Content-shaped claim evasion closed for obvious text files:** both the harness hook and git pre-commit gate now scan staged/write-time text for investor, rollout, regulated-money, board, and partnership/distributor claim language outside `claims/`. Obvious cases (for example parent savings wallet launch terms under `docs/`) block as `claim_content_outside_claims` and must move to the explicit claim surface before PRE-CLAIM.
 - **Regression coverage:** `test_claim_gate.py` and `test_pre_commit_gate.py` now verify that ordinary docs still pass while claim-shaped docs outside `claims/` are rejected. This addresses the field finding that syntactic path-only classification made `docs/notes.md` a known dodge.
