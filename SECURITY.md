@@ -18,6 +18,7 @@ The passport is personal data. Non-negotiables:
 ## Audit & integrity
 - `mvr/gate-events.jsonl`: append-only enforcement receipts (event, claim class, path, reason, entry_id, timestamp). Contains file paths, never secrets or personal data. Part of the case record; ships with exported case audits.
 - `mvr/decision-log.json`: append-only; corrections are new entries. The claim gate fails CLOSED on unreadable or malformed logs — a broken log never authorizes.
+- Named-human overrides are local-only controls, not kernel authorization. Any override that extends local `authorized_use` beyond `kernel_authorized_use` must be signed in `human_review`, explain itself in `override_note`, and will be receipted as `allow_override_claim` for external review.
 - Charters are hashed and externally anchored (≥2 anchors) before they count as preregistered; settlement writes are made only by the settlement process, never the authoring agent.
 
 ## Reporting

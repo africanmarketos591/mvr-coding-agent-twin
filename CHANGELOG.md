@@ -1,5 +1,11 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.14 - 2026-07-07 (override-authority precision from Opus field run)
+- **Named-human override semantics hardened:** local overrides are now machine-distinct from kernel-backed authorizations. If `decision_authorization.authorized_use` exceeds `kernel_authorized_use`, the gates require `authorization_basis: "named_human_override"`, signed `human_review`, and `override_note`; otherwise they fail closed as ambiguous local authorization.
+- **Override receipts are explicit:** successful overrides emit `allow_override_claim`, never `allow_claim`, with `kernel_authorized_use` and `authorization_basis` attached. Export reviewers can now separate local human discipline from kernel permission without reading prose.
+- **Unsigned review enforcement:** `human_review.required=true` is now enforced by both the harness hook and git pre-commit gate. Unsigned required review cannot authorize claims, matching `memory/decision-log.format.md`.
+- **Regression coverage:** claim-gate and pre-commit suites now cover unsigned human review, ambiguous local authorization, and explicit signed override receipts. Field finding came from the Claude Opus 4.8 healthcare-procurement simulation after the Antigravity beta.13 healthcare run validated the normal block path.
+
 ## 1.1.0-beta.13 - 2026-07-07 (second field report: rulings + stale-renewal UX)
 - **Stale-block renewal path (accepted essence of "renew_claims.py", built smaller):** both gates' stale messages now carry the full renewal path AND the last known evidence gaps from the expired entry - the developer returning after a month sees exactly what was outstanding, in the block message itself. A separate renewal script was rejected: it would be a third wrapper around two spine calls the checkpoint already makes.
 - **Interception-layers note in install.py:** until the host's write-tool hook is wired, claim interception is commit-time only; write-time interception (the "Silent Bypass" fix) ALREADY EXISTS as the harness-level claim gate (settings-hooks.json / adapters) - the installer now says so explicitly so no host skips wiring it.

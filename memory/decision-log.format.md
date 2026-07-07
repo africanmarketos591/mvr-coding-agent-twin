@@ -20,6 +20,8 @@ Each entry (append on every PRE-CHARTER and PRE-CLAIM checkpoint):
   "verdict": "permission_not_yet_earned | pilot_only | pilot_ready | ready_to_scale | abstained",
   "confidence": 0.15,
   "abstention_reason_codes": ["..."],
+  "kernel_authorized_use": ["internal_planning"],
+  "authorization_basis": "kernel_receipt | named_human_override",
   "decision_authorization": {
     "authorized_use": ["internal_planning"],
     "not_authorized_use": ["national_rollout", "capital_allocation", "board_reporting"]
@@ -36,6 +38,7 @@ Each entry (append on every PRE-CHARTER and PRE-CLAIM checkpoint):
     "settled": null
   },
   "human_review": { "required": false, "reviewer": null, "signature_ref": null },
+  "override_note": null,
   "notes_for_settlement_reader": "One plain sentence you are willing to be judged by later."
 }
 ```
@@ -45,3 +48,5 @@ Rules:
 - The charter hash MUST verify with `python scripts/preregister.py --verify <charter.md>`. A pasted hash that does not verify is not preregistration evidence.
 - `settlement.settled` is written ONLY by the settlement process (scripts/settle.py output or instrumentation silence detection) — never by the authoring agent.
 - If `human_review.required` is true and unsigned, the claim gate treats the entry as non-authorizing regardless of `authorized_use`.
+- `kernel_authorized_use` is the live kernel baseline copied from the receipt. If local `decision_authorization.authorized_use` exceeds it, the entry MUST be a signed `named_human_override` with `override_note`; otherwise the gate fails closed as ambiguous local authorization.
+- Override receipts are emitted as `allow_override_claim`, never `allow_claim`. A human override is local discipline, not kernel authorization, and external parties must verify the kernel receipt before trusting exported claims.

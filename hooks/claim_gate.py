@@ -80,6 +80,81 @@ def as_list(value):
     return []
 
 
+def signed_human_review(latest):
+    review = latest.get("human_review")
+    if not isinstance(review, dict):
+        return False, "missing human_review object"
+    reviewer = str(review.get("reviewer") or "").strip()
+    signature = str(review.get("signature_ref") or "").strip()
+    if reviewer and signature:
+        return True, ""
+    return False, "human_review requires both reviewer and signature_ref"
+
+
+def authorization_result(latest, claim_class):
+    decision_authorization = latest.get("decision_authorization") or {}
+    if not isinstance(decision_authorization, dict):
+        decision_authorization = {}
+    authorized = as_list(decision_authorization.get("authorized_use"))
+    not_authorized = as_list(decision_authorization.get("not_authorized_use"))
+    gaps = latest.get("evidence_gaps") or latest.get("abstention_reason_codes") or []
+
+    if claim_class not in authorized:
+        return False, "not_authorized", (
+            f"Claim class '{claim_class}' is NOT in authorized_use {authorized} "
+            f"(not_authorized_use: {not_authorized}). Outstanding evidence: {gaps}. "
+            "Options: (1) gather the listed evidence and rerun PRE-CLAIM; (2) downgrade the artifact to the "
+            "authorized level (e.g. internal_planning memo); (3) request named-human review for an override - "
+            "overrides are logged, never silent."
+        ), {}
+
+    review = latest.get("human_review") if isinstance(latest.get("human_review"), dict) else {}
+    if review.get("required") is True:
+        ok, reason = signed_human_review(latest)
+        if not ok:
+            return False, "human_review_unsigned", (
+                f"Claim class '{claim_class}' is listed in authorized_use, but human_review.required=true "
+                f"and the review is unsigned ({reason}). Add reviewer + signature_ref or rerun PRE-CLAIM."
+            ), {}
+
+    basis = str(latest.get("authorization_basis") or latest.get("authorization_source") or "").strip()
+    basis_lower = basis.lower()
+    override_note = str(latest.get("override_note") or "").strip()
+    is_override = "override" in basis_lower or bool(override_note)
+    kernel_authorized = as_list(latest.get("kernel_authorized_use"))
+
+    if kernel_authorized and claim_class not in kernel_authorized and not is_override:
+        return False, "ambiguous_local_authorization", (
+            f"Claim class '{claim_class}' appears in local authorized_use but not in kernel_authorized_use "
+            f"{kernel_authorized}. If this is a named-human override, mark authorization_basis='named_human_override', "
+            "add override_note, and sign human_review. Otherwise rerun PRE-CLAIM."
+        ), {}
+
+    if is_override:
+        if not kernel_authorized:
+            return False, "override_missing_kernel_baseline", (
+                "Named-human overrides must record kernel_authorized_use so auditors can distinguish local override "
+                "from kernel-backed authorization. Add kernel_authorized_use from the live receipt."
+            ), {}
+        ok, reason = signed_human_review(latest)
+        if not ok:
+            return False, "override_unsigned", (
+                f"Named-human override for '{claim_class}' is unsigned ({reason}). "
+                "Overrides require reviewer + signature_ref."
+            ), {}
+        if not override_note:
+            return False, "override_note_missing", (
+                f"Named-human override for '{claim_class}' needs override_note explaining that this is local-only "
+                "and not kernel authorization."
+            ), {}
+        return True, "allow_override_claim", "", {
+            "authorization_basis": basis or "named_human_override",
+            "kernel_authorized_use": kernel_authorized,
+        }
+
+    return True, "allow_claim", "", {"authorized_use": authorized}
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
@@ -145,29 +220,19 @@ def main():
     except Exception:
         deny("Latest decision-log entry has no valid ISO timestamp. Rerun PRE-CLAIM.", "timestamp_invalid")
 
-    decision_authorization = latest.get("decision_authorization") or {}
-    if not isinstance(decision_authorization, dict):
-        decision_authorization = {}
-    authorized = as_list(decision_authorization.get("authorized_use"))
     if claim_class == "unclassified_claim":
         deny(
             f"'{path}' sits under claims/ but matches no known claim class. Name it so its class is explicit "
             "(investor/board/launch/distributor/grant), or move it out of claims/ if it is not claim-bearing.",
             "unclassified_claim",
         )
-    if claim_class not in authorized:
-        na = as_list(decision_authorization.get("not_authorized_use"))
-        gaps = latest.get("evidence_gaps") or latest.get("abstention_reason_codes") or []
-        deny(
-            f"Claim class '{claim_class}' is NOT in authorized_use {authorized} "
-            f"(not_authorized_use: {na}). Outstanding evidence: {gaps}. "
-            "Options: (1) gather the listed evidence and rerun PRE-CLAIM; (2) downgrade the artifact to the "
-            "authorized level (e.g. internal_planning memo); (3) request named-human review for an override - "
-            "overrides are logged, never silent.",
-            "not_authorized",
-        )
-    audit(project_dir, {"event": "allow_claim", "claim_class": claim_class,
-                        "path": path, "entry_id": latest.get("entry_id"), "tool": tool})
+    ok, event, message, extra = authorization_result(latest, claim_class)
+    if not ok:
+        deny(message, event)
+    record = {"event": event, "claim_class": claim_class,
+              "path": path, "entry_id": latest.get("entry_id"), "tool": tool}
+    record.update(extra)
+    audit(project_dir, record)
     sys.exit(0)
 
 

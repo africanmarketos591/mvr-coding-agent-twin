@@ -73,6 +73,7 @@ Release boundary:
 - **Security & data protection:** `SECURITY.md` is binding for beta — key handling (env-only, scope classes, rotation), Operator Passport consent/deletion rules (Kenya DPA 2019 / Uganda DPPA 2019 floor), and the append-only audit surfaces.
 - **Enforcement receipts:** every claim-path gate decision (block or allow) is appended to `mvr/gate-events.jsonl` — audit-grade evidence of what the gate did and why, shipped with exported case audits. Tested in `tests/test_gate_audit.py`.
 - **Default-deny precision (binding interpretation):** unverified facts cannot justify redirects or external recommendations; they never UNBLOCK claims — claims stay denied until the decision log authorizes them, and in credit/health/legal categories an `UNKNOWN` regulatory status is itself grounds for continued non-authorization.
+- **Override precision:** local named-human overrides are allowed only when explicit and signed. If local `authorized_use` exceeds `kernel_authorized_use`, the gate requires `authorization_basis: "named_human_override"`, signed `human_review`, and `override_note`; it receipts `allow_override_claim`, never `allow_claim`.
 
 ## Host Support Matrix (what functions where — honest grades)
 

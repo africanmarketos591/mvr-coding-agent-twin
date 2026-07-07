@@ -59,6 +59,29 @@ def main():
         check("authorized staged claim allowed", rc == 0)
         check("pre-commit decisions receipted", any(e.get("tool") == "git-pre-commit" and e.get("event") == "allow_claim" for e in events))
 
+        # 5. Ambiguous hand-edited local authorization beyond kernel baseline -> rejected
+        json.dump([{"entry_id": "DL-3", "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "kernel_authorized_use": ["internal_planning"],
+                    "decision_authorization": {"authorized_use": ["capital_allocation"], "not_authorized_use": []}}],
+                  open(os.path.join(d, "mvr", "decision-log.json"), "w"))
+        rc, err = run_gate(d)
+        check("pre-commit rejects ambiguous local authorization",
+              rc == 1 and "not in kernel_authorized_use" in err)
+
+        # 6. Explicit named-human override -> allowed but receipted as override, not kernel allow
+        json.dump([{"entry_id": "DL-4", "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "kernel_authorized_use": ["internal_planning"],
+                    "authorization_basis": "named_human_override",
+                    "decision_authorization": {"authorized_use": ["capital_allocation"], "not_authorized_use": []},
+                    "human_review": {"required": True, "reviewer": "test_reviewer", "signature_ref": "sig-test"},
+                    "override_note": "Local-only override for test; kernel did not authorize this claim class."}],
+                  open(os.path.join(d, "mvr", "decision-log.json"), "w"))
+        rc, _ = run_gate(d)
+        events = [json.loads(x) for x in open(os.path.join(d, "mvr", "gate-events.jsonl"), encoding="utf-8") if x.strip()]
+        check("pre-commit explicit override allowed", rc == 0)
+        check("pre-commit override receipted distinctly",
+              any(e.get("tool") == "git-pre-commit" and e.get("event") == "allow_override_claim" and e.get("entry_id") == "DL-4" for e in events))
+
     print()
     if FAILS:
         print(f"FAILURES: {FAILS}"); sys.exit(1)

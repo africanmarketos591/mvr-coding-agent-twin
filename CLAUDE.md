@@ -55,6 +55,8 @@ The committee never returns a bare "no." If the idea as stated cannot survive, t
 
 You may always build code and prototypes — the kernel itself authorizes `internal_planning`; the Twin NEVER blocks building. What is gated is CLAIMS: anything under `claims/` (investor decks, launch/rollout plans, board packs, distributor/partnership pitches, grant applications) requires the latest `mvr/decision-log.json` entry to authorize that use class (mirroring the kernel's `decision_authorization.authorized_use`). The hook (hooks/claim_gate.py) blocks the write otherwise and tells you what evidence is missing. Do not route around it by writing claim content elsewhere; if you catch yourself doing that, that is the drift countermeasure firing — go get the evidence or downgrade the claim.
 
+If a local human intentionally authorizes a claim beyond the live kernel baseline, it is a **named-human override**, not kernel permission. The decision-log entry MUST include `kernel_authorized_use`, `authorization_basis: "named_human_override"`, signed `human_review` (`reviewer` + `signature_ref`), and `override_note`; the gate receipts it as `allow_override_claim`. Ambiguous local edits fail closed. Exports must label overrides as local-only and external parties must verify kernel receipts before treating them as evidence-backed authorization.
+
 ## §6 SETTLEMENT DUTY (the memory stratum)
 
 - Every charter is preregistered: run scripts/preregister.py; embed the hash block; anchor per protocol.

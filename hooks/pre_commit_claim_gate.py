@@ -19,7 +19,7 @@ mvr/gate-events.jsonl (fail-silent auditing).
 import json, os, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from claim_gate import CLAIM_CLASS_BY_PATTERN, MAX_LOG_AGE_DAYS, as_list, audit, classify_path  # noqa: E402
+from claim_gate import MAX_LOG_AGE_DAYS, audit, authorization_result, classify_path  # noqa: E402
 
 from datetime import datetime, timezone, timedelta  # noqa: E402
 
@@ -83,21 +83,17 @@ def main():
                  f"Latest decision-log entry is {age.days} days old (max {MAX_LOG_AGE_DAYS}). "
                  f"Renewal path: refresh evidence (last known gaps: {stale_gaps or 'none recorded'}), "
                  "rerun PRE-CLAIM on the current pack, append the new entry, then commit.")
-        authorization = latest.get("decision_authorization") or {}
-        authorized = as_list(authorization.get("authorized_use") if isinstance(authorization, dict) else None)
         if claim_class == "unclassified_claim":
             fail(root, claim_class, path, "unclassified_claim",
                  f"staged '{path}' sits under claims/ but matches no known claim class. Name it explicitly "
                  "(investor/board/launch/distributor/grant) or move it out of claims/.")
-        if claim_class not in authorized:
-            na = as_list(authorization.get("not_authorized_use") if isinstance(authorization, dict) else None)
-            gaps = latest.get("evidence_gaps") or latest.get("abstention_reason_codes") or []
-            fail(root, claim_class, path, "not_authorized",
-                 f"Claim class '{claim_class}' NOT in authorized_use {authorized} (not_authorized_use: {na}). "
-                 f"Outstanding evidence: {gaps}. Gather evidence and rerun PRE-CLAIM, downgrade the artifact, "
-                 "or obtain a logged named-human override.")
-        audit(root, {"event": "allow_claim", "claim_class": claim_class, "path": path,
-                     "entry_id": latest.get("entry_id"), "tool": "git-pre-commit"})
+        ok, event, message, extra = authorization_result(latest, claim_class)
+        if not ok:
+            fail(root, claim_class, path, event, message)
+        record = {"event": event, "claim_class": claim_class, "path": path,
+                  "entry_id": latest.get("entry_id"), "tool": "git-pre-commit"}
+        record.update(extra)
+        audit(root, record)
     sys.exit(0)
 
 

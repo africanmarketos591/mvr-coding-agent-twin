@@ -58,6 +58,41 @@ def main():
         rc, _ = run_hook({"file_path": os.path.join(d, "claims", "investor-deck.md")}, d)
         check("authorized claim allowed", rc == 0)
 
+        # 4b. Unsigned required human review cannot authorize even if authorized_use says yes
+        unsigned_review = {
+            "entry_id": "unsigned", "timestamp": datetime.now(timezone.utc).isoformat(),
+            "decision_authorization": {"authorized_use": ["capital_allocation"], "not_authorized_use": []},
+            "human_review": {"required": True, "reviewer": None, "signature_ref": None},
+        }
+        write_log(d, [], entries=[unsigned_review])
+        rc, err = run_hook({"file_path": os.path.join(d, "claims", "investor-deck.md")}, d)
+        check("unsigned required human review blocks", rc == 2 and "human_review.required=true" in err)
+
+        # 4c. Local authorized_use cannot exceed kernel_authorized_use unless marked as a signed override
+        ambiguous_local = {
+            "entry_id": "ambiguous", "timestamp": datetime.now(timezone.utc).isoformat(),
+            "kernel_authorized_use": ["internal_planning"],
+            "decision_authorization": {"authorized_use": ["capital_allocation"], "not_authorized_use": []},
+        }
+        write_log(d, [], entries=[ambiguous_local])
+        rc, err = run_hook({"file_path": os.path.join(d, "claims", "investor-deck.md")}, d)
+        check("ambiguous local authorization blocks", rc == 2 and "not in kernel_authorized_use" in err)
+
+        # 4d. Explicit named-human override can allow, but is receipted distinctly
+        explicit_override = {
+            "entry_id": "override", "timestamp": datetime.now(timezone.utc).isoformat(),
+            "kernel_authorized_use": ["internal_planning"],
+            "authorization_basis": "named_human_override",
+            "decision_authorization": {"authorized_use": ["capital_allocation"], "not_authorized_use": []},
+            "human_review": {"required": True, "reviewer": "test_reviewer", "signature_ref": "sig-test"},
+            "override_note": "Local-only override for test; kernel did not authorize this claim class.",
+        }
+        write_log(d, [], entries=[explicit_override])
+        rc, _ = run_hook({"file_path": os.path.join(d, "claims", "investor-deck.md")}, d)
+        events = [json.loads(x) for x in open(os.path.join(d, "mvr", "gate-events.jsonl"), encoding="utf-8") if x.strip()]
+        check("explicit override allowed", rc == 0)
+        check("override receipted distinctly", any(e.get("event") == "allow_override_claim" and e.get("entry_id") == "override" for e in events))
+
         # 5. Stale log (>30d) -> block even if authorized, with renewal path + last known gaps
         old = (datetime.now(timezone.utc) - timedelta(days=45)).isoformat()
         write_log(d, ["capital_allocation"], ts=old)
