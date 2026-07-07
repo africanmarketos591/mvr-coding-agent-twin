@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mvr": {
+      "type": "http",
+      "url": "https://africanmarketos.com/mcp",
+      "headers": {
+        "X-API-Key": "${MVR_API_KEY}"
+      }
+    }
+  }
+}

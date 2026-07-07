@@ -1,0 +1,7 @@
+# Install as mvr/.gitignore — REQUIRED before first commit (see SECURITY.md).
+# NEVER committed (personal data / local cache):
+passport.json
+state.json
+.twin-nudge-*
+# ALWAYS committed (the audit trail — do not add these here):
+#   decision-log.json, gate-events.jsonl, charters, mirrors

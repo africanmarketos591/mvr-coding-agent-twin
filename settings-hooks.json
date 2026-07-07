@@ -1,0 +1,26 @@
+{
+  "_comment": "Merge the 'hooks' block into the project's .claude/settings.json. The claim gate is authority-at-the-gates: it blocks claim-artifact writes that lack decision-log authorization. It NEVER blocks code (internal_planning is kernel-authorized).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/mvr-coding-agent-twin/hooks/claim_gate.py\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/mvr-coding-agent-twin/hooks/heartbeat.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

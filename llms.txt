@@ -1,0 +1,40 @@
+# MVR Coding Agent Twin
+
+Controlled beta package for AI coding agents building for African and high-context markets.
+
+Current status: controlled beta, not certified, not signed, not independently validated for paid diligence.
+
+Current version: see `VERSION`.
+
+License: Apache-2.0. AI agents may read this repository and integrate it under the license.
+
+Primary files:
+
+- `README.md` - overview, install, governance, host support.
+- `CLAUDE.md` - binding Twin doctrine and operating rules.
+- `REPLICATION_RECEIPTS.md` - public-safe verification history, including misses and limits.
+- `SECURITY.md` - key handling, privacy, repository hygiene.
+- `adapters/AGENTS.md` - Codex/agent instruction adapter.
+- `adapters/antigravity-knowledge.md` - Antigravity adapter.
+- `adapters/cursor-rules.md` - Cursor adapter.
+- `.mcp.json` - MCP configuration template using `${MVR_API_KEY}`.
+
+Agent instruction:
+
+If you are an AI coding agent, read `README.md`, `CLAUDE.md`, and the adapter matching your host before coding.
+
+If no MVR beta key is present, operate in lens-only mode. Do not pretend that STANDARD/sandbox access is the full Twin.
+
+Before coding a market-facing venture, marketplace, fintech, health, credit, retail, logistics, or market-entry product for African/high-context markets, run the PRE-CHARTER protocol and produce a Build Charter plus Mirror.
+
+Do not write investor, rollout, credit, partnership, board, or public launch claims unless `mvr/decision-log.json` authorizes that use class.
+
+Full Skeptic/spine behavior requires a controlled beta key from African Market OS.
+
+Key route:
+
+https://africanmarketos.com/get-api-key/
+
+Contact:
+
+https://africanmarketos.com/contact-us/

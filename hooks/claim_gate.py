@@ -1,0 +1,168 @@
+"""MVR Twin claim gate — PreToolUse hook (Claude Code contract).
+
+Reads the tool call JSON from stdin. If the write/edit targets a claim-bearing artifact
+(anything under a 'claims/' path segment), it requires the LATEST entry in
+mvr/decision-log.json to authorize that claim class. Otherwise: exit 2 (block) with an
+instructive message on stderr, which the harness feeds back to the agent.
+
+Code, prototypes, docs, tests are NEVER gated (kernel authorizes internal_planning).
+Exit 0 = allow. Exit 2 = block. Any other failure = allow-with-warning (fail-open for
+non-claim paths, fail-CLOSED for claim paths — a broken log must not silently authorize).
+
+Audit trail: every claim-path decision (block or allow) is appended as one JSON line to
+mvr/gate-events.jsonl — enforcement receipts for the Consequence Ledger. Audit logging
+is fail-silent: a broken audit file never changes a gate decision.
+"""
+import json, os, re, sys
+from datetime import datetime, timezone, timedelta
+
+WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+CLAIM_CLASS_BY_PATTERN = [
+    (re.compile(r"claims[\\/].*?(investor|fundrais|pitch|deck)", re.I), "capital_allocation"),
+    (re.compile(r"claims[\\/].*?(board)", re.I), "board_reporting"),
+    (re.compile(r"claims[\\/].*?(launch|rollout|scale)", re.I), "national_rollout"),
+    (re.compile(r"claims[\\/].*?(distributor|partner)", re.I), "partnership_claims"),
+    (re.compile(r"claims[\\/].*?(grant|donor|dfi)", re.I), "capital_allocation"),
+    (re.compile(r"claims[\\/]", re.I), "unclassified_claim"),
+]
+MAX_LOG_AGE_DAYS = 30
+
+
+def audit(project_dir, record):
+    """Append one enforcement receipt. Fail-silent: auditing never alters a decision."""
+    try:
+        path = os.path.join(project_dir, "mvr", "gate-events.jsonl")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        record["ts"] = datetime.now(timezone.utc).isoformat()
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def block(msg):
+    sys.stderr.write("[MVR CLAIM GATE] " + msg + "\n")
+    sys.exit(2)
+
+
+def tool_paths(tool_input):
+    if not isinstance(tool_input, dict):
+        return []
+    paths = []
+    for key in ("file_path", "path", "notebook_path"):
+        value = tool_input.get(key)
+        if value:
+            paths.append(str(value))
+    for key in ("edits", "files"):
+        values = tool_input.get(key)
+        if isinstance(values, list):
+            for item in values:
+                if isinstance(item, dict):
+                    for path_key in ("file_path", "path", "notebook_path"):
+                        value = item.get(path_key)
+                        if value:
+                            paths.append(str(value))
+    return paths
+
+
+def classify_path(path):
+    for pattern, cls in CLAIM_CLASS_BY_PATTERN:
+        if pattern.search(path):
+            return cls
+    return None
+
+
+def as_list(value):
+    if isinstance(value, list):
+        return [str(item) for item in value if item]
+    if isinstance(value, str) and value.strip():
+        return [value.strip()]
+    return []
+
+
+def main():
+    try:
+        payload = json.load(sys.stdin)
+    except Exception:
+        sys.exit(0)  # not a parseable tool call — never brick the session
+
+    tool = payload.get("tool_name", "")
+    if tool not in WRITE_TOOLS:
+        sys.exit(0)
+    path = ""
+    claim_class = None
+    for candidate in tool_paths(payload.get("tool_input") or {}):
+        candidate_class = classify_path(candidate)
+        if candidate_class:
+            path = candidate
+            claim_class = candidate_class
+            break
+    if claim_class is None:
+        sys.exit(0)  # not a claim artifact — building is always allowed
+
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR", ".")
+
+    def deny(msg, reason_code):
+        audit(project_dir, {"event": "block", "claim_class": claim_class,
+                            "path": path, "reason": reason_code, "tool": tool})
+        block(msg)
+
+    # Locate decision log relative to project root (hook cwd = project dir per contract)
+    log_path = os.path.join(project_dir, "mvr", "decision-log.json")
+    if not os.path.exists(log_path):
+        deny(
+            f"'{path}' is a claim-bearing artifact ({claim_class}) but mvr/decision-log.json does not exist. "
+            "Run the PRE-CLAIM checkpoint first: decision_check + evidence_completeness on the current pack, "
+            "append the entry, then retry. Building code is never blocked - claims require authorization.",
+            "no_decision_log",
+        )
+    try:
+        entries = json.load(open(log_path, encoding="utf-8-sig"))
+        latest = entries[-1] if isinstance(entries, list) and entries else None
+    except Exception as e:
+        deny(f"mvr/decision-log.json is unreadable ({e}). A broken log cannot authorize claims. Fix the log, rerun PRE-CLAIM.",
+             "log_unreadable")
+    if not latest:
+        deny("mvr/decision-log.json is empty. Run PRE-CLAIM and append the decision entry first.", "log_empty")
+    if not isinstance(latest, dict):
+        deny("Latest decision-log entry is not an object. A malformed log cannot authorize claims. Rerun PRE-CLAIM.",
+             "log_malformed")
+
+    # Freshness (PRE-EXPORT staleness rule)
+    ts = latest.get("timestamp", "")
+    try:
+        age = datetime.now(timezone.utc) - datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        if age > timedelta(days=MAX_LOG_AGE_DAYS):
+            deny(f"Latest decision-log entry is {age.days} days old (max {MAX_LOG_AGE_DAYS}). Rerun PRE-CLAIM against the current pack.",
+                 "authorization_stale")
+    except Exception:
+        deny("Latest decision-log entry has no valid ISO timestamp. Rerun PRE-CLAIM.", "timestamp_invalid")
+
+    decision_authorization = latest.get("decision_authorization") or {}
+    if not isinstance(decision_authorization, dict):
+        decision_authorization = {}
+    authorized = as_list(decision_authorization.get("authorized_use"))
+    if claim_class == "unclassified_claim":
+        deny(
+            f"'{path}' sits under claims/ but matches no known claim class. Name it so its class is explicit "
+            "(investor/board/launch/distributor/grant), or move it out of claims/ if it is not claim-bearing.",
+            "unclassified_claim",
+        )
+    if claim_class not in authorized:
+        na = as_list(decision_authorization.get("not_authorized_use"))
+        gaps = latest.get("evidence_gaps") or latest.get("abstention_reason_codes") or []
+        deny(
+            f"Claim class '{claim_class}' is NOT in authorized_use {authorized} "
+            f"(not_authorized_use: {na}). Outstanding evidence: {gaps}. "
+            "Options: (1) gather the listed evidence and rerun PRE-CLAIM; (2) downgrade the artifact to the "
+            "authorized level (e.g. internal_planning memo); (3) request named-human review for an override - "
+            "overrides are logged, never silent.",
+            "not_authorized",
+        )
+    audit(project_dir, {"event": "allow_claim", "claim_class": claim_class,
+                        "path": path, "entry_id": latest.get("entry_id"), "tool": tool})
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

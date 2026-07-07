@@ -1,0 +1,64 @@
+{
+  "passport_id": "OPP-REPLACE-ME",
+  "created_at": "2026-07-07T00:00:00Z",
+  "updated_at": "2026-07-07T00:00:00Z",
+  "operator": {
+    "display_name": "",
+    "base_geography": {
+      "country": "",
+      "city": ""
+    },
+    "languages": []
+  },
+  "reach": {
+    "named_counterparties": [
+      {
+        "label": "role-level label only unless personal-name consent is explicit",
+        "role": "",
+        "relationship": "",
+        "status": "self_reported",
+        "will_take_call": false,
+        "attestation_ref": "",
+        "geography": {
+          "country": "",
+          "city": ""
+        }
+      }
+    ],
+    "communities_standing": [
+      {
+        "community": "",
+        "standing": "stranger",
+        "status": "self_reported"
+      }
+    ],
+    "guardians_accessible": [],
+    "geographies_reachable": []
+  },
+  "capacity": {
+    "hours_per_week": 0,
+    "capital_available": {
+      "amount": 0,
+      "currency": ""
+    },
+    "runway_months_without_income": 0,
+    "licenses_held": [],
+    "prior_ventures": [
+      {
+        "summary": "",
+        "outcome": "unknown"
+      }
+    ],
+    "distribution_events_history": []
+  },
+  "verification": {
+    "status": "self_reported",
+    "attestation_refs": [],
+    "last_attestation_at": ""
+  },
+  "consent": {
+    "storage_consented": false,
+    "disclosure_per_run": false,
+    "consent_basis": "consent"
+  }
+}

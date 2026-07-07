@@ -1,0 +1,69 @@
+"""Offline tests for the git pre-commit claim gate - host-agnostic authority."""
+import json, os, subprocess, sys, tempfile
+from datetime import datetime, timezone
+
+GATE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "hooks", "pre_commit_claim_gate.py"))
+FAILS = []
+
+
+def check(name, cond, detail=""):
+    print(f"{'PASS' if cond else 'FAIL'}  {name}  {detail}")
+    if not cond:
+        FAILS.append(name)
+
+
+def git(repo, *args):
+    return subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
+
+
+def run_gate(repo):
+    p = subprocess.run([sys.executable, GATE], capture_output=True, text=True, cwd=repo,
+                       env=dict(os.environ, CLAUDE_PROJECT_DIR=repo))
+    return p.returncode, p.stderr
+
+
+def main():
+    with tempfile.TemporaryDirectory() as d:
+        git(d, "init", "-q")
+        git(d, "config", "user.email", "t@t.t"); git(d, "config", "user.name", "t")
+
+        # 1. Staged code only -> allowed
+        os.makedirs(os.path.join(d, "src"), exist_ok=True)
+        open(os.path.join(d, "src", "app.py"), "w").write("print('x')\n")
+        git(d, "add", "src/app.py")
+        rc, _ = run_gate(d)
+        check("staged code never gated", rc == 0)
+
+        # 2. Staged claim without log -> rejected
+        os.makedirs(os.path.join(d, "claims"), exist_ok=True)
+        open(os.path.join(d, "claims", "investor-deck.md"), "w").write("# deck\n")
+        git(d, "add", "claims/investor-deck.md")
+        rc, err = run_gate(d)
+        check("staged claim blocked without log", rc == 1 and "decision-log.json does not exist" in err)
+
+        # 3. Unauthorized -> rejected with gaps
+        os.makedirs(os.path.join(d, "mvr"), exist_ok=True)
+        json.dump([{"entry_id": "DL-1", "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "decision_authorization": {"authorized_use": ["internal_planning"], "not_authorized_use": ["capital_allocation"]},
+                    "evidence_gaps": ["guardian_or_regulatory_evidence"]}],
+                  open(os.path.join(d, "mvr", "decision-log.json"), "w"))
+        rc, err = run_gate(d)
+        check("unauthorized staged claim rejected", rc == 1 and "capital_allocation" in err and "guardian" in err)
+
+        # 4. Authorized -> commit allowed, receipt written
+        json.dump([{"entry_id": "DL-2", "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "decision_authorization": {"authorized_use": ["capital_allocation"], "not_authorized_use": []}}],
+                  open(os.path.join(d, "mvr", "decision-log.json"), "w"))
+        rc, _ = run_gate(d)
+        events = [json.loads(x) for x in open(os.path.join(d, "mvr", "gate-events.jsonl"), encoding="utf-8") if x.strip()]
+        check("authorized staged claim allowed", rc == 0)
+        check("pre-commit decisions receipted", any(e.get("tool") == "git-pre-commit" and e.get("event") == "allow_claim" for e in events))
+
+    print()
+    if FAILS:
+        print(f"FAILURES: {FAILS}"); sys.exit(1)
+    print("ALL PASS - pre-commit gate contract verified.")
+
+
+if __name__ == "__main__":
+    main()

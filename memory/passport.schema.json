@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MVR Operator Passport v0",
+  "description": "Persistent profile of the BUILDER's real carrying capacity. Drafted by inference, corrected via the Mirror, upgraded via attestation (/v1/field-signal/*). All self_reported values carry weight 0.30 / uncertainty 0.50 until attested. Asked once ever - never per project.",
+  "type": "object",
+  "required": ["passport_id", "created_at", "verification", "reach", "capacity"],
+  "properties": {
+    "passport_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "operator": {
+      "type": "object",
+      "properties": {
+        "display_name": { "type": "string" },
+        "base_geography": { "type": "object", "properties": { "country": { "type": "string" }, "city": { "type": "string" } } },
+        "languages": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "reach": {
+      "type": "object",
+      "description": "Who this operator can actually activate. The distribution plan is built FROM this, never from hypothetical channels.",
+      "properties": {
+        "named_counterparties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "relationship", "status"],
+            "properties": {
+              "label": { "type": "string", "description": "Role-level label; personal names only with consent" },
+              "role": { "type": "string", "description": "e.g. head_teacher, sacco_chair, distributor_manager, association_official" },
+              "relationship": { "type": "string", "description": "e.g. family, former_employer, client, community" },
+              "status": { "enum": ["self_reported", "confirmation_requested", "attested", "lapsed"] },
+              "will_take_call": { "type": "boolean" },
+              "attestation_ref": { "type": "string", "description": "field_signal_request_id when attested" },
+              "geography": { "type": "object", "properties": { "country": { "type": "string" }, "city": { "type": "string" } } }
+            }
+          }
+        },
+        "communities_standing": {
+          "type": "array",
+          "items": { "type": "object", "properties": { "community": { "type": "string" }, "standing": { "enum": ["stranger", "guest", "neighbor", "local", "institution"] }, "status": { "enum": ["self_reported", "attested"] } } },
+          "description": "Embeddedness stages per the MVR five-stage ladder"
+        },
+        "guardians_accessible": { "type": "array", "items": { "type": "string" }, "description": "Guardian tiers this operator can reach warm (maps to category_playbook.minimum_guardian_map)" },
+        "geographies_reachable": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "capacity": {
+      "type": "object",
+      "properties": {
+        "hours_per_week": { "type": "number" },
+        "capital_available": { "type": "object", "properties": { "amount": { "type": "number" }, "currency": { "type": "string" } } },
+        "runway_months_without_income": { "type": "number" },
+        "licenses_held": { "type": "array", "items": { "type": "string" } },
+        "prior_ventures": { "type": "array", "items": { "type": "object", "properties": { "summary": { "type": "string" }, "outcome": { "enum": ["alive", "exited", "dead", "unknown"] } } } },
+        "distribution_events_history": { "type": "array", "items": { "type": "string" }, "description": "Times this operator actually moved product/money/people through a channel" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["self_reported", "partially_attested", "attested"] },
+        "attestation_refs": { "type": "array", "items": { "type": "string" } },
+        "last_attestation_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "properties": {
+        "storage_consented": { "type": "boolean" },
+        "disclosure_per_run": { "type": "boolean", "description": "Passport content is disclosed to a charter run only with standing consent" },
+        "consent_basis": { "enum": ["consent", "contract", "legitimate_interest"] }
+      }
+    }
+  }
+}
