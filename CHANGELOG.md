@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.17 - 2026-07-08 (response sentinel and advisory outcome priors)
+- **Advisory response sentinel:** added `hooks/response_claim_sentinel.py` for hosts that expose final-response/Stop hooks. It detects obvious claim-shaped assistant prose, writes `mvr/response-sentinel.jsonl`, and injects advisory context. It is counsel only: fail-open, never blocks, never authorizes, and never replaces PRE-CLAIM for external artifacts.
+- **Advisory outcome priors:** added `scripts/build_priors.py` to summarize settled `mvr/decision-log.json` entries into `governance/outcome_priors.json`. Priors are explicitly `advisory_only_no_kernel_mutation_no_claim_authorization`; cold-start buckets stay `insufficient_prior` until the configured minimum sample size.
+- **Regression coverage:** added `tests/test_response_claim_sentinel.py` and `tests/test_build_priors.py`.
+- **Field validation note:** the EastAgriGate Opus field run validated beta.16's content-shaped evasion gate by blocking claim-bearing fertilizer-credit terms under `docs/`, not just under `claims/`.
+- **Deferred intentionally:** automatic settlement pulses, kernel-side calibration ingestion, live receipt verification, semantic/multilingual egress control, and prose-level blocking remain roadmap/kernel/enterprise-governance items. This release does not counterfeit any of them locally.
+
 ## 1.1.0-beta.16 - 2026-07-07 (Cursor adapter and one-command install)
 - **Cursor harness artifacts:** added `adapters/cursor-hooks/` with a `hooks.json` template plus `pretooluse_claim_gate.py` and `before_submit_heartbeat.py` wrappers. Cursor hook coverage is version-dependent, so these are write-time/heartbeat best-effort layers; git pre-commit remains the hard universal floor.
 - **One-command Cursor install:** `scripts/install.py --root .` now installs `.cursor/rules/mvr-twin.mdc`, merges `.cursor/hooks.json`, and adds `.cursor/mcp.json` with the AfricanMarketOS MCP server using `${MVR_API_KEY}`. Existing Cursor config is merged, not clobbered, and no keys are written.

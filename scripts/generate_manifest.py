@@ -13,6 +13,7 @@ import argparse
 import hashlib
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 
 
@@ -57,7 +58,7 @@ def build_manifest(package_dir):
     version = (package_dir / "VERSION").read_text(encoding="utf-8").strip()
     return {
         "version": version,
-        "generated": "2026-07-07",
+        "generated": datetime.now().date().isoformat(),
         "files": {
             rel: sha256(package_dir / rel)
             for rel in included_files(package_dir)

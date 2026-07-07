@@ -1,0 +1,15 @@
+{
+  "_comment": "Optional counsel hook for hosts that support final-response/Stop hooks. Merge this block only when the host can pass assistant response text to hooks. This sentinel never blocks and never authorizes claims; it writes advisory receipts to mvr/response-sentinel.jsonl.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/mvr-coding-agent-twin/hooks/response_claim_sentinel.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
