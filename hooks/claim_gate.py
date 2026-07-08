@@ -16,6 +16,9 @@ is fail-silent: a broken audit file never changes a gate decision.
 import json, os, re, sys
 from datetime import datetime, timezone, timedelta
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from claim_scan_policy import binary_claim_carrier, should_scan_content as hardened_should_scan_content  # noqa: E402
+
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 CLAIM_CLASS_BY_PATTERN = [
     (re.compile(r"claims[\\/].*?(investor|fundrais|pitch|deck)", re.I), "capital_allocation"),
@@ -97,18 +100,7 @@ def tool_text(tool_input):
 
 
 def should_scan_content(path):
-    normalized = path.replace("\\", "/").lower()
-    parts = [p for p in normalized.split("/") if p]
-    if any(part in CONTENT_SCAN_SKIP_SEGMENTS for part in parts):
-        return False
-    name = parts[-1] if parts else normalized
-    if name in CONTENT_SCAN_SAFE_FILENAMES:
-        return False
-    if "." in name:
-        ext = "." + name.rsplit(".", 1)[-1]
-        if ext not in CONTENT_SCAN_EXTENSIONS:
-            return False
-    return "claims/" not in normalized
+    return hardened_should_scan_content(path)
 
 
 def classify_content(path, text):
@@ -337,6 +329,16 @@ def main():
                     f"'{candidate}' appears claim-bearing ({candidate_class}) but is outside claims/. "
                     f"Detector ({tier}): {reason}. Move the artifact under claims/ with an explicit name and run PRE-CLAIM; "
                     "writing claim-shaped content elsewhere is path evasion."
+                )
+            if binary_claim_carrier(candidate):
+                project_dir = os.environ.get("CLAUDE_PROJECT_DIR", ".")
+                audit(project_dir, {"event": "warn", "path": candidate,
+                                    "reason": "binary_claim_carrier_unscanned", "tool": tool})
+                sys.stderr.write(
+                    "[MVR CLAIM GATE advisory] "
+                    f"'{candidate}' is a binary document carrier outside claims/ and cannot be text-scanned. "
+                    "If it contains investor, rollout, board, partnership, credit, or regulated-market claims, "
+                    "move it under claims/ and run PRE-CLAIM.\n"
                 )
         sys.exit(0)  # not a claim artifact - building is always allowed
 

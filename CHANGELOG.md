@@ -1,5 +1,13 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.20 - 2026-07-08 (claim-scan hardening and passport consent gate)
+- **Claim-scan policy hardened:** added `hooks/claim_scan_policy.py` and wired the harness + pre-commit gates through it. Document, data, notebook, TeX, and nested documentation formats are now scanned for claim-shaped content outside `claims/`.
+- **Extension and safe-filename bypass closed:** `docs/pitch.csv`, `.yaml`, `.json`, `.ipynb`, `.tex`, and nested `docs/readme.md` no longer evade the gate. Root-safe files such as `README.md` remain exempt only at the repository root; Twin artifacts such as `charter.md` remain intentionally exempt.
+- **Root control files are root-only safe:** package instruction/evidence surfaces such as `CLAUDE.md`, `AGENTS.md`, `llms.txt`, and `REPLICATION_RECEIPTS.md` can be released from the package root, while nested copies remain scannable.
+- **Binary carrier advisory:** PDF, Office, and slide/spreadsheet carriers outside `claims/` now emit advisory receipts because local hooks cannot safely text-scan binary content. They do not authorize or block by themselves.
+- **Operator Passport consent gate:** added `scripts/passport_check.py` to validate `mvr/passport.json`, enforce storage + per-run disclosure consent, and report attestation status before a passport is used in a charter run.
+- **Standing adversarial harness:** added `tests/test_fuzz_claim_gate.py` so release CI tries to break the gate across extensions, filenames, paths, and multilingual/paraphrased claim payloads. The failure mode is now named in `CLAUDE.md`: frontier models confirm unless forced to falsify.
+
 ## 1.1.0-beta.19 - 2026-07-08 (outcome-feedback bridge and egress scanner)
 - **Outcome-feedback bridge:** added `scripts/submit_outcome_feedback.py`, a dry-run-first bridge that packages settled decision-log outcomes for `/v1/outcome-feedback`. The kernel route was verified live via its 422 contract and reports `calibration_impact=not_recorded` for invalid submissions. The script defaults to `--dry-run`; `--submit` is explicit.
 - **Optional online authorizing-receipt check:** added `hooks/verify_authorizing_receipt.py` for strict environments that want to verify the authorizing decision-log entry's kernel hash against `/v1/ledger/verify/<hash>`. This is an opt-in helper, not a default commit-time network dependency.

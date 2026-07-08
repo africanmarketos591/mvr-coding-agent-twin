@@ -80,6 +80,8 @@ Release boundary:
 - **Enforcement receipts:** every claim-path gate decision (block or allow) is appended to `mvr/gate-events.jsonl` — audit-grade evidence of what the gate did and why, shipped with exported case audits. Tested in `tests/test_gate_audit.py`.
 - **PRE-EXPORT receipt verification:** `scripts/verify_receipts.py` verifies kernel authority hashes against `/v1/ledger/verify/<hash>` before export. Content hashes remain informational; authority hashes must verify.
 - **Claim-surface detection:** the gates block obvious claim-shaped text files outside `claims/` (for example wallet launch terms in `docs/`) and require them to move to the explicit claim surface before PRE-CLAIM. An escalate-only semantic/multilingual tier adds obvious paraphrase catches when the keyword floor is silent. This is a local safety net, not a substitute for enterprise egress controls.
+- **Claim scan policy:** `hooks/claim_scan_policy.py` scans document, data, notebook, and TeX formats where claim-bearing pitch or rollout text is likely to hide. Root-safe filenames are safe only at the root; nested `readme.md` files are scanned. Binary carriers emit advisory receipts because local hooks cannot safely parse them.
+- **Operator Passport gate:** run `python scripts/passport_check.py --passport mvr/passport.json` before using a passport in a charter run. It validates structure, enforces storage + per-run disclosure consent, and reports attestation status without making network calls or upgrading evidence weights.
 - **Outbound egress scanning:** `adapters/egress_scanner.py` exposes the same classifier for MCP proxies, CI publish steps, and webhook wrappers. It scans; the host enforces.
 - **Outcome priors:** `scripts/build_priors.py` can turn settled decision-log entries into `governance/outcome_priors.json` for PRE-CHARTER reading. These priors are advisory only; they do not mutate the kernel, authorize claims, or replace calibrated API-side learning. Real buckets require `archetype`, `market_scope`, and `redirect_pattern` in the decision log.
 - **Outcome-feedback bridge:** `scripts/submit_outcome_feedback.py` packages settled outcomes for governed kernel review at `/v1/outcome-feedback`. It defaults to dry-run and does not calibrate locally.
@@ -109,6 +111,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `REPLICATION_RECEIPTS.md` — public-safe verification record with misses and remaining limits.
 - `hooks/heartbeat.py` + `memory/state.format.md` — the real-time counsel channel (see protocol section above); tested in `tests/test_heartbeat.py` (8/8).
 - `hooks/response_claim_sentinel.py` — optional final-response/Stop-hook counsel for claim-shaped assistant prose; writes advisory receipts, never blocks.
+- `hooks/claim_scan_policy.py` — hardened content-scan policy shared by the harness and git gates; covers document/data/notebook claim carriers and root-only safe filename rules.
 - `hooks/claim_semantic_tier.py` — wrapper for the escalate-only semantic/multilingual classifier used by the gates and response sentinel.
 - `hooks/verify_authorizing_receipt.py` — optional online-strict helper that checks an authorizing entry's kernel hash against the live ledger.
 - `spine/mvr_client.py` — kernel client (decision-check, category-playbook, strategy-sparring, evidence-completeness, field-signal request/submit). Env-keyed; never hardcode keys.
@@ -124,6 +127,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/generate_manifest.py` — strict UTF-8 no-BOM manifest generator for release parity checks.
 - `scripts/verify_receipts.py` — PRE-EXPORT kernel receipt verifier; confirms authority hashes against the live ledger route.
 - `scripts/submit_outcome_feedback.py` — dry-run-first bridge from settled local outcomes to governed kernel outcome-feedback review.
+- `scripts/passport_check.py` — Operator Passport structure + consent validator; exits nonzero when the passport is missing, invalid, or not consented for per-run disclosure.
 - `scripts/settle.py` — settlement pulse runner: emits the quarterly public-record checklist per charter; silence-detection notes for instrumented builds.
 - `scripts/settlement_daemon.py` + `adapters/pulse_collectors.py` — schedulable draft-only settlement pulse collector; never auto-settles.
 - `scripts/append_settlement.py` — safe append-only settlement writer so humans do not hand-edit and break `mvr/decision-log.json`.
@@ -131,6 +135,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/build_priors.py` — advisory local prior builder from settled decision logs; outputs `governance/outcome_priors.json` without mutating kernel calibration or authorizing claims.
 - `tests/smoke_test.py` — live kernel round-trip; `tests/test_claim_gate.py` — hook logic, offline.
 - `tests/test_preregister.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration integrity and safe key-file parsing.
+- `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_passport_check.py` — adversarial scan-policy and Operator Passport gate coverage.
 - `tests/test_manifest.py` — regression test for strict no-BOM manifest generation.
 - `tests/test_state_writer.py` — verifies the producer side of the heartbeat protocol: spine writes state, heartbeat consumes it, settlement writes state.
 - `STRESS_TEST_REPORT.md` — pre-delivery test results (live receipts).

@@ -8,6 +8,7 @@
 ## Personal data (Operator Passport)
 The passport is personal data. Non-negotiables:
 - **Consent basis recorded** (`consent.consent_basis`) before storage; storage and per-run disclosure are separate consents (`disclosure_per_run`).
+- **Pre-disclosure validation required:** run `python scripts/passport_check.py --passport mvr/passport.json` before a charter run uses the Operator Passport. Exit code `2` means consent is missing or insufficient; do not disclose the passport into the run.
 - **Role labels, not personal names**, for counterparties unless the counterparty consented (passport schema: `label` is role-level by default). Attestation requests to counterparties are themselves consent-first (`/v1/field-signal` privacy rules: plain-language consent, data minimization, aggregate-before-board-safe).
 - The passport is user-owned and portable; delete on request, fully — settlement records may retain the *aggregate* fact that a charter existed and settled, never the personal reach data.
 - Jurisdictional floor for beta (Kenya/Uganda operators): Kenya Data Protection Act 2019 and Uganda Data Protection and Privacy Act 2019 both require consent-or-lawful-basis, purpose limitation, and data-subject deletion rights — the schema fields above exist to satisfy exactly that. Cite the specific act in any beta agreement; do not paraphrase compliance.
@@ -20,7 +21,7 @@ The passport is personal data. Non-negotiables:
 - `mvr/decision-log.json`: append-only; corrections are new entries. The claim gate fails CLOSED on unreadable or malformed logs — a broken log never authorizes.
 - Kernel authority hashes must be verified with `scripts/verify_receipts.py` before exported packs are treated as externally trustworthy. Local logs are tamper-evident, not tamper-proof.
 - Named-human overrides are local-only controls, not kernel authorization. Any override that extends local `authorized_use` beyond `kernel_authorized_use` must be signed in `human_review`, explain itself in `override_note`, and will be receipted as `allow_override_claim` for external review.
-- Obvious claim-shaped text outside `claims/` is blocked as path evasion, but local hooks cannot police every exfiltration path. Email, SaaS dashboards, CI systems, and deployed runtime copy need enterprise egress controls or an MCP/API proxy if they become beta requirements. `adapters/egress_scanner.py` provides the shared scanner; the host must enforce it.
+- Obvious claim-shaped text outside `claims/` is blocked as path evasion across document, data, notebook, and TeX formats. Binary carriers outside `claims/` produce advisory receipts because local hooks cannot safely parse them. Email, SaaS dashboards, CI systems, deployed runtime copy, and binary artifacts need enterprise egress controls or an MCP/API proxy if they become beta requirements. `adapters/egress_scanner.py` provides the shared scanner; the host must enforce it.
 - Charters are hashed and externally anchored (≥2 anchors) before they count as preregistered; settlement writes are made only by the settlement process, never the authoring agent.
 
 ## Reporting

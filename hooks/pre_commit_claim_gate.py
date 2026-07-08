@@ -20,6 +20,7 @@ import json, os, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from claim_gate import MAX_LOG_AGE_DAYS, audit, authorization_result, classify_escalating_content, classify_path  # noqa: E402
+from claim_scan_policy import binary_claim_carrier  # noqa: E402
 
 from datetime import datetime, timezone, timedelta  # noqa: E402
 
@@ -72,6 +73,15 @@ def main():
                  f"staged '{path}' appears claim-bearing ({claim_class}) but is outside claims/. "
                  f"Detector ({tier}): {reason}. Move it under claims/ with an explicit name and run PRE-CLAIM; "
                  "writing claim-shaped content elsewhere is path evasion.")
+        if binary_claim_carrier(path):
+            audit(root, {"event": "warn", "path": path,
+                         "reason": "binary_claim_carrier_unscanned", "tool": "git-pre-commit"})
+            sys.stderr.write(
+                "[MVR CLAIM GATE / pre-commit advisory] "
+                f"staged '{path}' is a binary document carrier outside claims/ and cannot be text-scanned. "
+                "If it carries investor, rollout, board, partnership, credit, or regulated-market claims, "
+                "move it under claims/ and run PRE-CLAIM.\n"
+            )
 
     claim_files = [(p, classify_path(p)) for p in paths]
     claim_files = [(p, c) for p, c in claim_files if c]
