@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.21 - 2026-07-08 (directory-door hardening and one-command committee)
+- **Residual directory bypass closed:** generic project directories are no longer blanket-safe. Claim-bearing documents in `src/`, `tests/`, `memory/`, `scripts/`, and `adapters/` are scanned, while source code such as `.py` remains outside the claim scanner. This closes the beta.20 `src/pitch.md` style bypass.
+- **SVG carrier scanning:** `.svg` is now treated as text/XML and scanned for claim-shaped pitch, rollout, custody, credit, or board language outside `claims/`.
+- **Fuzz harness expanded:** `tests/test_fuzz_claim_gate.py` now exercises 277 cases, including generic-directory claim documents and SVG carriers, so the previous directory-axis blind spot is covered.
+- **One-command committee:** added `scripts/twin_committee.py`, a pre-charter orchestration command that calls the spine, unions playbook evidence lanes, writes `mvr/committee_packet.json`, drafts `charter.draft.md`, and seeds `mvr/decision-log.seed.json`. It performs plumbing only: the host model still writes the pivot, build, source ledger, and settlement criteria, and no claim is authorized.
+- **Committee regression coverage:** added `tests/test_twin_committee.py` for successful kernel calls, evidence-lane unioning, decision-log seed fields, and outage/provisional behavior.
+
 ## 1.1.0-beta.20 - 2026-07-08 (claim-scan hardening and passport consent gate)
 - **Claim-scan policy hardened:** added `hooks/claim_scan_policy.py` and wired the harness + pre-commit gates through it. Document, data, notebook, TeX, and nested documentation formats are now scanned for claim-shaped content outside `claims/`.
 - **Extension and safe-filename bypass closed:** `docs/pitch.csv`, `.yaml`, `.json`, `.ipynb`, `.tex`, and nested `docs/readme.md` no longer evade the gate. Root-safe files such as `README.md` remain exempt only at the repository root; Twin artifacts such as `charter.md` remain intentionally exempt.

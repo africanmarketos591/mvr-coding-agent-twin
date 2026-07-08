@@ -25,9 +25,15 @@ def main():
         "docs/pitch.json",
         "docs/deck.ipynb",
         "docs/pitch.tex",
+        "docs/pitch.svg",
         "docs/pitch.txt",
         "docs/notes.adoc",
         "docs/readme.md",
+        "src/pitch.md",
+        "tests/deck.md",
+        "memory/pitch.md",
+        "scripts/plan.md",
+        "adapters/deck.md",
     ):
         check(f"scans {path}", should_scan_content(path) is True)
 
@@ -61,6 +67,10 @@ def main():
     check("ipynb pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
     cls, reason, tier = classify_escalating_content("docs/readme.md", PITCH)
     check("nested readme pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
+    cls, reason, tier = classify_escalating_content("src/pitch.md", PITCH)
+    check("src claim doc caught", cls is not None and tier in {"keyword", "semantic"}, reason)
+    cls, reason, tier = classify_escalating_content("docs/pitch.svg", PITCH)
+    check("svg pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
 
     print()
     if FAILS:

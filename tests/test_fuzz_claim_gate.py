@@ -36,6 +36,7 @@ SCAN_EXTS = [
     ".org",
     ".html",
     ".xml",
+    ".svg",
     ".markdown",
     ".mdx",
 ]
@@ -79,6 +80,14 @@ def main():
             "national escrow wallet at rollout, investor pitch deck",
         )
         check("nested-doc-scanned", cls is not None, f"MISS nested {name}")
+        swept += 1
+
+    for path in ("src/pitch.md", "tests/deck.md", "memory/pitch.md", "scripts/plan.md", "adapters/deck.md"):
+        cls, _reason, _tier = classify_escalating_content(
+            path,
+            "national escrow wallet at rollout, investor pitch deck",
+        )
+        check("generic-dir-doc-scanned", cls is not None, f"MISS generic dir {path}")
         swept += 1
 
     for location in EXEMPT_LOCATIONS:
