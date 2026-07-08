@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.23 - 2026-07-08 (preflight reasoning brake and fieldkit actions)
+- **Pre-code reasoning brake:** added `scripts/twin_preflight.py`, a cheap preflight that writes `PREFLIGHT.md` before feature code. It forces the host model to answer ECLIPSE, PERMISSION, and RAILS questions before building, using live category playbooks when available and a safe generic checklist when offline.
+- **Doctrine step 0:** `CLAUDE.md` now makes preflight the first committee step. Building before eclipse/permission/rails are answered is a defect; the full committee remains mandatory before claims and when UNKNOWNs remain load-bearing.
+- **Done-for-you field evidence kit:** added `scripts/twin_fieldkit.py`, which turns `mvr/committee_packet.json` evidence lanes and UNKNOWN charter counterparties into draft field-signal request payloads, grounded survey questions, outreach drafts, gate-cost notes, and `NEXT_ACTIONS.md`.
+- **No-submit boundary:** fieldkit creates local drafts only. It does not call `/v1/field-signal/request`; human review and consent remain required before submission.
+- **Regression coverage:** added `tests/test_twin_preflight.py` and `tests/test_twin_fieldkit.py`.
+
 ## 1.1.0-beta.22 - 2026-07-08 (instrument-by-default and outcome visibility)
 - **Instrument-by-default kit:** added `adapters/product_kit/mvr_telemetry.py`, a zero-dependency product telemetry kit for aggregate 0-100 usage metrics. It refuses PII-looking metric names, requires a consent basis, writes local JSONL, and builds a dry-run `/v1/telemetry-translate` payload.
 - **Product instrumentation generator:** added `scripts/twin_instrument.py`, which drops the kit into a product root, writes `INSTRUMENTATION.md`, and creates `mvr/settlement_map.json` linking product metrics to charter settlement criteria.

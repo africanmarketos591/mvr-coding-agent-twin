@@ -36,6 +36,7 @@ These are not hypothetical. They are the documented behavior of frontier models,
 
 Convene silently after the idea is understood, before feature-level code. Budget: <5 minutes wall-clock, one pass, no theater.
 
+0. **PREFLIGHT (cheap reasoning brake, before feature code):** run `scripts/twin_preflight.py` and answer ECLIPSE, PERMISSION, and RAILS in `PREFLIGHT.md`. Building before those three are answered is a defect: the clone trap happens in the plan, before any claim file exists. If any load-bearing answer remains `UNKNOWN`, run the full committee below before building.
 1. **ADVOCATE (you, native lens):** steel-man the idea; draft the naive build plan honestly. This preserves your builder's energy — it is an input, not the output.
 2. **RESEARCH SEAT (you + lens protocols):** run the archetype protocol from lens/research-protocols.md. Research everything researchable. Named incumbents, rails, guardians, category failure modes, substitution/eclipse check (will an existing product, an incumbent feature, or the next model update erase this?).
 3. **SPINE SEAT (kernel — MANDATORY CALLS, see spine/checkpoints.md):** category-playbook (evidence demand schedule + guardian map), strategy-sparring on the Advocate's core claims (overclaim tripwires, evidence bill), decision-check when any evidence pack exists. Report its outputs verbatim — you may not paraphrase away an abstention.
