@@ -20,7 +20,7 @@ The passport is personal data. Non-negotiables:
 - `mvr/decision-log.json`: append-only; corrections are new entries. The claim gate fails CLOSED on unreadable or malformed logs — a broken log never authorizes.
 - Kernel authority hashes must be verified with `scripts/verify_receipts.py` before exported packs are treated as externally trustworthy. Local logs are tamper-evident, not tamper-proof.
 - Named-human overrides are local-only controls, not kernel authorization. Any override that extends local `authorized_use` beyond `kernel_authorized_use` must be signed in `human_review`, explain itself in `override_note`, and will be receipted as `allow_override_claim` for external review.
-- Obvious claim-shaped text outside `claims/` is blocked as path evasion, but local hooks cannot police every exfiltration path. Email, SaaS dashboards, CI systems, and deployed runtime copy need enterprise egress controls or an MCP/API proxy if they become beta requirements.
+- Obvious claim-shaped text outside `claims/` is blocked as path evasion, but local hooks cannot police every exfiltration path. Email, SaaS dashboards, CI systems, and deployed runtime copy need enterprise egress controls or an MCP/API proxy if they become beta requirements. `adapters/egress_scanner.py` provides the shared scanner; the host must enforce it.
 - Charters are hashed and externally anchored (≥2 anchors) before they count as preregistered; settlement writes are made only by the settlement process, never the authoring agent.
 
 ## Reporting

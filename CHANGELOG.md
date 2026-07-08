@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.19 - 2026-07-08 (outcome-feedback bridge and egress scanner)
+- **Outcome-feedback bridge:** added `scripts/submit_outcome_feedback.py`, a dry-run-first bridge that packages settled decision-log outcomes for `/v1/outcome-feedback`. The kernel route was verified live via its 422 contract and reports `calibration_impact=not_recorded` for invalid submissions. The script defaults to `--dry-run`; `--submit` is explicit.
+- **Optional online authorizing-receipt check:** added `hooks/verify_authorizing_receipt.py` for strict environments that want to verify the authorizing decision-log entry's kernel hash against `/v1/ledger/verify/<hash>`. This is an opt-in helper, not a default commit-time network dependency.
+- **Reusable egress scanner:** added `adapters/egress_scanner.py` so MCP proxies, CI publish steps, webhooks, or outbound wrappers can reuse the exact keyword + semantic/multilingual classifier that gates commits.
+- **Regression coverage:** added `tests/test_new_beta18_artifacts.py` covering dry-run outcome payload validation, authorizing-receipt states, and egress scanning.
+- **Boundary retained:** the Twin packages outcome evidence; kernel calibration review adjudicates. The local package still does not auto-calibrate, auto-settle, or intercept every egress channel by itself.
+
 ## 1.1.0-beta.18 - 2026-07-08 (receipt verification, semantic tier, settlement pulses)
 - **PRE-EXPORT receipt verification:** added `scripts/verify_receipts.py` now that `/v1/ledger/verify/<hash>` is live on the kernel. Authority hashes must verify against the kernel ledger before export; content-derived hashes remain informational. This supersedes the beta.15-beta.17 "kernel-pending" note.
 - **Draft-only settlement daemon:** added `adapters/pulse_collectors.py` and `scripts/settlement_daemon.py` for schedulable public-signal collection. It writes settlement drafts only, never `settled=true`, and never records hit/partial/miss without human countersign.
