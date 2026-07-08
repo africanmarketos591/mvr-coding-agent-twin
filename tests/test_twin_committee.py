@@ -21,7 +21,7 @@ PLAYBOOK_A = {
     "board_questions": ["Which localized stakeholders can block adoption?"],
 }
 PLAYBOOK_B = {
-    "minimum_guardian_map": [{"guardian_tier": "meso_community"}],
+    "minimum_guardian_map": [{"guardian_tier": "macro_regulator"}, {"guardian_tier": "meso_community"}],
     "required_local_evidence": [
         {"stakeholder_class": "farmer", "minimum_signal_count": 100, "required_fields": ["repeat_order"]}
     ],
@@ -86,7 +86,7 @@ def main():
 
         check("packet written", os.path.exists(packet_path))
         check("not provisional when kernel up", packet["provisional"] is False)
-        check("guardian map unioned", [g["guardian_tier"] for g in packet["guardian_map"]] == ["macro_regulator", "meso_community"])
+        check("guardian map deduped", [g["guardian_tier"] for g in packet["guardian_map"]] == ["macro_regulator", "meso_community"])
         check("abstention captured", packet["sparring"]["abstention_reason_codes"] == ["guardian_or_regulatory_evidence"])
         check("receipts captured", packet["kernel_receipts"].get("immutable_audit_hash") == "a" * 64)
         check("seed carries priors dims", seed["market_scope"] == "UG-KE" and seed["archetype"] == "a")

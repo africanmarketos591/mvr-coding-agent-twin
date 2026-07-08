@@ -82,6 +82,21 @@ def extract_receipts(*responses):
     return receipts
 
 
+def add_guardian_tiers(guardian_map, tiers):
+    seen = {
+        item.get("guardian_tier") or item.get("tier") or item.get("name")
+        for item in guardian_map
+        if isinstance(item, dict)
+    }
+    for tier in tiers or []:
+        if not isinstance(tier, dict):
+            continue
+        key = tier.get("guardian_tier") or tier.get("tier") or tier.get("name")
+        if key and key not in seen:
+            guardian_map.append(tier)
+            seen.add(key)
+
+
 def write_json(path, value):
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as handle:
@@ -203,7 +218,7 @@ def main():
         if status == 200 and isinstance(playbook, dict):
             playbooks.append(playbook)
             if playbook.get("minimum_guardian_map"):
-                guardian_map.extend(playbook.get("minimum_guardian_map") or [])
+                add_guardian_tiers(guardian_map, playbook.get("minimum_guardian_map") or [])
             write_json(os.path.join(checkpoints_dir, f"playbook_{archetype}.json"), playbook)
         else:
             provisional = True

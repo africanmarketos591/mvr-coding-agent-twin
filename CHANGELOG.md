@@ -1,5 +1,13 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.22 - 2026-07-08 (instrument-by-default and outcome visibility)
+- **Instrument-by-default kit:** added `adapters/product_kit/mvr_telemetry.py`, a zero-dependency product telemetry kit for aggregate 0-100 usage metrics. It refuses PII-looking metric names, requires a consent basis, writes local JSONL, and builds a dry-run `/v1/telemetry-translate` payload.
+- **Product instrumentation generator:** added `scripts/twin_instrument.py`, which drops the kit into a product root, writes `INSTRUMENTATION.md`, and creates `mvr/settlement_map.json` linking product metrics to charter settlement criteria.
+- **Draft-only settlement reader:** added `scripts/twin_settlement_read.py`, which reads aggregate usage and writes `mvr/settlement-draft.json`. It never writes `settled=true`, never records hit/miss, and labels telemetry as a capped leading demand signal requiring field corroboration.
+- **Outcome-delta scorecard:** added `scripts/twin_scorecard.py` to make the Twin's value visible from reviewed settlements: survival rate for Twin-guided builds versus solo builds. This is a reflection layer, not kernel calibration.
+- **Guardian-map de-dup:** `scripts/twin_committee.py` now de-duplicates guardian tiers across multiple archetype playbooks, fixing repeated status-line output while keeping the evidence bill union intact.
+- **Regression coverage:** added `tests/test_instrument_by_default.py` and `tests/test_twin_scorecard.py`; updated `tests/test_twin_committee.py` to lock guardian de-dup behavior.
+
 ## 1.1.0-beta.21 - 2026-07-08 (directory-door hardening and one-command committee)
 - **Residual directory bypass closed:** generic project directories are no longer blanket-safe. Claim-bearing documents in `src/`, `tests/`, `memory/`, `scripts/`, and `adapters/` are scanned, while source code such as `.py` remains outside the claim scanner. This closes the beta.20 `src/pitch.md` style bypass.
 - **SVG carrier scanning:** `.svg` is now treated as text/XML and scanned for claim-shaped pitch, rollout, custody, credit, or board language outside `claims/`.
