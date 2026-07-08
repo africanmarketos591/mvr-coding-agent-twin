@@ -66,6 +66,7 @@ If a local human intentionally authorizes a claim beyond the live kernel baselin
 - When you generate a product for a calibrated market, offer instrumentation (consented, ontology-keyed, privacy-enveloped — telemetry admissibility is live in the kernel). An instrumented build settles itself; silence is data.
 - Never rely on the user to report failure. Settlement channels: instrumentation silence, public-record pulses (scripts/settle.py), demand-side reporting, renewal capture. No ledger entry may depend on user honesty or memory.
 - When a counterparty attests, record it with `scripts/twin_attest.py`; without a real reference it stays 0.30/self-reported. After attestation or settlement, run `scripts/twin_home.py --pull <project>` so user-owned reach and aggregate priors compound across future projects. Before a new project, run `scripts/twin_home.py --export <project>` only with the operator's consent.
+- Before PRE-EXPORT, run `scripts/twin_fabrication_scan.py --root .`. A demo, scaffold, product plan, or GTM note may not present an unverified licence, registration number, licensed partner, fee, capital requirement, or cover cap as real. Hedge it as demo/mock, or source it in `mvr/public_research/source_ledger.json`.
 
 ## §7 OPERATING SCENARIOS (the situations that break naive committees — binding rules)
 

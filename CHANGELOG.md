@@ -1,5 +1,11 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.26 - 2026-07-08 (product-surface fabrication scan)
+- **Shippable-surface fabrication scan:** added `scripts/twin_fabrication_scan.py`, a PRE-EXPORT guard that scans scaffold UI, product plans, GTM notes, summaries, and README surfaces for unhedged licence numbers, licensed partners, and hard fee/capital/cover figures that are not backed by a `verified` public research source-ledger entry.
+- **MamaCare A/B finding closed:** the scanner catches fabricated-as-real demo claims such as `KMPDC Reg #LC-41094`, `IRA #MI-2094`, unverified named licensed partners, and unverified KES caps while ignoring hedged demo placeholders, statute citations, benign IDs, and verified ledger-backed partners/figures.
+- **Doctrine updated:** PRE-EXPORT now requires `twin_fabrication_scan`; demos may not present unverified licences, partners, or fees as real. Hedge it or source it.
+- **Regression coverage:** added `tests/test_twin_fabrication_scan.py`.
+
 ## 1.1.0-beta.25 - 2026-07-08 (preflight artifact claim-scan exemption)
 - **Field-reported preflight block fixed:** `PREFLIGHT.md` is now treated as a Twin artifact in `hooks/claim_scan_policy.py`. The file may quote the user's regulated idea while forcing ECLIPSE / PERMISSION / RAILS, so committing it should not be blocked as path evasion.
 - **Regression coverage:** `tests/test_claim_scan_policy.py` and `tests/test_fuzz_claim_gate.py` now lock `PREFLIGHT.md` as safe while keeping nested ordinary docs and pitch files scannable.
