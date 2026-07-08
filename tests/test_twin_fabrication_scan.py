@@ -105,6 +105,27 @@ def main():
         result = run(tempdir)
         check("verified partner credential and figure pass", result.returncode == 0, result.stdout[:120])
 
+    notes_only_ledger = {
+        "format": "mvr_public_research_pack_v1",
+        "entries": [
+            {
+                "claim": "Britam Microinsurance is verified here.",
+                "claim_class": "public_counterparty",
+                "source_name": "Britam Microinsurance",
+                "source_type": "company",
+                "url": "https://example.test/britam",
+                "access_date": "2026-07-08",
+                "status": "verified",
+                "used_for": "rails",
+                "notes": "Operator estimate says KES 500,000 cap.",
+            }
+        ],
+    }
+    with tempfile.TemporaryDirectory() as tempdir:
+        setup(tempdir, "Sum insured KES 500,000 cap.", "", notes_only_ledger)
+        result = run(tempdir)
+        check("ledger notes do not verify figures", result.returncode == 1 and "KES 500,000" in result.stdout)
+
     legacy_ledger = {
         "entries": [
             {
@@ -137,6 +158,14 @@ def main():
         )
         result = run_default(tempdir)
         check("default scan discovers hyphen app directory", result.returncode == 1 and "roscha-app/README.md" in result.stdout)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        write(
+            os.path.join(tempdir, "mvr", "fieldkit", "gate_costs.md"),
+            "Compliance overhead is KES 500,000 - KES 1,000,000 capital requirement.\n",
+        )
+        result = run_default(tempdir)
+        check("default scan covers founder gate costs artifact", result.returncode == 1 and "mvr/fieldkit/gate_costs.md" in result.stdout)
 
     with tempfile.TemporaryDirectory() as tempdir:
         write(os.path.join(tempdir, "roscha-app", "app.py"), "@app.route('/api/credit-score/<int:member_id>')\n")

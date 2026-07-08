@@ -41,6 +41,38 @@ def main():
         }
         with open(os.path.join(tempdir, "mvr", "committee_packet.json"), "w", encoding="utf-8") as handle:
             json.dump(packet, handle)
+        os.makedirs(os.path.join(tempdir, "mvr", "public_research"), exist_ok=True)
+        with open(os.path.join(tempdir, "mvr", "public_research", "source_ledger.json"), "w", encoding="utf-8") as handle:
+            json.dump(
+                {
+                    "format": "mvr_public_research_pack_v1",
+                    "entries": [
+                        {
+                            "claim": "Bancassurance agent licence fee UGX 500,000.",
+                            "claim_class": "licence_cost",
+                            "source_name": "IRA",
+                            "source_type": "regulator",
+                            "url": "https://example.test/ira",
+                            "access_date": "2026-07-08",
+                            "status": "verified",
+                            "used_for": "permission",
+                            "notes": "",
+                        },
+                        {
+                            "claim": "Compliance overhead UGX 2,000,000.",
+                            "claim_class": "licence_cost",
+                            "source_name": "Practitioner blog",
+                            "source_type": "news",
+                            "url": "https://example.test/blog",
+                            "access_date": "2026-07-08",
+                            "status": "verified",
+                            "used_for": "permission",
+                            "notes": "Secondary estimate only.",
+                        },
+                    ],
+                },
+                handle,
+            )
         with open(os.path.join(tempdir, "charter.md"), "w", encoding="utf-8") as handle:
             handle.write(
                 "| Claim / fact used in charter | Source | URL | Date | Status |\n"
@@ -79,7 +111,12 @@ def main():
 
         outreach_dir = os.path.join(tempdir, "mvr", "fieldkit", "outreach")
         check("outreach generated for UNKNOWN", any("custody" in name.lower() for name in os.listdir(outreach_dir)))
-        check("gate costs written", os.path.exists(os.path.join(tempdir, "mvr", "fieldkit", "gate_costs.md")))
+        gate_costs_path = os.path.join(tempdir, "mvr", "fieldkit", "gate_costs.md")
+        gate_costs = open(gate_costs_path, encoding="utf-8").read()
+        check("gate costs written", os.path.exists(gate_costs_path))
+        check("gate costs sourced from authority ledger", "Bancassurance agent licence fee UGX 500,000" in gate_costs)
+        check("secondary cost estimate omitted", "Compliance overhead UGX 2,000,000" not in gate_costs)
+        check("no blanket verified cost header", "verified against official" not in gate_costs.lower())
         check("next actions written", os.path.exists(os.path.join(tempdir, "mvr", "fieldkit", "NEXT_ACTIONS.md")))
 
     print()

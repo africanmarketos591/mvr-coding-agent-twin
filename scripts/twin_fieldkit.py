@@ -82,6 +82,10 @@ def load_json(path, fallback):
         return fallback
 
 
+AUTHORITY_SOURCE_TYPES = {"regulator", "registry", "official"}
+LEDGER_COST_CLASSES = {"licence_cost", "regulation"}
+
+
 def slug(value):
     text = re.sub(r"[^a-z0-9]+", "_", str(value).lower()).strip("_")
     return text or "item"
@@ -108,16 +112,26 @@ def unknown_counterparties(charter_text):
     return items
 
 
-def verified_cost_rows(charter_text):
+def ledger_cost_rows(root):
+    ledger = load_json(os.path.join(root, "mvr", "public_research", "source_ledger.json"), {})
     rows = []
-    for line in charter_text.splitlines():
-        if not line.strip().startswith("|"):
+    if ledger.get("format") != "mvr_public_research_pack_v1":
+        return rows
+    for entry in ledger.get("entries", []) or []:
+        if str(entry.get("status", "")).lower() != "verified":
             continue
-        lowered = line.lower()
-        if "verified" in lowered and re.search(r"(fee|licen|capital|ugx|ksh|usd|cost)", lowered):
-            cells = [cell.strip() for cell in line.split("|") if cell.strip()]
-            if cells:
-                rows.append(cells)
+        claim_class = str(entry.get("claim_class", "")).lower()
+        source_type = str(entry.get("source_type", "")).lower()
+        if claim_class not in LEDGER_COST_CLASSES or source_type not in AUTHORITY_SOURCE_TYPES:
+            continue
+        claim = str(entry.get("claim", "")).strip()
+        notes = str(entry.get("notes", "")).strip()
+        if not re.search(r"(fee|licen[cs]e|capital|ugx|ksh|usd|cost)", f"{claim} {notes}", re.I):
+            continue
+        source = str(entry.get("source_name", "")).strip() or "source ledger"
+        url = str(entry.get("url", "")).strip()
+        source_ref = f"{source} ({url})" if url else source
+        rows.append([claim, "see source claim", "TODO-verify lead time", source_ref])
     return rows
 
 
@@ -202,17 +216,18 @@ def generate_fieldkit(root, project_id, country, region="", committee=None, char
         )
         made["outreach"] += 1
 
-    cost_rows = verified_cost_rows(charter_text)
+    cost_rows = ledger_cost_rows(root)
     table_rows = []
     for cells in cost_rows[:20]:
-        table_rows.append(f"| {cells[0][:100]} | see source ledger | TODO-verify lead time | charter |")
+        table_rows.append(f"| {cells[0][:140]} | {cells[1]} | {cells[2]} | {cells[3]} |")
     if not table_rows:
         table_rows.append("| No verified fee/capital rows parsed | TODO-verify | TODO-verify | source ledger |")
     write_text(
         os.path.join(out, "gate_costs.md"),
         "# Gate cost and time\n\n"
-        "Use dated source-ledger figures only. Regulatory numbers go stale; if a number "
-        "cannot be verified, mark it TODO-verify.\n\n"
+        "Use current-format source-ledger figures only. Regulatory numbers go stale; "
+        "verified cost rows require regulator, official, or registry sources. If a "
+        "number cannot be verified, mark it TODO-verify.\n\n"
         "| Gate | Cost / capital | Lead time | Source |\n"
         "|---|---|---|---|\n"
         + "\n".join(table_rows)

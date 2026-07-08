@@ -41,9 +41,15 @@ def main():
         check("Cursor MCP config installed", mcp.get("mcpServers", {}).get("mvr", {}).get("url") == "https://africanmarketos.com/mcp")
         rc2, _ = run([os.path.join(PKG, "scripts", "install.py"), "--root", d])
         hooks2 = json.load(open(cursor_hooks, encoding="utf-8"))
+        cursor_commands = [
+            h.get("command", "")
+            for entries in hooks2.get("hooks", {}).values()
+            for h in entries
+            if isinstance(h, dict)
+        ]
         cursor_hook_count = sum(
-            1 for entries in hooks2.get("hooks", {}).values() for h in entries
-            if "mvr-coding-agent-twin" in h.get("command", "")
+            1 for command in cursor_commands
+            if "pretooluse_claim_gate.py" in command or "before_submit_heartbeat.py" in command
         )
         check("install is idempotent", rc2 == 0 and open(hook).read().count("pre_commit_claim_gate.py") == 1 and cursor_hook_count == 2)
 

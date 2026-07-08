@@ -21,6 +21,7 @@ import sys
 
 
 ROOT_DOC_TARGETS = ["PRODUCT_PLAN.md", "GO_TO_MARKET.md", "SUMMARY.md", "README.md"]
+FOUNDER_ARTIFACT_TARGETS = ["mvr/fieldkit/gate_costs.md", "mvr/fieldkit/NEXT_ACTIONS.md"]
 COMMON_DIR_TARGETS = ["scaffold", "app", "apps", "src", "web", "frontend", "backend", "client", "server", "product"]
 SCAN_EXTENSIONS = {".js", ".jsx", ".ts", ".tsx", ".html", ".md", ".py", ".txt", ".json", ".vue", ".svelte"}
 SKIP_DIRS = {
@@ -136,7 +137,10 @@ def read_ledger(path):
     for entry in data.get("entries", []) or []:
         if str(entry.get("status", "")).lower() != "verified":
             continue
-        blob = " ".join(str(entry.get(key, "")) for key in ("claim", "source_name", "url", "notes"))
+        # Notes are operator commentary, not verification authority. They may
+        # contain approximations ("KES 500k-1M estimate") and must not bless
+        # product-surface numbers or credentials.
+        blob = " ".join(str(entry.get(key, "")) for key in ("claim", "source_name", "url"))
         blobs.append(normalize_words(blob))
         for code in CREDENTIAL.findall(blob):
             codes.add(normalize_code(code))
@@ -207,7 +211,7 @@ def discover_default_targets(root):
             seen.add(normalized)
             targets.append(target)
 
-    for target in ROOT_DOC_TARGETS + COMMON_DIR_TARGETS:
+    for target in ROOT_DOC_TARGETS + FOUNDER_ARTIFACT_TARGETS + COMMON_DIR_TARGETS:
         add(target)
     try:
         for name in os.listdir(root):
