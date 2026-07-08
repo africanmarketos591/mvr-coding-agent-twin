@@ -53,7 +53,7 @@ def main():
     for path in ("docs/agents.md", "docs/claude.md", "docs/llms.txt"):
         check(f"nested control doc scanned {path}", should_scan_content(path) is True)
 
-    for path in ("some/dir/charter.md", "x/mirror.md", "transcript_report.md"):
+    for path in ("PREFLIGHT.md", "some/dir/preflight.md", "some/dir/charter.md", "x/mirror.md", "transcript_report.md"):
         check(f"twin artifact safe {path}", should_scan_content(path) is False)
 
     for path in ("src/app.py", "build.py", "mvr/state.json", "claims/investor.md"):

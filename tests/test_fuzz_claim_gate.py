@@ -47,6 +47,8 @@ EXEMPT_LOCATIONS = [
     "CLAUDE.md",
     "CHANGELOG.md",
     "llms.txt",
+    "PREFLIGHT.md",
+    "docs/PREFLIGHT.md",
     "charter.md",
     "docs/charter.md",
     "x/mirror.md",

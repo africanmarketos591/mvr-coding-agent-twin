@@ -19,6 +19,7 @@ SKIP_SEGMENTS = {
 }
 
 TWIN_ARTIFACTS = {
+    "preflight.md",
     "charter.md",
     "mirror.md",
     "transcript.md",

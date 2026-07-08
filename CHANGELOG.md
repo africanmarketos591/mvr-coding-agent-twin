@@ -1,5 +1,9 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.25 - 2026-07-08 (preflight artifact claim-scan exemption)
+- **Field-reported preflight block fixed:** `PREFLIGHT.md` is now treated as a Twin artifact in `hooks/claim_scan_policy.py`. The file may quote the user's regulated idea while forcing ECLIPSE / PERMISSION / RAILS, so committing it should not be blocked as path evasion.
+- **Regression coverage:** `tests/test_claim_scan_policy.py` and `tests/test_fuzz_claim_gate.py` now lock `PREFLIGHT.md` as safe while keeping nested ordinary docs and pitch files scannable.
+
 ## 1.1.0-beta.24 - 2026-07-08 (attestation, home memory, and public research pack)
 - **Attestation loop closed:** added `scripts/twin_attest.py`, which records real counterparty attestation into `mvr/passport.json` after a signed note, MOU, or field-signal id exists. It refuses to mark any counterparty `attested` without `--attestation-ref`, preserving the 0.30 self-reported weight rule.
 - **Cross-project memory home:** added `scripts/twin_home.py`, a user-owned `~/.mvr-twin` memory that pulls attested reach and aggregate settled priors from prior projects, then exports them into a new project. It carries no raw evidence packs and recomputes from the full portfolio so repeated pulls are idempotent.
