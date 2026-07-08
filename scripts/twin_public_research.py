@@ -32,6 +32,8 @@ CLAIM_CLASSES = {
 }
 SOURCE_TYPES = {"regulator", "registry", "dataset", "news", "company", "academic", "official", "other"}
 STATUSES = {"verified", "unknown", "rejected"}
+AUTHORITY_REQUIRED_CLASSES = {"regulation", "licence_cost", "guardian"}
+AUTHORITY_SOURCE_TYPES = {"regulator", "registry", "official"}
 
 
 def write_text(path, text):
@@ -85,7 +87,7 @@ def template_entries(country):
             "access_date": str(date.today()),
             "status": "unknown",
             "used_for": "permission",
-            "notes": "Use regulator/official source where possible.",
+            "notes": "Use regulator/official/registry source. Keep as UNKNOWN if only secondary sources exist.",
         },
         {
             "claim": f"UNKNOWN - rail owner in {country}",
@@ -148,6 +150,11 @@ regulated facts cannot authorize claims or unlock launch language.
 - guardian or public_counterparty when public gatekeepers are named
 - market_figure when statistics appear
 - failure_precedent when a failure case is used
+
+Authority-grade rule: `regulation`, `licence_cost`, and `guardian` entries
+may be marked `verified` only when the source type is regulator, official, or
+registry. Secondary/practitioner sources can guide research, but they stay
+UNKNOWN until authority-grade support is attached.
 """,
     )
     return out_dir
@@ -205,6 +212,10 @@ def validate_ledger(path, check_urls=False):
             errors.append(f"{prefix}.access_date must be YYYY-MM-DD")
         if status == "verified":
             verified_count += 1
+            if claim_class in AUTHORITY_REQUIRED_CLASSES and source_type not in AUTHORITY_SOURCE_TYPES:
+                errors.append(
+                    f"{prefix}.source_type must be regulator/official/registry for verified {claim_class!r} claims"
+                )
             if not entry.get("source_name"):
                 errors.append(f"{prefix}.source_name required for verified entries")
             if not valid_url(entry.get("url")):

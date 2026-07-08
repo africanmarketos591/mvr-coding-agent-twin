@@ -12,11 +12,11 @@
 {{research_appendix_summary: incumbents (named, scaled, sourced), rails ownership, guardian topology, permission structure, category failure modes, eclipse verdict. Every fact cited. If a fact could not be established: marked UNKNOWN, not guessed.}}
 
 ### Source ledger (mandatory for beta)
-| Claim / fact used in charter | Source name | URL or local evidence ref | Published / accessed date | Status |
-|---|---|---|---|---|
-| {{named_incumbent_or_regulation_or_figure}} | {{source_name}} | {{url_or_local_ref}} | {{date}} | {{verified | UNKNOWN - not verified}} |
+| Claim / fact used in charter | Source name | Source type | URL or local evidence ref | Published / accessed date | Status |
+|---|---|---|---|---|---|
+| {{named_incumbent_or_regulation_or_figure}} | {{source_name}} | {{regulator | official | registry | dataset | company | news | academic | other}} | {{url_or_local_ref}} | {{date}} | {{verified | UNKNOWN - not verified}} |
 
-Rule: no named incumbent, regulation, licensing claim, market figure, failure precedent, capital number, market-share number, or health/credit/legal constraint may appear in user-facing sections unless it appears in this ledger as `verified`. `UNKNOWN - not verified` facts may stay in the internal appendix only and cannot justify redirects or external recommendations. They never unblock claims either: claims stay denied by default until the decision log authorizes them, and in credit/health/legal categories an `UNKNOWN` regulatory status is itself grounds for continued non-authorization plus a verification task in the evidence bill (Section 7A).
+Rule: no named incumbent, regulation, licensing claim, market figure, failure precedent, capital number, market-share number, or health/credit/legal constraint may appear in user-facing sections unless it appears in this ledger as `verified`. For regulation, licence-cost, and guardian claims, verified means the source type is regulator, official, or registry. `UNKNOWN - not verified` facts may stay in the internal appendix only and cannot justify redirects or external recommendations. They never unblock claims either: claims stay denied by default until the decision log authorizes them, and in credit/health/legal categories an `UNKNOWN` regulatory status is itself grounds for continued non-authorization plus a verification task in the evidence bill (Section 7A).
 
 ## 3. What the evidence machine said (quoted, not paraphrased)
 - Sparring: unsafe claims -> {{unsafe_claims_verbatim}}

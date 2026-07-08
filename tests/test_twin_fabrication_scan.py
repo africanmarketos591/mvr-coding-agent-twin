@@ -40,6 +40,10 @@ def run(root):
     )
 
 
+def run_default(root):
+    return subprocess.run([sys.executable, SCRIPT, "--root", root], capture_output=True, text=True)
+
+
 def main():
     with tempfile.TemporaryDirectory() as tempdir:
         setup(
@@ -76,12 +80,17 @@ def main():
         check("benign codes pass", result.returncode == 0, result.stdout[:100])
 
     verified_ledger = {
+        "format": "mvr_public_research_pack_v1",
         "entries": [
             {
                 "claim": "Britam Microinsurance is verified here with IRA #MI-2094 and KES 500,000 cover cap.",
+                "claim_class": "public_counterparty",
                 "source_name": "Britam Microinsurance",
+                "source_type": "company",
                 "url": "https://example.test/britam",
+                "access_date": "2026-07-08",
                 "status": "verified",
+                "used_for": "rails",
                 "notes": "Includes KES 500,000 cap.",
             }
         ]
@@ -96,10 +105,62 @@ def main():
         result = run(tempdir)
         check("verified partner credential and figure pass", result.returncode == 0, result.stdout[:120])
 
+    legacy_ledger = {
+        "entries": [
+            {
+                "claim": "Britam Microinsurance is verified here with IRA #MI-2094 and KES 500,000 cover cap.",
+                "source_name": "Britam Microinsurance",
+                "url": "https://example.test/britam",
+                "status": "verified",
+            }
+        ]
+    }
+    with tempfile.TemporaryDirectory() as tempdir:
+        setup(
+            tempdir,
+            "Underwritten by Britam Microinsurance (IRA #MI-2094). Sum insured KES 500,000 cap.",
+            "",
+            legacy_ledger,
+        )
+        result = run(tempdir)
+        check("legacy loose ledger does not verify product claims", result.returncode == 1 and "MI-2094" in result.stdout)
+
     with tempfile.TemporaryDirectory() as tempdir:
         setup(tempdir, "Minimum capital KES 500k cap.", "")
         result = run(tempdir)
         check("unverified hard figure flagged", result.returncode == 1 and "KES 500k" in result.stdout)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        write(
+            os.path.join(tempdir, "roscha-app", "README.md"),
+            "Underwritten by Britam Microinsurance (IRA #MI-2094).",
+        )
+        result = run_default(tempdir)
+        check("default scan discovers hyphen app directory", result.returncode == 1 and "roscha-app/README.md" in result.stdout)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        write(os.path.join(tempdir, "roscha-app", "app.py"), "@app.route('/api/credit-score/<int:member_id>')\n")
+        result = run_default(tempdir)
+        check("unauthorized regulated capability flagged", result.returncode == 1 and "credit-score" in result.stdout)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        write(os.path.join(tempdir, "roscha-app", "README.md"), "No credit scoring and no mobile money integration in this build.\n")
+        result = run_default(tempdir)
+        check("negated regulated capabilities pass", result.returncode == 0, result.stdout[:120])
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        write(os.path.join(tempdir, "roscha-app", "README.md"), "You will need a UMRA digital lending license for credit scoring later.\n")
+        result = run_default(tempdir)
+        check("future licence warning passes", result.returncode == 0, result.stdout[:120])
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        write(os.path.join(tempdir, "roscha-app", "app.py"), "@app.route('/api/credit-score/<int:member_id>')\n")
+        write(
+            os.path.join(tempdir, "mvr", "state.json"),
+            json.dumps({"authorized_use": ["credit_scoring"]}),
+        )
+        result = run_default(tempdir)
+        check("authorized regulated capability passes", result.returncode == 0, result.stdout[:120])
 
     print()
     if FAILS:

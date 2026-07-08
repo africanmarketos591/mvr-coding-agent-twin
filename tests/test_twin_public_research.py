@@ -63,6 +63,28 @@ def main():
         result = run("--validate", "--ledger", ledger_path)
         check("verified http source validates", result.returncode == 0 and "OK" in result.stdout)
 
+        ledger["entries"][0].update(
+            {
+                "claim": "A payment licence requires UGX 250M capital.",
+                "claim_class": "licence_cost",
+                "source_type": "news",
+                "source_name": "Practitioner blog",
+                "url": "https://example.com/blog",
+                "access_date": "2026-07-08",
+                "status": "verified",
+            }
+        )
+        with open(ledger_path, "w", encoding="utf-8") as handle:
+            json.dump(ledger, handle)
+        result = run("--validate", "--ledger", ledger_path)
+        check("verified licence cost requires authority-grade source", result.returncode == 1 and "source_type must" in result.stdout)
+
+        ledger["entries"][0]["source_type"] = "regulator"
+        with open(ledger_path, "w", encoding="utf-8") as handle:
+            json.dump(ledger, handle)
+        result = run("--validate", "--ledger", ledger_path)
+        check("authority-grade licence source validates", result.returncode == 0 and "OK" in result.stdout)
+
         ledger["entries"][0]["url"] = "not-a-url"
         with open(ledger_path, "w", encoding="utf-8") as handle:
             json.dump(ledger, handle)

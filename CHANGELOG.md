@@ -1,5 +1,13 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.27 - 2026-07-08 (authority-grade source ledger hardening)
+- **Source-ledger trust tightened:** `scripts/twin_fabrication_scan.py` now trusts only current-format `mvr_public_research_pack_v1` ledgers. Legacy or loose JSON files with `status: verified` no longer bless product-surface licences, partners, fees, or capital figures.
+- **Authority-grade regulatory evidence:** `scripts/twin_public_research.py` now requires verified `regulation`, `licence_cost`, and `guardian` entries to use `regulator`, `official`, or `registry` source types. Secondary/practitioner sources can guide research, but they cannot carry hard legal or licence-cost claims as verified facts.
+- **Product-surface discovery widened:** the fabrication scanner now auto-discovers common product folders (`src`, `app`, `frontend`, `backend`, `*-app`, etc.) instead of only the earlier `scaffold` shape, closing the Kimi ROSCHA `roscha-app` directory blind spot.
+- **Regulated capability drift scan:** the same PRE-EXPORT scanner now flags unhedged credit-scoring, mobile-money integration, payment-custody, and digital-lending capabilities in shippable code/docs unless local Twin state authorizes that capability.
+- **Kimi A/B review finding closed:** the ROSCHA test was directionally valid, but its source ledger used a legacy format and mixed secondary sources for legal figures. The release now prevents that kind of source-quality drift from being treated as export-grade verification.
+- **Regression coverage:** updated `tests/test_twin_fabrication_scan.py` and `tests/test_twin_public_research.py`.
+
 ## 1.1.0-beta.26 - 2026-07-08 (product-surface fabrication scan)
 - **Shippable-surface fabrication scan:** added `scripts/twin_fabrication_scan.py`, a PRE-EXPORT guard that scans scaffold UI, product plans, GTM notes, summaries, and README surfaces for unhedged licence numbers, licensed partners, and hard fee/capital/cover figures that are not backed by a `verified` public research source-ledger entry.
 - **MamaCare A/B finding closed:** the scanner catches fabricated-as-real demo claims such as `KMPDC Reg #LC-41094`, `IRA #MI-2094`, unverified named licensed partners, and unverified KES caps while ignoring hedged demo placeholders, statute citations, benign IDs, and verified ledger-backed partners/figures.

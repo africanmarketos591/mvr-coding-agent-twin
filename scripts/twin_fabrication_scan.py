@@ -1,12 +1,13 @@
-"""Scan shippable surfaces for fabricated-as-real credentials and partners.
+"""Scan shippable surfaces for fabricated-as-real credentials and regulated features.
 
 The claim gate governs claim artifacts. The source ledger governs the charter.
 But a polished demo can still present an invented clinic, licence number, or
 fee as real inside UI strings, product plans, and go-to-market notes.
 
 This scanner is a PRE-EXPORT / CI guard. It flags unhedged credentials, named
-licensed partners, and hard fee/capital figures that are not backed by a
-`verified` entry in `mvr/public_research/source_ledger.json`.
+licensed partners, hard fee/capital figures, and unhedged regulated product
+capabilities that are not backed by a current-format source ledger or local
+Twin authorization.
 
 Exit codes:
   0 clean
@@ -19,9 +20,23 @@ import re
 import sys
 
 
-DEFAULT_TARGETS = ["scaffold", "PRODUCT_PLAN.md", "GO_TO_MARKET.md", "SUMMARY.md", "README.md"]
+ROOT_DOC_TARGETS = ["PRODUCT_PLAN.md", "GO_TO_MARKET.md", "SUMMARY.md", "README.md"]
+COMMON_DIR_TARGETS = ["scaffold", "app", "apps", "src", "web", "frontend", "backend", "client", "server", "product"]
 SCAN_EXTENSIONS = {".js", ".jsx", ".ts", ".tsx", ".html", ".md", ".py", ".txt", ".json", ".vue", ".svelte"}
-SKIP_DIRS = {"node_modules", "dist", "build", ".git", "__pycache__", "mvr-coding-agent-twin"}
+SKIP_DIRS = {
+    "node_modules",
+    "dist",
+    "build",
+    ".git",
+    "__pycache__",
+    "mvr-coding-agent-twin",
+    "mvr-twin",
+    "mvr",
+    "charters",
+    "claims",
+    "rehearsals",
+}
+LEDGER_FORMAT = "mvr_public_research_pack_v1"
 
 HEDGE = re.compile(
     r"\b(e\.?g\.?|mock|demo|sample|placeholder|dummy|fake|hypothetical|illustrat|"
@@ -49,6 +64,33 @@ FIGURE = re.compile(
     re.I,
 )
 FIGURE_CONTEXT = re.compile(r"fee|capital|licen[cs]e|\bcap\b|minimum|premium|cover|sum insured", re.I)
+CAPABILITY_NEGATION = re.compile(
+    r"\b(no|not|without|exclude[ds]?|does not|do not|never|avoid|blocked|unauthori[sz]ed|"
+    r"requires|required|need(?:s|ed)?|will need|licen[cs]e|regulat|only after|path back in|explicitly not)\b",
+    re.I,
+)
+REGULATED_CAPABILITIES = [
+    (
+        "credit_scoring",
+        re.compile(r"\bcredit[-_\s]?scor(?:e|ing)|eligibility_for_loan|loan eligibility\b", re.I),
+    ),
+    (
+        "mobile_money_integration",
+        re.compile(
+            r"\bmobile money (?:integration|api|callback|endpoint|collection|payment flow)|"
+            r"/api/mobile-money|(?:mtn|airtel)[^\n]{0,40}money[^\n]{0,40}callback|stk push",
+            re.I,
+        ),
+    ),
+    (
+        "payment_custody",
+        re.compile(r"\bescrow wallet|payment escrow|hold(?:s|ing)?[^\n]{0,20}(?:money|funds)|custody of funds\b", re.I),
+    ),
+    (
+        "digital_lending",
+        re.compile(r"\bloan api|small loans|digital lending|underwrit(?:e|ing)[^\n]{0,40}loan|asset[- ]backed credit|credit financing\b", re.I),
+    ),
+]
 
 
 def normalize_code(value):
@@ -84,6 +126,8 @@ def read_ledger(path):
             data = json.load(handle)
     except Exception:
         data = {}
+    if data.get("format") != LEDGER_FORMAT:
+        data = {}
 
     blobs = []
     codes = set()
@@ -110,6 +154,19 @@ def read_ledger(path):
             for word in re.findall(r"[A-Za-z][A-Za-z&'.-]{2,}", phrase):
                 names.add(normalize_words(word))
     return {"blobs": blobs, "codes": codes, "numbers": numbers, "names": names}
+
+
+def read_authorized(root):
+    state_path = os.path.join(root, "mvr", "state.json")
+    try:
+        with open(state_path, encoding="utf-8-sig") as handle:
+            state = json.load(handle)
+    except Exception:
+        state = {}
+    authorized = state.get("authorized_use") or []
+    if not isinstance(authorized, list):
+        return set()
+    return {str(item).strip().lower() for item in authorized if str(item).strip()}
 
 
 def is_verified_name(name, verified):
@@ -140,7 +197,32 @@ def iter_files(root, targets):
             yield path
 
 
-def scan_line(line, verified):
+def discover_default_targets(root):
+    targets = []
+    seen = set()
+
+    def add(target):
+        normalized = target.replace("\\", "/")
+        if normalized not in seen and os.path.exists(os.path.join(root, target)):
+            seen.add(normalized)
+            targets.append(target)
+
+    for target in ROOT_DOC_TARGETS + COMMON_DIR_TARGETS:
+        add(target)
+    try:
+        for name in os.listdir(root):
+            path = os.path.join(root, name)
+            lowered = name.lower()
+            if not os.path.isdir(path) or lowered in SKIP_DIRS:
+                continue
+            if lowered.endswith(("-app", "_app")):
+                add(name)
+    except OSError:
+        pass
+    return targets
+
+
+def scan_line(line, verified, authorized):
     findings = []
     if HEDGE.search(line):
         return findings
@@ -172,17 +254,27 @@ def scan_line(line, verified):
                 fragment,
                 "hard fee/capital/cap/cover figure stated as fact without a verified source",
             ))
+    if not CAPABILITY_NEGATION.search(line):
+        for capability, pattern in REGULATED_CAPABILITIES:
+            match = pattern.search(line)
+            if match and capability not in authorized:
+                findings.append((
+                    "capability",
+                    match.group(0).strip(),
+                    f"regulated product capability {capability!r} appears without Twin authorization",
+                ))
     return findings
 
 
 def scan(root, ledger, targets):
     verified = read_ledger(ledger)
+    authorized = read_authorized(root)
     findings = []
     for path in iter_files(root, targets):
         try:
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for line_number, line in enumerate(handle, 1):
-                    for kind, text, why in scan_line(line, verified):
+                    for kind, text, why in scan_line(line, verified, authorized):
                         rel = os.path.relpath(path, root).replace("\\", "/")
                         findings.append((rel, line_number, kind, text, why))
         except Exception:
@@ -194,23 +286,24 @@ def main():
     parser = argparse.ArgumentParser(description="Scan shippable surfaces for fabricated-as-real regulated facts.")
     parser.add_argument("--root", default=".")
     parser.add_argument("--ledger", default=os.path.join("mvr", "public_research", "source_ledger.json"))
-    parser.add_argument("--targets", nargs="*", default=DEFAULT_TARGETS)
+    parser.add_argument("--targets", nargs="*")
     args = parser.parse_args()
 
     root = os.path.abspath(args.root)
     ledger = args.ledger if os.path.isabs(args.ledger) else os.path.join(root, args.ledger)
-    findings = scan(root, ledger, args.targets)
+    targets = args.targets if args.targets else discover_default_targets(root)
+    findings = scan(root, ledger, targets)
     if not findings:
-        print("FABRICATION SCAN: clean - no unhedged, unsourced credentials/partners/figures in shippable surfaces.")
+        print("FABRICATION SCAN: clean - no unhedged, unsourced credentials/partners/figures or unauthorized regulated capabilities in shippable surfaces.")
         return
 
     print(f"FABRICATION SCAN: {len(findings)} claim(s) presented AS REAL but not backed by a verified source ledger:\n")
     for path, line_number, kind, text, why in findings[:80]:
         print(f"  [{kind}] {path}:{line_number}  \"{text[:90]}\"")
-        print(f"          -> {why}. Mark it demo/mock, or add a verified source-ledger entry.")
+        print(f"          -> {why}. Mark it demo/mock, add verified evidence, or remove/authorize the capability.")
     if len(findings) > 80:
         print(f"  ... {len(findings) - 80} more")
-    print("\nFix or hedge before export. This is CLAUDE.md Law 5 applied to the product surface.")
+    print("\nFix, hedge, source, or obtain authorization before export. This is CLAUDE.md Law 5 applied to the product surface.")
     sys.exit(1)
 
 
