@@ -82,8 +82,11 @@ Release boundary:
 - **Claim-surface detection:** the gates block obvious claim-shaped text files outside `claims/` (for example wallet launch terms in `docs/`) and require them to move to the explicit claim surface before PRE-CLAIM. An escalate-only semantic/multilingual tier adds obvious paraphrase catches when the keyword floor is silent. This is a local safety net, not a substitute for enterprise egress controls.
 - **Claim scan policy:** `hooks/claim_scan_policy.py` scans document, data, notebook, and TeX formats where claim-bearing pitch or rollout text is likely to hide. Root-safe filenames are safe only at the root; nested `readme.md` files are scanned. Binary carriers emit advisory receipts because local hooks cannot safely parse them.
 - **Operator Passport gate:** run `python scripts/passport_check.py --passport mvr/passport.json` before using a passport in a charter run. It validates structure, enforces storage + per-run disclosure consent, and reports attestation status without making network calls or upgrading evidence weights.
+- **Attestation recorder:** `scripts/twin_attest.py` records real counterparty attestation into `mvr/passport.json` after a signed note, MOU, or field-signal id exists. It refuses to self-upgrade reach without an attestation reference.
+- **Cross-project home memory:** `scripts/twin_home.py` can pull attested reach and aggregate settled priors into a user-owned `~/.mvr-twin` home and export them into the next project. It carries no raw evidence packs.
 - **One-command committee:** `scripts/twin_committee.py` runs the PRE-CHARTER spine calls, unions guardian/evidence requirements, and writes `charter.draft.md`, `mvr/committee_packet.json`, and `mvr/decision-log.seed.json`. It does not write the pivot, fitted build, source ledger, or settlement criteria, and it never authorizes claims.
 - **Pre-code preflight:** `scripts/twin_preflight.py` writes `PREFLIGHT.md` before feature code. It forces ECLIPSE, PERMISSION, and RAILS answers so clone risk and licence/rail blockers appear in the plan, not after the build.
+- **Public-source research pack:** `scripts/twin_public_research.py` writes and validates `mvr/public_research/source_ledger.json`, pushing host agents to browse/search public sources for researchable facts and mark each claim as `verified`, `unknown`, or `rejected`.
 - **Fieldkit next actions:** `scripts/twin_fieldkit.py` converts the committee evidence bill and UNKNOWN counterparties into local field-signal request drafts, grounded survey questions, outreach asks, gate-cost notes, and `NEXT_ACTIONS.md`. It submits nothing.
 - **Instrument-by-default:** `scripts/twin_instrument.py` can drop `adapters/product_kit/mvr_telemetry.py` into a generated product and map aggregate product metrics to charter settlement criteria. The kit is local and dry-run by default; it turns usage into capped leading evidence, not proof of product-market fit.
 - **Draft settlement from usage:** `scripts/twin_settlement_read.py` reads aggregate telemetry and writes `mvr/settlement-draft.json` for human countersign. It never writes `settled=true`, never appends hit/miss by itself, and requires field corroboration before stronger claims.
@@ -135,6 +138,9 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/verify_receipts.py` — PRE-EXPORT kernel receipt verifier; confirms authority hashes against the live ledger route.
 - `scripts/submit_outcome_feedback.py` — dry-run-first bridge from settled local outcomes to governed kernel outcome-feedback review.
 - `scripts/passport_check.py` — Operator Passport structure + consent validator; exits nonzero when the passport is missing, invalid, or not consented for per-run disclosure.
+- `scripts/twin_attest.py` — records attested counterparties into the local passport only when a real attestation reference exists.
+- `scripts/twin_home.py` — cross-project user-owned memory for attested reach and aggregate settled priors.
+- `scripts/twin_public_research.py` — public web/source research pack generator and source-ledger validator.
 - `scripts/twin_preflight.py` — cheap pre-code reasoning brake; writes `PREFLIGHT.md` and forces eclipse/permission/rails before building.
 - `scripts/twin_committee.py` — one-command PRE-CHARTER committee plumbing; creates the packet, draft charter, and decision-log seed while leaving judgment to the host model.
 - `scripts/twin_fieldkit.py` — turns evidence gaps and UNKNOWN counterparties into field-signal request drafts, surveys, outreach, gate costs, and next actions.
@@ -150,6 +156,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `tests/test_preregister.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration integrity and safe key-file parsing.
 - `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_passport_check.py` — adversarial scan-policy and Operator Passport gate coverage.
 - `tests/test_twin_committee.py` — one-command committee regression coverage, including outage/provisional behavior.
+- `tests/test_twin_attest.py`, `tests/test_twin_home.py`, `tests/test_twin_public_research.py` — attestation, cross-project memory, and public-source ledger coverage.
 - `tests/test_twin_preflight.py`, `tests/test_twin_fieldkit.py` — reasoning-brake and fieldkit action coverage.
 - `tests/test_instrument_by_default.py`, `tests/test_twin_scorecard.py` — instrumentation and outcome visibility coverage.
 - `tests/test_manifest.py` — regression test for strict no-BOM manifest generation.
@@ -168,6 +175,6 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 2. Decide charter anchor targets (public git repo + Wayback minimum; Zenodo for flagship).
 3. `/v1/auth-check` is currently 403 not-registered upstream — smoke test uses `/v1/schema` for auth verification instead. Flag to kernel team.
 4. Full live smoke requires a PRO/ENTERPRISE-scope key because `/v1/strategy-sparring` is intentionally unavailable to STANDARD sandbox keys. With the public sandbox key the smoke test exits as `STANDARD-SCOPE PASS`.
-5. Passport attestation flow can request and submit field signals through `spine/mvr_client.py`, but status polling is intentionally not automated until the API publishes a field-signal status route.
+5. Field-signal status polling is intentionally not automated until the API publishes a field-signal status route. Until then, `scripts/twin_attest.py` records only human-reviewed attestation references.
 6. Naming is a founder decision — "Twin" used throughout as working title.
 7. Free-tier Skeptic access needs a product/kernel decision: TWIN-scoped key class, `sparring-lite`, or an honest reduced free tier.

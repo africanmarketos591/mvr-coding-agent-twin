@@ -139,6 +139,23 @@ If the only advantage is "AI can generate this", stop. Every buyer owns a fronti
 model. The build survives only if it has evidence, permission, distribution, or a
 relationship the model cannot hallucinate into being.
 
+## Public research pack
+
+If any named public fact will enter the charter, run:
+
+```bash
+python scripts/twin_public_research.py --init --idea "{idea}" --country "{country}" --archetype {archetypes[0]}
+```
+
+Use browser/search tools to fill `mvr/public_research/source_ledger.json`, then
+validate it with:
+
+```bash
+python scripts/twin_public_research.py --validate
+```
+
+No source/date/status, no user-facing public fact.
+
 ## Permission gates to name
 
 {gate_lines}

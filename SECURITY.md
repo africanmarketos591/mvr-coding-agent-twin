@@ -19,6 +19,12 @@ The optional instrument-by-default kit records aggregate usage metrics only. It 
 ## Field evidence drafts
 `scripts/twin_fieldkit.py` generates local draft field-signal request payloads, surveys, and outreach notes. These are not submitted automatically. Before any request is sent, the operator must review consent wording, lawful basis, recipient identity, jurisdiction, and data minimization. Generated questions are starting instruments, not legal clearance.
 
+## Public-source research pack
+`scripts/twin_public_research.py` is for public facts only: incumbents, regulations, market figures, costs, rails, and failure precedents. Do not put API keys, private correspondence, personal counterparty names without consent, or confidential client data into `mvr/public_research/source_ledger.json`. A `verified` public entry requires a public HTTP(S) source and access date; otherwise mark it `UNKNOWN` or keep it out of user-facing claims.
+
+## Attestation and home memory
+`scripts/twin_attest.py` updates `mvr/passport.json`, which remains personal data and must stay uncommitted. `scripts/twin_home.py` stores a user-owned cross-project passport plus aggregate priors in `~/.mvr-twin` by default. Exporting home memory into a new project requires operator consent; it must carry only attested reach and aggregate outcomes, never raw evidence packs or private source files.
+
 ## Repository hygiene (data-leak prevention — REQUIRED)
 `mvr/passport.json` is personal data and MUST NEVER be committed: a shared or public repo would publish the operator's counterparty relationships. Install `templates/mvr.gitignore` as `mvr/.gitignore` before the first commit (install step 6). Committed on purpose: `decision-log.json`, `gate-events.jsonl`, charters, mirrors — they are the audit trail. Local-only: `passport.json`, `state.json` (cache), nudge markers.
 

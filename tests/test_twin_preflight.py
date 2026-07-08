@@ -51,6 +51,7 @@ def main():
         body = open(out, encoding="utf-8").read()
         for token in ("ECLIPSE", "PERMISSION", "RAILS", "0.30", "Do not proceed"):
             check(f"card contains {token}", token in body)
+        check("card pushes public research pack", "twin_public_research.py --init" in body)
         check("offline names guardian tiers", "macro_regulator" in body)
         check("offline does not authorize", "does not authorize claims" in body)
 

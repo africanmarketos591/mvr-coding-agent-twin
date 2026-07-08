@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.24 - 2026-07-08 (attestation, home memory, and public research pack)
+- **Attestation loop closed:** added `scripts/twin_attest.py`, which records real counterparty attestation into `mvr/passport.json` after a signed note, MOU, or field-signal id exists. It refuses to mark any counterparty `attested` without `--attestation-ref`, preserving the 0.30 self-reported weight rule.
+- **Cross-project memory home:** added `scripts/twin_home.py`, a user-owned `~/.mvr-twin` memory that pulls attested reach and aggregate settled priors from prior projects, then exports them into a new project. It carries no raw evidence packs and recomputes from the full portfolio so repeated pulls are idempotent.
+- **Public research pack:** added `scripts/twin_public_research.py`, which creates and validates `mvr/public_research/source_ledger.json`. Host agents must use browser/search tools for public facts, then record claim class, source, URL, access date, and `verified|unknown|rejected` status before named public claims enter the charter.
+- **Doctrine updated:** `CLAUDE.md` now pushes public web research for researchable facts and makes home memory a post-attestation/post-settlement habit. `README.md` and `SECURITY.md` document the no-submit/no-secret boundaries.
+- **Regression coverage:** added `tests/test_twin_attest.py`, `tests/test_twin_home.py`, and `tests/test_twin_public_research.py`.
+
 ## 1.1.0-beta.23 - 2026-07-08 (preflight reasoning brake and fieldkit actions)
 - **Pre-code reasoning brake:** added `scripts/twin_preflight.py`, a cheap preflight that writes `PREFLIGHT.md` before feature code. It forces the host model to answer ECLIPSE, PERMISSION, and RAILS questions before building, using live category playbooks when available and a safe generic checklist when offline.
 - **Doctrine step 0:** `CLAUDE.md` now makes preflight the first committee step. Building before eclipse/permission/rails are answered is a defect; the full committee remains mandatory before claims and when UNKNOWNs remain load-bearing.
