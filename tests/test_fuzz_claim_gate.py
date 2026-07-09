@@ -48,14 +48,14 @@ EXEMPT_LOCATIONS = [
     "CHANGELOG.md",
     "llms.txt",
     "PREFLIGHT.md",
-    "docs/PREFLIGHT.md",
     "charter.md",
-    "docs/charter.md",
-    "x/mirror.md",
+    "mirror.md",
     "transcript_report.md",
     "src/app.py",
     "build.py",
     "mvr/state.json",
+    "mvr/decision-log.json",
+    "mvr/checkpoints/strategy_sparring.json",
     "claims/investor_deck.md",
 ]
 
@@ -90,6 +90,14 @@ def main():
             "national escrow wallet at rollout, investor pitch deck",
         )
         check("generic-dir-doc-scanned", cls is not None, f"MISS generic dir {path}")
+        swept += 1
+
+    for path in ("docs/charter.md", "docs/PREFLIGHT.md", "x/mirror.md", "twin/notes.md", "mvr/deck.md"):
+        cls, _reason, _tier = classify_escalating_content(
+            path,
+            "national escrow wallet at rollout, investor pitch deck",
+        )
+        check("rename-and-skip-bypass-scanned", cls is not None, f"MISS bypass path {path}")
         swept += 1
 
     for location in EXEMPT_LOCATIONS:

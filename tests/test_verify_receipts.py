@@ -46,12 +46,25 @@ def run(receipt):
 
 def main():
     vr.c.call = fake_call
-    check(
-        "genuine authority hash verifies",
-        run({"immutable_audit_hash": "a" * 64, "stable_content_hash": "c" * 64}) == 0,
-    )
-    check("tampered authority hash fails", run({"immutable_audit_hash": "f" * 64}) == 1)
-    check("content-only receipt has no authority", run({"stable_content_hash": "c" * 64}) == 2)
+    old_key = os.environ.get("MVR_API_KEY")
+    try:
+        os.environ["MVR_API_KEY"] = "test-key"
+        check(
+            "genuine authority hash verifies",
+            run({"immutable_audit_hash": "a" * 64, "stable_content_hash": "c" * 64}) == 0,
+        )
+        check(
+            "descriptive authority hash verifies",
+            run({"strategy_sparring_immutable_receipt_hash": "a" * 64}) == 0,
+        )
+        check("tampered authority hash fails", run({"immutable_audit_hash": "f" * 64}) == 1)
+        check("content-only receipt has no authority", run({"stable_content_hash": "a" * 64}) == 2)
+    finally:
+        if old_key is None:
+            os.environ.pop("MVR_API_KEY", None)
+        else:
+            os.environ["MVR_API_KEY"] = old_key
+    check("missing key exits unavailable", run({"immutable_audit_hash": "a" * 64}) == 3)
 
     print()
     if FAILS:

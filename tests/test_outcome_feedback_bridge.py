@@ -84,11 +84,28 @@ def main():
             json.dump([{"entry_id": "DL-1", "kernel_receipts": receipts}], handle)
         return directory
 
-    check("real receipt verifies", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "verified")
-    check("forged receipt is caught", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "f" * 64}))[0] == "unverified")
-    check("no-receipt entry is explicit", verifier.authorizing_receipt_status(mk({}))[0] == "no_receipt")
-    verifier.c.call = lambda path, **kwargs: (0.0, 0, {"error": "kernel_unreachable"})
-    check("offline is a distinct state", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "offline")
+    old_key = os.environ.get("MVR_API_KEY")
+    try:
+        os.environ["MVR_API_KEY"] = "test-key"
+        check("real receipt verifies", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "verified")
+        check(
+            "descriptive sparring receipt verifies",
+            verifier.authorizing_receipt_status(mk({"strategy_sparring_immutable_receipt_hash": "a" * 64}))[0] == "verified",
+        )
+        check(
+            "content hash alone is not authority",
+            verifier.authorizing_receipt_status(mk({"stable_content_hash": "a" * 64}))[0] == "no_receipt",
+        )
+        check("forged receipt is caught", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "f" * 64}))[0] == "unverified")
+        check("no-receipt entry is explicit", verifier.authorizing_receipt_status(mk({}))[0] == "no_receipt")
+        verifier.c.call = lambda path, **kwargs: (0.0, 0, {"error": "kernel_unreachable"})
+        check("offline is a distinct state", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "offline")
+    finally:
+        if old_key is None:
+            os.environ.pop("MVR_API_KEY", None)
+        else:
+            os.environ["MVR_API_KEY"] = old_key
+    check("missing key is a clean state", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "no_key")
 
     import egress_scanner as egress  # noqa: E402
 

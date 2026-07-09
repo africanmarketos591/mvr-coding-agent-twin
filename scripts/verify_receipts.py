@@ -38,6 +38,39 @@ AUTHORITY_HASH_KEYS = {
     "semantic_decision_hash",
 }
 CONTENT_HASH_KEYS = {"stable_content_hash", "evidence_bundle_hash", "charter_hash"}
+AUTHORITY_KEY_FRAGMENTS = {
+    "provenance_hash",
+    "immutable_audit_hash",
+    "response_hash",
+    "full_response_hash",
+    "anti_corruption_audit_hash",
+    "request_hash",
+    "immutable_receipt_hash",
+    "receipt_hash",
+    "audit_hash",
+    "semantic_decision_hash",
+}
+CONTENT_KEY_FRAGMENTS = {
+    "stable_content_hash",
+    "evidence_bundle_hash",
+    "charter_hash",
+    "content_hash",
+    "canonical_sha256",
+}
+
+
+def is_authority_key(key):
+    lowered = key.lower()
+    if lowered in AUTHORITY_HASH_KEYS:
+        return True
+    if any(fragment in lowered for fragment in CONTENT_KEY_FRAGMENTS):
+        return False
+    return any(fragment in lowered for fragment in AUTHORITY_KEY_FRAGMENTS)
+
+
+def is_content_key(key):
+    lowered = key.lower()
+    return lowered in CONTENT_HASH_KEYS or any(fragment in lowered for fragment in CONTENT_KEY_FRAGMENTS)
 
 
 def walk_hashes(obj, prefix=""):
@@ -63,6 +96,8 @@ def iter_json_files(target):
 
 
 def verify_hash(value):
+    if not os.environ.get("MVR_API_KEY", "").strip():
+        return "no_key", {"error": "MVR_API_KEY not set"}
     _, status, body = c.call(f"/v1/ledger/verify/{value}", timeout=30)
     if status == 0:
         return "unreachable", body
@@ -90,8 +125,8 @@ def main():
             print(f"SKIP  {path} (unreadable: {exc})")
             continue
         for dotted, leaf, value in walk_hashes(data):
-            is_authority = leaf in AUTHORITY_HASH_KEYS
-            is_content = leaf in CONTENT_HASH_KEYS
+            is_authority = is_authority_key(leaf)
+            is_content = is_content_key(leaf)
             if not args.all and not is_authority and not is_content:
                 continue
             if value in seen:
@@ -101,9 +136,9 @@ def main():
             tag = "AUTHORITY" if is_authority else ("content" if is_content else "other")
             print(f"  [{result:>11}] {tag:9} {dotted} = {value[:16]}...")
 
-    authority = {value: meta for value, meta in seen.items() if meta[2] in AUTHORITY_HASH_KEYS}
-    if any(result == "unreachable" for result, _, _ in seen.values()):
-        print("\nLEDGER UNREACHABLE - cannot verify offline. Outage Rule: do not assert. (exit 3)")
+    authority = {value: meta for value, meta in seen.items() if is_authority_key(meta[2])}
+    if any(result in {"unreachable", "no_key"} for result, _, _ in seen.values()):
+        print("\nLEDGER UNREACHABLE OR NO KEY - cannot verify now. Outage Rule: do not assert. (exit 3)")
         sys.exit(3)
     if not authority:
         print("\nNo kernel AUTHORITY receipt hashes found. Nothing to verify. (exit 2)")

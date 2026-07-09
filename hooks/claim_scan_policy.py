@@ -4,18 +4,34 @@ The claim gate must scan obvious claim-shaped text files outside claims/. This
 policy covers document, data, and notebook formats where market claims are likely
 to be hidden, while avoiding source-code false positives.
 """
+import os
 
-SKIP_SEGMENTS = {
+SKIP_SEGMENTS_ANY = {
     ".git",
     ".venv",
     "node_modules",
     "__pycache__",
     "mvr-coding-agent-twin",
     "mvr-twin",
-    "twin",
-    "mvr",
     "release-manifests",
     "rehearsals",
+}
+
+MVR_MANAGED_EXACT = {
+    ("mvr", ".gitignore"),
+    ("mvr", "state.json"),
+    ("mvr", "passport.json"),
+    ("mvr", "decision-log.json"),
+    ("mvr", "decision-log.seed.json"),
+    ("mvr", "gate-events.jsonl"),
+    ("mvr", "committee_packet.json"),
+    ("mvr", "settlement_map.json"),
+    ("mvr", "settlement-draft.json"),
+}
+
+MVR_MANAGED_PREFIXES = {
+    ("mvr", "checkpoints"),
+    ("mvr", "public_research"),
 }
 
 TWIN_ARTIFACTS = {
@@ -85,18 +101,38 @@ BINARY_CLAIM_CARRIERS = {
 
 
 def _parts(path):
-    normalized = str(path).replace("\\", "/").lower()
+    raw = str(path)
+    root = os.environ.get("CLAUDE_PROJECT_DIR")
+    if root:
+        try:
+            abs_path = os.path.abspath(raw)
+            abs_root = os.path.abspath(root)
+            common = os.path.commonpath([abs_path, abs_root])
+            if os.path.normcase(common) == os.path.normcase(abs_root):
+                raw = os.path.relpath(abs_path, abs_root)
+        except Exception:
+            pass
+    normalized = raw.replace("\\", "/").lower()
     return normalized, [part for part in normalized.split("/") if part]
+
+
+def _is_mvr_managed(parts):
+    tuple_parts = tuple(parts)
+    if tuple_parts in MVR_MANAGED_EXACT:
+        return True
+    return any(tuple_parts[:len(prefix)] == prefix for prefix in MVR_MANAGED_PREFIXES)
 
 
 def should_scan_content(path):
     normalized, parts = _parts(path)
-    if any(part in SKIP_SEGMENTS for part in parts):
+    if any(part in SKIP_SEGMENTS_ANY for part in parts):
+        return False
+    if _is_mvr_managed(parts):
         return False
     if "claims/" in normalized:
         return False
     name = parts[-1] if parts else normalized
-    if name in TWIN_ARTIFACTS:
+    if len(parts) == 1 and name in TWIN_ARTIFACTS:
         return False
     if len(parts) == 1 and name in ROOT_ONLY_SAFE:
         return False
@@ -108,7 +144,9 @@ def should_scan_content(path):
 
 def binary_claim_carrier(path):
     normalized, parts = _parts(path)
-    if any(part in SKIP_SEGMENTS for part in parts):
+    if any(part in SKIP_SEGMENTS_ANY for part in parts):
+        return False
+    if _is_mvr_managed(parts):
         return False
     if "claims/" in normalized:
         return False

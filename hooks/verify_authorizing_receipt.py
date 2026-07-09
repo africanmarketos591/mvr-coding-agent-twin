@@ -22,15 +22,52 @@ AUTHORITY_KEYS = (
     "full_response_hash",
     "immutable_receipt_hash",
 )
+AUTHORITY_KEY_FRAGMENTS = (
+    "immutable_audit_hash",
+    "response_hash",
+    "provenance_hash",
+    "full_response_hash",
+    "immutable_receipt_hash",
+    "receipt_hash",
+    "audit_hash",
+)
+CONTENT_KEY_FRAGMENTS = (
+    "stable_content_hash",
+    "evidence_bundle_hash",
+    "charter_hash",
+    "content_hash",
+    "canonical_sha256",
+)
+
+
+def _walk_hashes(obj, prefix=""):
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            dotted = f"{prefix}{key}"
+            if isinstance(value, str) and HEX64.match(value):
+                yield dotted, key, value
+            else:
+                yield from _walk_hashes(value, dotted + ".")
+    elif isinstance(obj, list):
+        for idx, item in enumerate(obj):
+            yield from _walk_hashes(item, f"{prefix}{idx}.")
+
+
+def _is_authority_key(key):
+    lowered = key.lower()
+    if lowered in AUTHORITY_KEYS:
+        return True
+    if any(fragment in lowered for fragment in CONTENT_KEY_FRAGMENTS):
+        return False
+    return any(fragment in lowered for fragment in AUTHORITY_KEY_FRAGMENTS)
 
 
 def _authority_hashes(entry):
     receipts = entry.get("kernel_receipts") or {}
     found = []
-    for key in AUTHORITY_KEYS:
-        value = receipts.get(key)
-        if isinstance(value, str) and HEX64.match(value):
-            found.append((key, value))
+    for dotted, key, value in _walk_hashes(receipts):
+        if _is_authority_key(key):
+            found.append((dotted, value))
     return found
 
 
@@ -51,6 +88,8 @@ def authorizing_receipt_status(project_dir):
     hashes = _authority_hashes(latest)
     if not hashes:
         return "no_receipt", "authorizing entry carries no kernel authority hash to verify"
+    if not os.environ.get("MVR_API_KEY", "").strip():
+        return "no_key", "MVR_API_KEY not set; strict receipt verification cannot run"
     any_offline = False
     for key, value in hashes:
         _, status, body = c.call(f"/v1/ledger/verify/{value}", timeout=30)
@@ -68,7 +107,11 @@ def main():
     project_dir = os.environ.get("CLAUDE_PROJECT_DIR") or (sys.argv[1] if len(sys.argv) > 1 else ".")
     status, detail = authorizing_receipt_status(project_dir)
     print(f"[authorizing-receipt] {status}: {detail}")
-    sys.exit(1 if status == "unverified" else 0)
+    if status == "unverified":
+        sys.exit(1)
+    if status in {"offline", "no_key"}:
+        sys.exit(3)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

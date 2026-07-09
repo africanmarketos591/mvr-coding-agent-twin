@@ -34,6 +34,11 @@ def main():
         "memory/pitch.md",
         "scripts/plan.md",
         "adapters/deck.md",
+        "docs/charter.md",
+        "docs/preflight.md",
+        "x/mirror.md",
+        "twin/notes.md",
+        "mvr/deck.md",
     ):
         check(f"scans {path}", should_scan_content(path) is True)
 
@@ -53,10 +58,18 @@ def main():
     for path in ("docs/agents.md", "docs/claude.md", "docs/llms.txt"):
         check(f"nested control doc scanned {path}", should_scan_content(path) is True)
 
-    for path in ("PREFLIGHT.md", "some/dir/preflight.md", "some/dir/charter.md", "x/mirror.md", "transcript_report.md"):
+    for path in ("PREFLIGHT.md", "charter.md", "mirror.md", "transcript_report.md"):
         check(f"twin artifact safe {path}", should_scan_content(path) is False)
 
-    for path in ("src/app.py", "build.py", "mvr/state.json", "claims/investor.md"):
+    for path in (
+        "src/app.py",
+        "build.py",
+        "mvr/state.json",
+        "mvr/decision-log.json",
+        "mvr/checkpoints/strategy_sparring.json",
+        "mvr/public_research/source_ledger.json",
+        "claims/investor.md",
+    ):
         check(f"not scanned {path}", should_scan_content(path) is False)
 
     check("binary pdf carrier", binary_claim_carrier("docs/deck.pdf") is True)
@@ -71,6 +84,12 @@ def main():
     check("src claim doc caught", cls is not None and tier in {"keyword", "semantic"}, reason)
     cls, reason, tier = classify_escalating_content("docs/pitch.svg", PITCH)
     check("svg pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
+    cls, reason, tier = classify_escalating_content("docs/charter.md", PITCH)
+    check("nested charter pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
+    cls, reason, tier = classify_escalating_content("twin/notes.md", PITCH)
+    check("bare twin dir pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
+    cls, reason, tier = classify_escalating_content("mvr/deck.md", PITCH)
+    check("unmanaged mvr pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
 
     print()
     if FAILS:

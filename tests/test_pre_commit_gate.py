@@ -62,6 +62,20 @@ def main():
         rc, _ = run_gate(d)
         check("pre-commit allows ordinary docs outside claims", rc == 0)
 
+        # 2d. Renamed Twin artifacts and skip-zone lookalikes are not safe when nested
+        for rel in ("docs/charter.md", "twin/notes.md", "mvr/deck.md"):
+            git(d, "reset", "-q")
+            full = os.path.join(d, *rel.split("/"))
+            os.makedirs(os.path.dirname(full), exist_ok=True)
+            open(full, "w").write(
+                "Fundraising KES 200M at a KES 2B valuation. "
+                "Pitch deck, investment memo, capital allocation to national rollout.\n"
+            )
+            git(d, "add", rel)
+            rc, err = run_gate(d)
+            check(f"pre-commit blocks renamed bypass {rel}",
+                  rc == 1 and "outside claims/" in err and "capital_allocation" in err)
+
         # 3. Unauthorized -> rejected with gaps
         git(d, "reset", "-q")
         git(d, "add", "claims/investor-deck.md")

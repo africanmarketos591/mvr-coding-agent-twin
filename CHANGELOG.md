@@ -1,5 +1,13 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.30 - 2026-07-09 (claim-scan bypass and receipt-binding hardening)
+- **Nested Twin-artifact rename bypass closed:** root Twin artifacts such as `charter.md`, `PREFLIGHT.md`, and `mirror.md` remain safe at the project root, but nested files like `docs/charter.md`, `docs/PREFLIGHT.md`, and `x/mirror.md` are now scanned. A renamed investor deck can no longer evade the claim gate by borrowing a Twin artifact filename.
+- **Bare `twin/` skip-zone removed:** ordinary project folders named `twin/` are no longer blanket-exempt. Claim-shaped files such as `twin/notes.md` now block like any other path.
+- **`mvr/` residual narrowed to an allowlist:** Twin-managed files such as `mvr/state.json`, `mvr/decision-log.json`, `mvr/committee_packet.json`, `mvr/checkpoints/*`, and `mvr/public_research/*` remain exempt to avoid self-false-positives, while unmanaged files such as `mvr/deck.md` are scanned.
+- **Path-root normalization:** claim-scan policy now resolves absolute paths relative to `CLAUDE_PROJECT_DIR` when available, so root-only exemptions mean the same thing in harness hooks and git pre-commit.
+- **Authorizing receipt verification widened and softened correctly:** `hooks/verify_authorizing_receipt.py` and `scripts/verify_receipts.py` now recognize descriptive authority hash keys such as `strategy_sparring_immutable_receipt_hash`, while continuing to reject content hashes as authority. Missing API keys now return a clean unavailable/no-key state instead of a traceback.
+- **Regression coverage:** updated `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_outcome_feedback_bridge.py`, and `tests/test_verify_receipts.py`. The fuzz sweep now covers 284 adversarial paths.
+
 ## 1.1.0-beta.29 - 2026-07-09 (provisional-outage authorization hardening)
 - **Provisional committee drafts no longer offer `build_authorized`:** when `scripts/twin_committee.py` cannot reach the spine/kernel, generated `charter.draft.md` now uses `Status: provisional_not_authorized` instead of the normal `{pilot_only|build_authorized|redirected}` choice set.
 - **Regulated scaffold warning in outage mode:** provisional drafts now carry an explicit rule that regulated implementation details must not enter scaffold/export surfaces until a non-empty kernel receipt exists.
