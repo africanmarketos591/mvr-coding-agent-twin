@@ -132,12 +132,24 @@ def draft_charter(args, packet, seed_entry_id):
         if packet["provisional"]
         else "Spine sat; abstention codes below are evidence requirements, not approval."
     )
+    status_choices = (
+        "provisional_not_authorized"
+        if packet["provisional"]
+        else "{pilot_only|build_authorized|redirected}"
+    )
+    provisional_rule = (
+        "\n> PROVISIONAL RULE: do not change Status to build_authorized, and do not place regulated "
+        "implementation details in scaffold/export surfaces until a non-empty kernel receipt exists."
+        if packet["provisional"]
+        else ""
+    )
 
     return f"""# BUILD CHARTER - {{PROJECT}} (DRAFT)
 **Charter ID:** CH-{uuid.uuid4()} | **Date:** {datetime.now(timezone.utc).date()} | **Archetype:** {', '.join(args.archetype)} | **Market:** {args.market}
-**Status:** {{pilot_only|build_authorized|redirected}} | **Preregistration hash:** {{canonical_sha256}} (anchors: {{anchor_refs}})
+**Status:** {status_choices} | **Preregistration hash:** {{canonical_sha256}} (anchors: {{anchor_refs}})
 
 > Committee packet: `mvr/committee_packet.json`. Decision-log seed: `{seed_entry_id}`. {status_line}
+{provisional_rule}
 
 ## PIVOT EXPLANATION (model writes <=3 sentences before the charter)
 {{MODEL: binding constraint; what was preserved; what stays legal or possible today}}

@@ -92,6 +92,7 @@ def main():
         check("seed carries priors dims", seed["market_scope"] == "UG-KE" and seed["archetype"] == "a")
         check("seed remains internal planning only", seed["decision_authorization"]["authorized_use"] == ["internal_planning"])
         check("draft leaves judgment to model", "{MODEL" in draft and "test idea" in draft)
+        check("live draft exposes normal statuses", "{pilot_only|build_authorized|redirected}" in draft)
         check("evidence bill takes higher lane", ">=100 signals" in draft)
 
     # Outage path: no exception, provisional packet, still no claim authorization.
@@ -119,8 +120,11 @@ def main():
             sys.argv = old_argv
         packet = json.load(open(os.path.join(tempdir, "mvr", "committee_packet.json"), encoding="utf-8"))
         seed = json.load(open(os.path.join(tempdir, "mvr", "decision-log.seed.json"), encoding="utf-8"))[0]
+        draft = open(os.path.join(tempdir, "charter.draft.md"), encoding="utf-8").read()
         check("outage packet is provisional", packet["provisional"] is True)
         check("outage seed still denies claims", "national_rollout" in seed["decision_authorization"]["not_authorized_use"])
+        check("outage draft cannot mark build authorized", "provisional_not_authorized" in draft and "build_authorized" not in draft.splitlines()[2])
+        check("outage draft warns regulated scaffolds", "regulated implementation details" in draft)
 
     print()
     if FAILS:
