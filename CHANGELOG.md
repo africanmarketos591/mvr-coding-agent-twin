@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.31 - 2026-07-09 (Delta Report and root agent instructions)
+- **Delta Report added:** `scripts/twin_delta_report.py` writes `MVR_DELTA_REPORT.md` from `charter.md` and `mvr/decision-log.json`, making the Twin's change visible while keeping the counterfactual labelled as a hypothesis.
+- **Root agent instructions added:** root `AGENTS.md` gives Codex and other agents that auto-read root instructions the short path: preflight, committee, charter, Delta Report, fabrication scan.
+- **Examples seeded:** `examples/01-lending-redirect/` provides a small controlled example showing the Delta Report shape without claiming blind benchmark evidence.
+- **Doctrine/docs updated:** `CLAUDE.md` and `README.md` now include the Delta Report in the PRE-EXPORT and toolchain flow.
+- **Regression coverage:** added `tests/test_twin_delta_report.py`.
+
 ## 1.1.0-beta.30 - 2026-07-09 (claim-scan bypass and receipt-binding hardening)
 - **Nested Twin-artifact rename bypass closed:** root Twin artifacts such as `charter.md`, `PREFLIGHT.md`, and `mirror.md` remain safe at the project root, but nested files like `docs/charter.md`, `docs/PREFLIGHT.md`, and `x/mirror.md` are now scanned. A renamed investor deck can no longer evade the claim gate by borrowing a Twin artifact filename.
 - **Bare `twin/` skip-zone removed:** ordinary project folders named `twin/` are no longer blanket-exempt. Claim-shaped files such as `twin/notes.md` now block like any other path.

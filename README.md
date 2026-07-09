@@ -91,6 +91,7 @@ Release boundary:
 - **Instrument-by-default:** `scripts/twin_instrument.py` can drop `adapters/product_kit/mvr_telemetry.py` into a generated product and map aggregate product metrics to charter settlement criteria. The kit is local and dry-run by default; it turns usage into capped leading evidence, not proof of product-market fit.
 - **Draft settlement from usage:** `scripts/twin_settlement_read.py` reads aggregate telemetry and writes `mvr/settlement-draft.json` for human countersign. It never writes `settled=true`, never appends hit/miss by itself, and requires field corroboration before stronger claims.
 - **Outcome-delta visibility:** `scripts/twin_scorecard.py` reflects reviewed settlements as Twin-vs-solo survival rates. It is an adoption/value dashboard, not a kernel calibration input.
+- **Delta Report:** `scripts/twin_delta_report.py` writes `MVR_DELTA_REPORT.md` after a build so the user can see what changed versus an unconstrained build. It grounds authorization in `mvr/decision-log.json` and labels the counterfactual as a hypothesis.
 - **Product-surface fabrication scan:** `scripts/twin_fabrication_scan.py` runs before export and flags unhedged licence numbers, licensed partners, hard fee/capital/cover figures, and unauthorized regulated capabilities in demos/plans/source files and founder-facing fieldkit artifacts that are not backed by current-format evidence or local Twin authorization. With no `--targets`, it scans root product docs, `mvr/fieldkit/gate_costs.md`, `mvr/fieldkit/NEXT_ACTIONS.md`, and common app folders such as `src`, `app`, `frontend`, `backend`, `scaffold`, and `*-app`.
 - **Outbound egress scanning:** `adapters/egress_scanner.py` exposes the same classifier for MCP proxies, CI publish steps, and webhook wrappers. It scans; the host enforces.
 - **Outcome priors:** `scripts/build_priors.py` can turn settled decision-log entries into `governance/outcome_priors.json` for PRE-CHARTER reading. These priors are advisory only; they do not mutate the kernel, authorize claims, or replace calibrated API-side learning. Real buckets require `archetype`, `market_scope`, and `redirect_pattern` in the decision log.
@@ -148,6 +149,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/twin_instrument.py` — copies the self-settling telemetry kit into a product and writes the settlement map.
 - `scripts/twin_settlement_read.py` — reads product telemetry into a draft-only settlement suggestion; never auto-settles.
 - `scripts/twin_scorecard.py` — renders outcome delta from reviewed settlement entries.
+- `scripts/twin_delta_report.py` — renders the per-build Delta Report from `charter.md` and `mvr/decision-log.json`.
 - `scripts/twin_fabrication_scan.py` — PRE-EXPORT scanner for fabricated-as-real credentials, licensed partners, and fee/capital figures in shippable surfaces.
 - `scripts/settle.py` — settlement pulse runner: emits the quarterly public-record checklist per charter; silence-detection notes for instrumented builds.
 - `scripts/settlement_daemon.py` + `adapters/pulse_collectors.py` — schedulable draft-only settlement pulse collector; never auto-settles.
@@ -160,7 +162,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `tests/test_twin_committee.py` — one-command committee regression coverage, including outage/provisional behavior.
 - `tests/test_twin_attest.py`, `tests/test_twin_home.py`, `tests/test_twin_public_research.py` — attestation, cross-project memory, and public-source ledger coverage.
 - `tests/test_twin_preflight.py`, `tests/test_twin_fieldkit.py` — reasoning-brake and fieldkit action coverage.
-- `tests/test_instrument_by_default.py`, `tests/test_twin_scorecard.py` — instrumentation and outcome visibility coverage.
+- `tests/test_instrument_by_default.py`, `tests/test_twin_scorecard.py`, `tests/test_twin_delta_report.py` — instrumentation and outcome visibility coverage.
 - `tests/test_twin_fabrication_scan.py` — product-surface fabrication scan coverage.
 - `tests/test_manifest.py` — regression test for strict no-BOM manifest generation.
 - `tests/test_state_writer.py` — verifies the producer side of the heartbeat protocol: spine writes state, heartbeat consumes it, settlement writes state.
