@@ -13,6 +13,7 @@ changes the hash and requires rerunning this script.
 Anchoring (public git commit / Wayback / Zenodo) is a human step by protocol -
 this script emits the exact instructions and a decision-log skeleton.
 For a root ``charter.md``, ``--in-place`` also emits ``mvr/build_spec.json``.
+The build contract can still fail closed if a redirect has no extractable cut list.
 """
 import argparse
 import hashlib
@@ -107,10 +108,13 @@ def main():
             from twin_build_spec import write_contract
             root = os.path.dirname(os.path.abspath(path))
             contract, output = write_contract(root, os.path.abspath(path))
-            print(
-                f"PASS: authority-to-code contract emitted: {output} "
-                f"({contract['contract_level']})"
-            )
+            if contract.get("blocking_reasons"):
+                print(
+                    "FAIL: build constraint contract requires correction: "
+                    + "; ".join(contract["blocking_reasons"])
+                )
+                sys.exit(2)
+            print(f"PASS: build constraint contract emitted: {output} ({contract['contract_level']})")
         # fall through to print the registration block + skeleton for the log
 
     if args.verify:

@@ -1,4 +1,4 @@
-"""Authority-to-code contract regression tests."""
+"""Build-constraint tripwire, history, and semantic-review regression tests."""
 import json
 import os
 import sys
@@ -6,7 +6,7 @@ import tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-import twin_build_spec as build_spec  # noqa: E402
+import twin_build_spec as bs  # noqa: E402
 
 
 FAILS = []
@@ -24,83 +24,165 @@ def write(path, value):
         handle.write(value)
 
 
+def write_decision(root, override=None, charter_ref="charter.md"):
+    entry = {
+        "charter_ref": charter_ref,
+        "decision_authorization": {
+            "authorized_use": ["internal_planning"],
+            "not_authorized_use": ["national_rollout", "capital_allocation"],
+        },
+        "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+    }
+    if override:
+        entry["build_contract_override"] = override
+    path = os.path.join(root, "mvr", "decision-log.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump([entry], handle)
+
+
+def charter(cut="a consumer loan book or credit scoring; no wallet holding funds", status="redirect"):
+    return (
+        "# BUILD CHARTER\n"
+        f"**Status:** {status}\n"
+        "## 5. THE BUILD\n"
+        "- **Build:** an employer-funded, non-custodial wage ledger.\n"
+        "- **For:** one factory.\n"
+        "- **Distributed through:** employer HR.\n"
+        + (f"- **Explicitly NOT building:** {cut}.\n" if cut else "")
+        + "- **What a demo will NOT prove:** regulatory approval.\n"
+    )
+
+
+def write_semantic_review(root, targets, contract, verdict="pass", findings=None):
+    request, _ = bs.write_review_request(root, targets, contract)
+    review = {
+        "format": "mvr_semantic_code_review_v1",
+        "request_sha256": request["request_sha256"],
+        "reviewer_kind": "host_model",
+        "reviewer_id": "test-reviewer-session",
+        "model_id": "test-frontier-model",
+        "reviewed_at": "2026-07-10T00:00:00Z",
+        "verdict": verdict,
+        "findings": findings or [],
+        "attestation": "I reviewed behavior against every forbidden constraint in the request.",
+    }
+    with open(os.path.join(root, bs.REVIEW_PATH), "w", encoding="utf-8") as handle:
+        json.dump(review, handle)
+    return review
+
+
 def main():
     with tempfile.TemporaryDirectory() as root:
-        mvr = os.path.join(root, "mvr")
-        os.makedirs(mvr)
-        write(
-            os.path.join(root, "charter.md"),
-            "# BUILD CHARTER\n"
-            "**Status:** redirect\n"
-            "## 5. THE BUILD\n"
-            "- **Build:** an employer-funded, non-custodial wage ledger.\n"
-            "- **For:** one factory.\n"
-            "- **Distributed through:** employer HR.\n"
-            "- **Explicitly NOT building:** a consumer loan book or credit scoring; no wallet holding funds.\n"
-            "- **What a demo will NOT prove:** regulatory approval.\n"
-            "## 6. Redirect\n"
-            "The app-funded loan died.\n",
-        )
-        with open(os.path.join(mvr, "decision-log.json"), "w", encoding="utf-8") as handle:
-            json.dump([{
-                "decision_authorization": {
-                    "authorized_use": ["internal_planning"],
-                    "not_authorized_use": ["national_rollout", "capital_allocation"],
-                },
-                "kernel_receipts": {"immutable_audit_hash": "a" * 64},
-            }], handle)
-        with open(os.path.join(mvr, "committee_packet.json"), "w", encoding="utf-8") as handle:
-            json.dump({
-                "provisional": False,
-                "claims_sent": ["consumer credit scoring and a digital loan advance"],
-                "evidence_bill": [{
-                    "stakeholder_class": "worker",
-                    "minimum_signal_count": 25,
-                    "required_fields": ["trust"],
-                }],
-            }, handle)
+        write(os.path.join(root, "charter.md"), charter())
+        write_decision(root)
+        packet = {
+            "provisional": False,
+            "claims_sent": ["consumer credit scoring and a digital loan advance"],
+            "evidence_bill": [{"stakeholder_class": "worker", "minimum_signal_count": 25, "required_fields": ["trust"]}],
+        }
+        with open(os.path.join(root, "mvr", "committee_packet.json"), "w", encoding="utf-8") as handle:
+            json.dump(packet, handle)
 
-        contract, output = build_spec.write_contract(root)
+        contract, output = bs.write_contract(root)
         forbidden = {item["capability"] for item in contract["forbidden_capabilities"]}
         check("contract file emitted", os.path.exists(output))
         check("claim authorization comes from decision log", contract["authority"]["authorized_claim_classes"] == ["internal_planning"])
-        check("denied claim classes retained", "national_rollout" in contract["authority"]["not_authorized_claim_classes"])
+        check("kernel authority boundary is explicit", "not semantic code behavior" in contract["authority"]["boundary"])
         check("build feature excludes cut list", contract["build_features"] == ["an employer-funded, non-custodial wage ledger."])
-        check("forbids lending", "digital_lending" in forbidden)
-        check("forbids credit scoring", "credit_scoring" in forbidden)
-        check("forbids custody", "fund_custody" in forbidden)
-        check("captures proposed regulated capability", "credit_scoring" in contract["proposed_regulated_capabilities"])
-        check("preserves instrumentation bill", contract["required_instrumentation"][0]["capture_for"] == "worker")
-        check("receipt presence is not called verification", contract["authority"]["receipt_verification"] == "not_performed_offline")
-        check("source fingerprints validate", not build_spec.validate_contract(root, contract))
+        check("raw cut-list constraint retained", len(contract["forbidden_constraints"]) == 1)
+        check("naive tripwires derived", {"digital_lending", "credit_scoring", "fund_custody"}.issubset(forbidden))
+        check("source fingerprints validate", not bs.validate_contract(root, contract))
 
         src = os.path.join(root, "src")
         os.makedirs(src)
         write(os.path.join(src, "loans.py"), "def approve_loan(user):\n    return underwrite_credit(user)\n")
-        findings = build_spec.scan_code(root, ["src"], contract)
-        check("code-time check catches redirected lending", any(item["capability"] == "digital_lending" for item in findings))
+        findings = bs.scan_code(root, ["src"], contract)
+        check("tripwire catches obvious lending spelling", any(item["capability"] == "digital_lending" for item in findings))
 
         write(os.path.join(src, "loans.py"), "# This app must not approve loans.\ndef record_wages(amount):\n    return amount\n")
-        check("negated safety comment does not false-block", not build_spec.scan_code(root, ["src"], contract))
+        check("negated safety comment does not false-block", not bs.scan_code(root, ["src"], contract))
 
-        write(os.path.join(src, "loans.py"), "allowed = not blocked; result = issue_loan(user)\n")
-        inline = build_spec.scan_code(root, ["src"], contract)
-        check("inline negation cannot hide executable lending", any(item["capability"] == "digital_lending" for item in inline))
+        # A semantic rename can clear the lexical tripwire, so it must never clear the end-to-end review gate.
+        write(
+            os.path.join(src, "loans.py"),
+            "def release(worker, amount):\n    pool.debit(amount)\n    worker.credit(amount)\n    payroll.deduct_next_cycle(worker, amount)\n",
+        )
+        check("semantic rename may clear lexical tripwire", not bs.scan_code(root, ["src"], contract))
+        missing = bs.validate_semantic_review(root, ["src"], contract)
+        check("semantic rename cannot earn assurance without model review", missing["status"] == "missing")
+        write_semantic_review(root, ["src"], contract, "block", [{
+            "path": "src/loans.py", "line": 1,
+            "constraint_id": contract["forbidden_constraints"][0]["constraint_id"],
+            "reason": "pool-funded advance repaid through payroll is lending behavior",
+        }])
+        check("model semantic block is binding", bs.validate_semantic_review(root, ["src"], contract)["status"] == "current_block")
 
-        write(os.path.join(root, "charter.md"), read_back(os.path.join(root, "charter.md")) + "\nChanged after contract.\n")
-        stale = build_spec.validate_contract(root, contract)
-        check("changed charter invalidates old contract", any("charter changed" in item for item in stale))
+        write(os.path.join(src, "loans.py"), "def record_wages(amount):\n    return amount\n")
+        write_semantic_review(root, ["src"], contract, "pass")
+        check("fresh model semantic pass validates", bs.validate_semantic_review(root, ["src"], contract)["status"] == "current_pass")
+        write(os.path.join(src, "loans.py"), "def record_wages(amount, ref):\n    return amount\n")
+        check("code change makes semantic review stale", bs.validate_semantic_review(root, ["src"], contract)["status"] == "invalid")
+
+        write(os.path.join(src, "wallet.sol"), "contract L { function approve_loan() public {} }\n")
+        write(os.path.join(src, "wallet.sql"), "CREATE PROC approve_loan AS INSERT INTO loan_book VALUES(1);\n")
+        carriers = bs.scan_code(root, ["src"], contract)
+        check("Solidity and SQL are scanned", {"src/wallet.sol", "src/wallet.sql"}.issubset({item["path"] for item in carriers}))
+
+        write(
+            os.path.join(root, "charter.md"),
+            charter(cut="no consumer loan book, no credit scoring, and no custody of member funds", status="redirect"),
+        )
+        reworded, _ = bs.write_contract(root)
+        check("rewording that preserves all capability cuts is not laundering", not reworded["blocking_reasons"])
+
+        write(os.path.join(root, "charter.md"), charter(cut="", status="build_authorized"))
+        weakened, _ = bs.write_contract(root)
+        check("constraint removal without signature blocks", weakened["contract_level"] == "constraint_weakening_blocked")
+        check("old lending constraint carried forward", "digital_lending" in {item["capability"] for item in weakened["forbidden_capabilities"]})
+
+        dropped_ids = weakened["constraint_history"]["dropped_constraint_ids"]
+        dropped_caps = weakened["constraint_history"]["dropped_capabilities"]
+        override = {
+            "basis": "named_human_override",
+            "reviewer": "test-reviewer",
+            "signature_ref": "sig-test",
+            "note": "Test-only removal after documented scope change.",
+            "allow_removed_capabilities": dropped_caps,
+            "allow_removed_constraint_ids": dropped_ids,
+        }
+        write_decision(root, override=override)
+        released, _ = bs.write_contract(root)
+        check("complete named-human override can release old constraint", not released["blocking_reasons"])
+
+    with tempfile.TemporaryDirectory() as root:
+        write(os.path.join(root, "charter.md"), "# Charter\n**Status:** redirect\n## 5. THE BUILD\nA ledger.\n")
+        write_decision(root)
+        suspect, _ = bs.write_contract(root)
+        check("empty redirect extraction fails loud", suspect["contract_level"] == "extraction_suspect" and suspect["blocking_reasons"])
+
+    with tempfile.TemporaryDirectory() as root:
+        prose = (
+            "# Charter\n**Status:** redirect\n## 5. THE BUILD (fitted)\n"
+            "Employer-funded ledger. NOT building: a direct-to-consumer loan book, interest-bearing credit, or credit scoring.\n"
+        )
+        write(os.path.join(root, "charter.md"), prose)
+        write_decision(root)
+        parsed, _ = bs.write_contract(root)
+        check("inline prose cut-list extracts", len(parsed["forbidden_constraints"]) == 1 and len(parsed["forbidden_capabilities"]) >= 2)
+
+    with tempfile.TemporaryDirectory() as root:
+        nested = os.path.join(root, "case", "charter.md")
+        write(nested, charter())
+        write_decision(root, charter_ref="case/charter.md")
+        discovered, _ = bs.write_contract(root)
+        check("decision-log charter_ref works outside root", discovered["source_fingerprints"]["charter"]["path"] == "case/charter.md")
 
     if FAILS:
         print(f"FAILURES: {FAILS}")
         return 1
-    print("ALL PASS - authority-to-code contract is grounded, freshness-bound, and enforced.")
+    print("ALL PASS - tripwire, semantic review, extraction, and constraint history boundaries verified.")
     return 0
-
-
-def read_back(path):
-    with open(path, encoding="utf-8") as handle:
-        return handle.read()
 
 
 if __name__ == "__main__":

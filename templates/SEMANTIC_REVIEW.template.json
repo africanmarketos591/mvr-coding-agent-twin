@@ -1,0 +1,11 @@
+{
+  "format": "mvr_semantic_code_review_v1",
+  "request_sha256": "<copy from mvr/semantic-review-request.json>",
+  "reviewer_kind": "host_model",
+  "reviewer_id": "<stable agent/session or human reviewer id>",
+  "model_id": "<exact model id>",
+  "reviewed_at": "<ISO-8601 timestamp>",
+  "verdict": "pass",
+  "findings": [],
+  "attestation": "I reviewed behavior against every forbidden constraint in the request."
+}

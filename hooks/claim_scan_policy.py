@@ -26,6 +26,9 @@ MVR_MANAGED_EXACT = {
     ("mvr", "gate-events.jsonl"),
     ("mvr", "committee_packet.json"),
     ("mvr", "build_spec.json"),
+    ("mvr", "build-contract-history.jsonl"),
+    ("mvr", "semantic-review-request.json"),
+    ("mvr", "semantic-review.json"),
     ("mvr", "settlement_map.json"),
     ("mvr", "settlement-draft.json"),
 }
@@ -37,6 +40,10 @@ MVR_MANAGED_PREFIXES = {
 
 PACKAGE_MANAGED_PREFIXES = {
     ("benchmarks", "mvr-viability-v1"),
+}
+
+PACKAGE_MANAGED_EXACT = {
+    ("memory", "decision-log.format.md"),
 }
 
 TWIN_ARTIFACTS = {
@@ -59,6 +66,7 @@ ROOT_ONLY_SAFE = {
     "llms-full.txt",
     "license",
     "contributing.md",
+    "capability_claim.md",
     "code_of_conduct.md",
     "replication_receipts.md",
     "stress_test_report.md",
@@ -130,6 +138,8 @@ def _is_mvr_managed(parts):
 
 def _is_package_managed(parts):
     tuple_parts = tuple(parts)
+    if tuple_parts in PACKAGE_MANAGED_EXACT:
+        return True
     return any(tuple_parts[:len(prefix)] == prefix for prefix in PACKAGE_MANAGED_PREFIXES)
 
 

@@ -68,9 +68,22 @@ Save a `run_manifest.json` beside `runs/` for every benchmark run:
   "score_benchmark_version": "",
   "answer_key_sha256": "",
   "arm_authorship": {
-    "control_author": "",
-    "treatment_author": "",
-    "blind_to_answer_key": true
+    "control": {
+      "agent_id": "opaque stable run id",
+      "exact_prompt": "verbatim prompt",
+      "started_at": "ISO-8601",
+      "ended_at": "ISO-8601",
+      "artifact_sha256": {"PRODUCT_PLAN.md": "..."}
+    },
+    "treatment": {
+      "agent_id": "different opaque stable run id",
+      "exact_prompt": "verbatim prompt",
+      "started_at": "ISO-8601",
+      "ended_at": "ISO-8601",
+      "artifact_sha256": {"charter.md": "..."}
+    },
+    "blind_to_answer_key": true,
+    "orchestrator_did_not_author_arms": true
   },
   "kernel_reachable_before_run": true,
   "kernel_version": "",
@@ -78,6 +91,10 @@ Save a `run_manifest.json` beside `runs/` for every benchmark run:
   "notes": ""
 }
 ```
+
+Do not call a run independently reconstructable unless every arm has a distinct opaque agent ID, exact prompt, start/end timestamps, and hashes for every produced artifact. A prose assertion that agents were separate is useful provenance but not independently auditable separation.
+
+For any future "frontier capability" claim, add a third ablation arm: the same host with Twin doctrine/research instructions but without kernel/spine access. The three-way comparison is `host alone` / `host + doctrine` / `host + full Twin`; without it, the kernel's marginal contribution is not isolated.
 
 Full-system claims require a reachable kernel and non-empty kernel receipts in the treatment charters. If the kernel is down, the run is still valuable: it tests how much the Twin's doctrine, tools, research layer, and export scanners preserve judgment under outage conditions.
 

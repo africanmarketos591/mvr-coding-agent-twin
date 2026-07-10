@@ -1,9 +1,20 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.33 - 2026-07-10 (peer-critique correction and semantic review boundary)
+- **beta.32 overclaim withdrawn:** `--check` is now a deterministic **naive-capability tripwire**, never behavioral proof. A clear result explicitly says it is not semantic assurance.
+- **Model-in-loop semantic review:** governed code requires a current host-model or human review bound to the exact contract and exact file hashes through `mvr/semantic-review-request.json` and `mvr/semantic-review.json`. The result is labelled model-attested, not kernel authority.
+- **Empty redirect extraction fails loud:** redirect-like charters with no extracted cut list become `extraction_suspect` unless they carry an explicit capability-free disposition. Inline prose and raw non-capability constraints are retained.
+- **Constraint laundering blocked:** re-emitting a weaker charter carries prior constraints forward. Removal requires a complete `named_human_override` naming reviewer, signature, reason, removed capability IDs, and removed constraint IDs.
+- **Carrier coverage widened:** SQL, Solidity, notebooks, Docker/Compose, common IaC/config formats, and environment/config files enter the lexical tripwire surface.
+- **Non-root charters supported:** `decision-log.json` `charter_ref` is authoritative for discovery; missing or outside-project references fail validation.
+- **Peer red-team made permanent:** `tests/test_build_spec_redteam.py` encodes all four reproduced beta.32 evasions plus a clean-code control and the published-charter extraction regression.
+- **Capability claim made falsifiable:** `CAPABILITY_CLAIM.md` states the earned +46.2 controlled-beta claim, explicit exclusions, and the 50-case/three-market/ablation/provenance bar required before any Fable-class claim.
+
 ## 1.1.0-beta.32 - 2026-07-10 (authority-to-code contract)
+> Historical correction: the capability-enforcement wording below was disproven by the beta.32 peer red-team and withdrawn in beta.33. The beta.32 scanner was lexical, not semantic enforcement.
 - **MVR judgment now binds code generation:** added `scripts/twin_build_spec.py`, which compiles the fitted charter, decision-log claim envelope, explicit cut list, evidence bill, and source fingerprints into `mvr/build_spec.json`.
 - **Stale authority fails closed:** changing `charter.md`, `mvr/decision-log.json`, or `mvr/committee_packet.json` invalidates the emitted contract before staged code can commit.
-- **Per-charter capability enforcement:** `--check` blocks product code that reintroduces redirected-away custody, lending, scoring, payment, certification, or collective-investment behavior.
+- **Withdrawn beta.32 wording:** beta.32 described `--check` as blocking reintroduced capabilities. The peer red-team disproved that blanket statement; beta.33 replaces it with the tripwire-plus-semantic-review boundary above.
 - **Automatic normal-path wiring:** `preregister.py --in-place charter.md` emits the build contract, and the universal git pre-commit gate requires a current contract whenever a root charter and shippable code coexist.
 - **Authority boundary kept honest:** kernel `authorized_use` remains claim-class authorization; charter cut-list constraints govern implementation. Receipt presence is reported but never mislabeled as live verification.
 - **Blind benchmark published and scorer hardened:** `benchmarks/mvr-viability-v1/` carries the raw 12-case arms, answer key, symmetric judge record, run manifest, and scorer v1.4. Both arms now use the same machine-readable verdict contract (or one blind judge); legacy prose inference is explicitly non-citable. The corrected result (43.6 control, 89.8 treatment, +46.2) reproduces with 12/12 treatment receipts verified, while the authorship-reconstruction limit remains visible.

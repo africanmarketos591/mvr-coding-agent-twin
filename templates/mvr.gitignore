@@ -4,4 +4,5 @@ passport.json
 state.json
 .twin-nudge-*
 # ALWAYS committed (the audit trail — do not add these here):
-#   decision-log.json, build_spec.json, gate-events.jsonl, charters, mirrors
+#   decision-log.json, build_spec.json, build-contract-history.jsonl,
+#   semantic-review-request.json, semantic-review.json, gate-events.jsonl, charters, mirrors

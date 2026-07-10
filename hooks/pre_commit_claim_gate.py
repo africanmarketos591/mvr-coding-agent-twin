@@ -12,9 +12,11 @@ Install (once per repo):
   echo 'python mvr-coding-agent-twin/hooks/pre_commit_claim_gate.py || exit 1' >> .git/hooks/pre-commit
   (or wire via the pre-commit framework; see README Host Support Matrix)
 
-Same doctrine as claim_gate.py: code is never gated; claims are denied by default;
-broken/stale logs fail CLOSED for claims; every decision is receipted to
-mvr/gate-events.jsonl (fail-silent auditing).
+Claim classes remain denied by default and broken/stale logs fail closed. Ordinary
+code outside a Twin case is not gated. Once a Twin charter governs product code,
+the hook also requires a current build-constraint contract and model-attested
+semantic review; its lexical scan is only a tripwire, not behavioral proof. Every
+decision is receipted to mvr/gate-events.jsonl (fail-silent auditing).
 """
 import json, os, subprocess, sys
 
@@ -28,8 +30,10 @@ from twin_build_spec import (  # noqa: E402
     contract_path,
     is_governed_code_path,
     load_contract,
+    project_has_twin_case,
     scan_code,
     validate_contract,
+    validate_semantic_review,
 )
 
 from datetime import datetime, timezone, timedelta  # noqa: E402
@@ -74,7 +78,7 @@ def fail(root, claim_class, path, reason_code, msg):
 def enforce_build_contract(root, paths):
     """Bind staged code to the current charter instead of relying on model memory."""
     code_paths = [path for path in paths if is_governed_code_path(path)]
-    if not code_paths or not os.path.exists(os.path.join(root, "charter.md")):
+    if not code_paths or not project_has_twin_case(root):
         return
     if not os.path.exists(contract_path(root)):
         fail(
@@ -112,10 +116,27 @@ def enforce_build_contract(root, paths):
             f"staged code implements redirected-away capability '{first['capability']}' "
             f"via {first['signal']!r}. Charter reason: {first['charter_reason']}",
         )
+    review = validate_semantic_review(root, code_paths, contract)
+    if review.get("status") not in {"not_required", "current_pass"}:
+        details = "; ".join(review.get("errors") or [])
+        if review.get("status") == "current_block":
+            details = "semantic reviewer found forbidden behavior: " + json.dumps(review.get("findings") or [])
+        fail(
+            root,
+            "build_contract",
+            code_paths[0],
+            "semantic_review_required",
+            "the lexical tripwire is clear, but that is not semantic assurance. "
+            f"Current semantic review status: {review.get('status')} ({details or 'no current pass'}). "
+            "Run scripts/twin_build_spec.py --root . --review-request <staged-code-paths>, "
+            "have the host model write mvr/semantic-review.json, stage both review artifacts, then commit.",
+        )
     audit(root, {
-        "event": "build_contract_pass",
+        "event": "build_constraint_tripwire_clear",
         "paths_checked": code_paths,
         "contract_level": contract.get("contract_level"),
+        "semantic_review_status": review.get("status"),
+        "assurance": "model_attested_not_deterministic_proof",
         "tool": "git-pre-commit",
     })
 

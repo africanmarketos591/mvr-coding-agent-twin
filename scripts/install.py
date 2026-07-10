@@ -11,6 +11,10 @@ Does, idempotently and Windows-safely:
   4. Prints the Claude Code settings-hooks merge instruction (harness-level channel).
   5. --verify: runs the offline suite set and reports PASS/FAIL per suite.
 
+After a charter exists, preregistration emits the build-constraint contract. The
+host must generate a semantic review request and review the exact code before
+the git gate accepts governed product code; lexical clearance alone is not proof.
+
 An installer that does not verify is a liability; use --verify on first install.
 Never touches keys. Never contacts the network.
 """
@@ -148,6 +152,9 @@ def main():
     print("NOTE  Interception layers: until your host's write-tool hook is wired (settings-hooks.json / adapters/),")
     print("      claim interception happens at COMMIT time only. Write-time interception (the claim gate firing the")
     print("      moment a claims/ file is drafted) requires the harness hook - wire it for the full partner experience.")
+    print("NEXT  After charter preregistration: run twin_build_spec.py --review-request <product-paths>,")
+    print("      have the host model write mvr/semantic-review.json, then run --check <paths> --require-semantic-review.")
+    print("      The deterministic scan is a naive-capability tripwire; a clear scan is not semantic assurance.")
 
     # 4. Optional verification
     if args.verify:

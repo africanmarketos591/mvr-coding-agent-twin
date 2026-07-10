@@ -32,6 +32,7 @@ Rule: no named incumbent, regulation, licensing claim, market figure, failure pr
 - **For:** {{first_user/counterparty - named from passport where possible}}
 - **Distributed through:** {{the operator's real channel, not a hypothetical one}}
 - **Explicitly NOT building (and why):** {{cut_list_with_reasons}}
+- **Code capability disposition:** {{cut_list_present | capability_free - explain why this redirect has no code-level capability cut}}
 - **What the working demo will NOT prove:** {{buildability != demand; state the specific unproven claims}}
 
 ## 6. Redirect (only if the original idea did not survive)

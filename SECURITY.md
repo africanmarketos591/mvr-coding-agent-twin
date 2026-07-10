@@ -25,11 +25,14 @@ The optional instrument-by-default kit records aggregate usage metrics only. It 
 ## Product-surface fabrication scan
 `scripts/twin_fabrication_scan.py` is a local PRE-EXPORT scanner. It reads shippable project files, founder-facing fieldkit artifacts (`mvr/fieldkit/gate_costs.md`, `mvr/fieldkit/NEXT_ACTIONS.md`), the current-format `mvr/public_research/source_ledger.json`, and local `mvr/state.json` authorization; it makes no network calls and submits nothing. With no explicit targets, it scans common app/product folders and root product docs while skipping other Twin governance directories. Treat scanner findings as release blockers for demos and plans: hedge the claim as mock/demo, remove it, add a verified public source-ledger entry, or obtain explicit authorization before shipping regulated capability.
 
+## Semantic code review
+`scripts/twin_build_spec.py --review-request` writes relative file paths, file hashes, and charter constraints to `mvr/semantic-review-request.json`; it does not copy source contents into the request. The host model or human still reads the underlying code, so the host's own data-processing, retention, and confidentiality policy applies. Never place secrets in semantic-review findings. Commit the request and `mvr/semantic-review.json` as audit metadata only when repository policy permits those paths and findings to be shared. A semantic review is model/human attestation, not proof, certification, legal clearance, or kernel authorization.
+
 ## Attestation and home memory
 `scripts/twin_attest.py` updates `mvr/passport.json`, which remains personal data and must stay uncommitted. `scripts/twin_home.py` stores a user-owned cross-project passport plus aggregate priors in `~/.mvr-twin` by default. Exporting home memory into a new project requires operator consent; it must carry only attested reach and aggregate outcomes, never raw evidence packs or private source files.
 
 ## Repository hygiene (data-leak prevention — REQUIRED)
-`mvr/passport.json` is personal data and MUST NEVER be committed: a shared or public repo would publish the operator's counterparty relationships. Install `templates/mvr.gitignore` as `mvr/.gitignore` before the first commit (install step 6). Committed on purpose: `decision-log.json`, `gate-events.jsonl`, charters, mirrors — they are the audit trail. Local-only: `passport.json`, `state.json` (cache), nudge markers.
+`mvr/passport.json` is personal data and MUST NEVER be committed: a shared or public repo would publish the operator's counterparty relationships. Install `templates/mvr.gitignore` as `mvr/.gitignore` before the first commit. Committed on purpose when repository policy permits: `decision-log.json`, `build_spec.json`, build-contract history, semantic-review request/review, `gate-events.jsonl`, charters, and mirrors — they are the audit trail. Local-only: `passport.json`, `state.json` (cache), nudge markers.
 
 ## Audit & integrity
 - `mvr/gate-events.jsonl`: append-only enforcement receipts (event, claim class, path, reason, entry_id, timestamp). Contains file paths, never secrets or personal data. Part of the case record; ships with exported case audits.

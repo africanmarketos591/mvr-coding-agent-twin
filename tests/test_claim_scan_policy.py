@@ -52,10 +52,11 @@ def main():
         "LICENSE",
         "REPLICATION_RECEIPTS.md",
         "STRESS_TEST_REPORT.md",
+        "CAPABILITY_CLAIM.md",
     ):
         check(f"root safe {path}", should_scan_content(path) is False)
 
-    for path in ("docs/agents.md", "docs/claude.md", "docs/llms.txt"):
+    for path in ("docs/agents.md", "docs/claude.md", "docs/llms.txt", "docs/capability_claim.md"):
         check(f"nested control doc scanned {path}", should_scan_content(path) is True)
 
     for path in ("PREFLIGHT.md", "charter.md", "mirror.md", "transcript_report.md"):
@@ -67,12 +68,21 @@ def main():
         "mvr/state.json",
         "mvr/decision-log.json",
         "mvr/build_spec.json",
+        "mvr/build-contract-history.jsonl",
+        "mvr/semantic-review-request.json",
+        "mvr/semantic-review.json",
         "mvr/checkpoints/strategy_sparring.json",
         "mvr/public_research/source_ledger.json",
         "benchmarks/mvr-viability-v1/answer_key.json",
+        "memory/decision-log.format.md",
         "claims/investor.md",
     ):
         check(f"not scanned {path}", should_scan_content(path) is False)
+
+    check(
+        "other memory claim docs remain scanned",
+        should_scan_content("memory/decision-log-copy.md") is True,
+    )
 
     check("binary pdf carrier", binary_claim_carrier("docs/deck.pdf") is True)
     check("binary pptx carrier", binary_claim_carrier("board/board.pptx") is True)

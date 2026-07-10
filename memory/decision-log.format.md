@@ -42,6 +42,14 @@ Each entry (append on every PRE-CHARTER and PRE-CLAIM checkpoint):
   },
   "human_review": { "required": false, "reviewer": null, "signature_ref": null },
   "override_note": null,
+  "build_contract_override": {
+    "basis": "named_human_override",
+    "reviewer": "<named reviewer>",
+    "signature_ref": "<signature or approval artifact>",
+    "note": "Why the prior implementation constraint is no longer applicable.",
+    "allow_removed_capabilities": ["digital_lending"],
+    "allow_removed_constraint_ids": ["<16-char constraint id from prior build_spec.json>"]
+  },
   "notes_for_settlement_reader": "One plain sentence you are willing to be judged by later."
 }
 ```
@@ -54,3 +62,4 @@ Rules:
 - If `human_review.required` is true and unsigned, the claim gate treats the entry as non-authorizing regardless of `authorized_use`.
 - `kernel_authorized_use` is the live kernel baseline copied from the receipt. If local `decision_authorization.authorized_use` exceeds it, the entry MUST be a signed `named_human_override` with `override_note`; otherwise the gate fails closed as ambiguous local authorization.
 - Override receipts are emitted as `allow_override_claim`, never `allow_claim`. A human override is local discipline, not kernel authorization, and external parties must verify the kernel receipt before trusting exported claims.
+- `build_contract_override` is separate from claim authorization. It is required only when a re-emitted build contract removes a previously active implementation constraint. It must cover every removed capability and constraint ID; partial or unsigned removal fails closed and carries the old constraint forward.

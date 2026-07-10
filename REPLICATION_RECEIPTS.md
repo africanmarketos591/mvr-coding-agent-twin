@@ -30,7 +30,8 @@ Not yet claimed:
 - Ledger inflation is mechanically rejected.
 - Manifest generation is Python-only, strict UTF-8, no BOM.
 - Internal key-file parsing ignores human labels and accepts only explicit key fields.
-- The authority-to-code contract blocks code that reintroduces a capability explicitly removed by the frozen charter, and invalidates itself when governed inputs change.
+- The build-constraint contract invalidates stale inputs, fails on empty redirects, carries prior constraints across weakened re-emits, and catches obvious lexical capability reintroductions. Lexical clearance is not semantic assurance.
+- A current model/human semantic review can be bound to the exact contract and file hashes. It is model-attested and can still be wrong; it is not kernel authority.
 
 ## Rehearsal Runs
 
@@ -74,6 +75,14 @@ The raw arms, answer key, judge record, manifest, scorer, and full review are pu
 
 Validity limit: separate blind authorship is attested in the run manifest, but the preserved package lacks immutable agent-run IDs and full orchestration transcripts. This is strong controlled-beta evidence, not yet independently peer-audited science. The next run must preserve opaque agent IDs, prompts, timestamps, and artifact hashes.
 
+### beta.32 Peer Red-Team
+
+Result: the blanket code-capability enforcement claim was disproven and withdrawn.
+
+Codex reproduced 4/4 attacks: prose extraction no-op, semantic rename, SQL/Solidity carrier escape, and weakened re-emit laundering. The critic was correct that a deterministic lexical scan cannot establish a semantic property of arbitrary code.
+
+beta.33 relabels the scan as a naive-capability tripwire, routes semantic behavior through a fresh model/human review, fails suspicious empty extraction, widens carrier coverage, and chains prior constraints unless a signed human override releases them. `tests/test_build_spec_redteam.py` preserves all four attacks and a clean control. The model review remains fallible; that limit is permanent and public.
+
 ## Defect Classes Found And Closed
 
 - Hook matcher gap.
@@ -90,6 +99,10 @@ Validity limit: separate blind authorship is attested in the run manifest, but t
 - Code-generation drift after a correct charter.
 - Stale charter/decision-log authority surviving into later code.
 - Benchmark verdict asymmetry between structured treatment artifacts and control prose.
+- False semantic assurance from a lexical code scanner.
+- Empty/prose charter cut-list extraction.
+- Constraint laundering by weakened re-emission.
+- SQL/Solidity and non-root-charter coverage gaps.
 
 Each class now has a tool, test, or binding rule intended to prevent recurrence.
 

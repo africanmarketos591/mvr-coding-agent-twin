@@ -4,14 +4,14 @@
 
 **A market-reality co-processor for AI coding agents.** It fuses the host agent's native intelligence with MVR's high-context market intelligence, so the agent builds what the market can carry, not just what the user imagined.
 
-Built 2026-07-06 by Claude Fable 5 as its own mirror: the instruction layer encodes Fable-5-class judgment discipline PLUS explicit countermeasures for the failure modes frontier models have from the inside (instruction-following under pressure, confidence without ground truth, imagination rewarding). It is model-agnostic: any agent that supports instructions + MCP + hooks (Claude Code / Fable 5, Codex CLI, Antigravity, Cursor) can host it. On a model more powerful than Fable 5, the Twin gets *stronger* — the spine and memory are external to the model, and better reasoning over them compounds.
+Built 2026-07-06 by Claude Fable 5 as its own mirror: the instruction layer encodes frontier-model judgment discipline plus explicit countermeasures for failures of incentive and epistemics. It is model-agnostic: any agent that supports instructions, files, MCP, and hooks can host it. A stronger host can reason better over the Twin's external evidence, authority, and memory; the Twin is not itself a Fable-class reasoner. The exact earned claim, exclusions, and future parity bar live in `CAPABILITY_CLAIM.md`.
 
 ## Architecture (three strata — see S18/S19 for doctrine)
 
 | Stratum | What | Where in this repo | Copyable? |
 |---|---|---|---|
 | **LENS** | Thinking angles + archetype research protocols (counsel, everywhere) | `lens/` + `CLAUDE.md` | Yes — by design; it recruits |
-| **SPINE** | Un-prompt-able kernel arbitration at hook-enforced checkpoints (authority, at the gates) | `spine/`, `hooks/`, `.mcp.json` | No — external position |
+| **SPINE** | Un-prompt-able kernel arbitration over finite claim classes at hook-enforced checkpoints | `spine/`, `hooks/`, `.mcp.json` | No — external position |
 | **MEMORY** | Operator Passport + preregistered, confession-free-settling Build Charters | `memory/`, `templates/`, `scripts/` | No — it ages |
 
 ## The behavior loop (non-negotiable)
@@ -92,7 +92,7 @@ Release boundary:
 - **Draft settlement from usage:** `scripts/twin_settlement_read.py` reads aggregate telemetry and writes `mvr/settlement-draft.json` for human countersign. It never writes `settled=true`, never appends hit/miss by itself, and requires field corroboration before stronger claims.
 - **Outcome-delta visibility:** `scripts/twin_scorecard.py` reflects reviewed settlements as Twin-vs-solo survival rates. It is an adoption/value dashboard, not a kernel calibration input.
 - **Delta Report:** `scripts/twin_delta_report.py` writes `MVR_DELTA_REPORT.md` after a build so the user can see what changed versus an unconstrained build. It grounds authorization in `mvr/decision-log.json` and labels the counterfactual as a hypothesis.
-- **Authority-to-code contract:** `scripts/twin_build_spec.py` compiles the fitted charter, kernel claim-authorization envelope, explicit cut list, and evidence bill into `mvr/build_spec.json`. It fingerprints every governed input, so changed market judgment makes the old contract stale, and the git gate blocks staged code that reintroduces a redirected-away capability. Kernel claim authorization and charter implementation constraints remain explicitly separate.
+- **Build-constraint contract + semantic review:** `scripts/twin_build_spec.py` preserves the fitted charter's raw cut list, kernel claim envelope, history, and evidence bill in `mvr/build_spec.json`. A deterministic naive-capability tripwire catches obvious spellings across common code/IaC carriers; a clear tripwire is explicitly **not** semantic assurance. Governed code also requires a fresh host-model or human semantic review bound to the exact contract and file hashes. That review is model-attested, not kernel authority or mathematical proof.
 - **Product-surface fabrication scan:** `scripts/twin_fabrication_scan.py` runs before export and flags unhedged licence numbers, licensed partners, hard fee/capital/cover figures, and unauthorized regulated capabilities in demos/plans/source files and founder-facing fieldkit artifacts that are not backed by current-format evidence or local Twin authorization. With no `--targets`, it scans root product docs, `mvr/fieldkit/gate_costs.md`, `mvr/fieldkit/NEXT_ACTIONS.md`, and common app folders such as `src`, `app`, `frontend`, `backend`, `scaffold`, and `*-app`.
 - **Outbound egress scanning:** `adapters/egress_scanner.py` exposes the same classifier for MCP proxies, CI publish steps, and webhook wrappers. It scans; the host enforces.
 - **Outcome priors:** `scripts/build_priors.py` can turn settled decision-log entries into `governance/outcome_priors.json` for PRE-CHARTER reading. These priors are advisory only; they do not mutate the kernel, authorize claims, or replace calibrated API-side learning. Real buckets require `archetype`, `market_scope`, and `redirect_pattern` in the decision log.
@@ -109,6 +109,7 @@ Release boundary:
 | Heartbeat (per-turn ambient state) | hook-native | hook-wire (adapter notes) | read `mvr/state.json` per turn (doctrine) | generated `beforeSubmitPrompt` hook where supported; otherwise read `mvr/state.json` |
 | Claim gate (harness-level) | hook-native | hook-wire (adapter notes) | limited | generated `preToolUse` hook where supported; version-dependent |
 | **Claim gate (git pre-commit — universal)** | ✔ | ✔ | ✔ | ✔ |
+| Semantic code-constraint review (model-attested) | native host review | native host review | native host review | native host review |
 | Settlement daemon (`settle.py` on any scheduler) | ✔ | ✔ (scheduled tasks) | ✔ (cron) | ✔ (cron) |
 | Memory (passport, decision log, charters, receipts) | ✔ files | ✔ files | ✔ files | ✔ files |
 | Browser-verified research/settlement | roadmap (claude-in-chrome) | ✔ native (browser subagent) | — | — |
@@ -121,6 +122,8 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `CLAUDE.md` — the Twin core: laws, committee protocol, checkpoints, refusal boundaries. **Read this first.**
 - `llms.txt` — machine-readable entrypoint for AI agents and fetchers.
 - `REPLICATION_RECEIPTS.md` — public-safe verification record with misses and remaining limits.
+- `CAPABILITY_CLAIM.md` — the earned controlled-beta claim, explicit exclusions, and measurable future Fable-class acceptance bar.
+- `reviews/PEER_CRITIQUE_RESPONSE_beta32.md` — reproduced peer critique, architectural correction, and remaining semantic-review limit.
 - `benchmarks/mvr-viability-v1/` — public 12-case blind-run artifacts, answer key, symmetric judge record, ledger-aware scorer, and the explicit authorship-reconstruction limitation.
 - `hooks/heartbeat.py` + `memory/state.format.md` — the real-time counsel channel (see protocol section above); tested in `tests/test_heartbeat.py` (8/8).
 - `hooks/response_claim_sentinel.py` — optional final-response/Stop-hook counsel for claim-shaped assistant prose; writes advisory receipts, never blocks.
@@ -135,8 +138,8 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `lens/research-protocols.md` — what to research (never ask): general high-context protocol + fintech_platform specialization.
 - `memory/passport.schema.json` — Operator Passport v0 (inferred → mirror-corrected → attestation-upgradeable via `/v1/field-signal/*`).
 - `memory/decision-log.format.md` — append-only machine-readable log; the claim gate reads `mvr/decision-log.json`.
-- `templates/BUILD_CHARTER.template.md`, `templates/MIRROR.template.md`, `templates/PASSPORT.template.json`.
-- `scripts/preregister.py` — computes a canonical charter hash, verifies embedded hashes, emits the anchor block plus decision-log skeleton, and with `--in-place charter.md` automatically emits the authority-to-code contract. A hash is not valid unless `--verify` passes after the final header is inserted.
+- `templates/BUILD_CHARTER.template.md`, `templates/MIRROR.template.md`, `templates/PASSPORT.template.json`, `templates/SEMANTIC_REVIEW.template.json`.
+- `scripts/preregister.py` — computes a canonical charter hash, verifies embedded hashes, emits the anchor block plus decision-log skeleton, and with `--in-place charter.md` automatically emits the build-constraint contract. A hash is not valid unless `--verify` passes after the final header is inserted.
 - `scripts/run_smoke_from_keyfile.py` + `scripts/keyfile_loader.py` — internal rehearsal helper for local key files; prevents label-slug extraction from masquerading as an enterprise key.
 - `scripts/generate_manifest.py` — strict UTF-8 no-BOM manifest generator for release parity checks.
 - `scripts/verify_receipts.py` — PRE-EXPORT kernel receipt verifier; confirms authority hashes against the live ledger route.
@@ -152,7 +155,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/twin_settlement_read.py` — reads product telemetry into a draft-only settlement suggestion; never auto-settles.
 - `scripts/twin_scorecard.py` — renders outcome delta from reviewed settlement entries.
 - `scripts/twin_delta_report.py` — renders the per-build Delta Report from `charter.md` and `mvr/decision-log.json`.
-- `scripts/twin_build_spec.py` — emits and checks the stale-resistant authority-to-code contract in `mvr/build_spec.json`.
+- `scripts/twin_build_spec.py` — emits the history-bound build-constraint contract, runs the naive lexical tripwire, prepares semantic review requests, and validates model-attested reviews against exact file hashes.
 - `scripts/twin_fabrication_scan.py` — PRE-EXPORT scanner for fabricated-as-real credentials, licensed partners, and fee/capital figures in shippable surfaces.
 - `scripts/settle.py` — settlement pulse runner: emits the quarterly public-record checklist per charter; silence-detection notes for instrumented builds.
 - `scripts/settlement_daemon.py` + `adapters/pulse_collectors.py` — schedulable draft-only settlement pulse collector; never auto-settles.
@@ -160,7 +163,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `adapters/egress_scanner.py` — reusable outbound scanner for host/proxy egress enforcement.
 - `scripts/build_priors.py` — advisory local prior builder from settled decision logs; outputs `governance/outcome_priors.json` without mutating kernel calibration or authorizing claims.
 - `tests/smoke_test.py` — live kernel round-trip; `tests/test_claim_gate.py` — hook logic, offline.
-- `tests/test_preregister.py`, `tests/test_twin_build_spec.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration integrity, authority-to-code enforcement, and safe key-file parsing.
+- `tests/test_preregister.py`, `tests/test_twin_build_spec.py`, `tests/test_build_spec_redteam.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration, the four peer-critic evasions, semantic-review freshness, constraint history, and safe key-file parsing.
 - `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_passport_check.py` — adversarial scan-policy and Operator Passport gate coverage.
 - `tests/test_twin_committee.py` — one-command committee regression coverage, including outage/provisional behavior.
 - `tests/test_twin_attest.py`, `tests/test_twin_home.py`, `tests/test_twin_public_research.py` — attestation, cross-project memory, and public-source ledger coverage.

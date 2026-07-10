@@ -1,32 +1,48 @@
-"""Compile a frozen MVR charter into an enforceable code-generation contract.
+"""Bind a fitted charter to code without pretending syntax proves behavior.
 
-The kernel authorizes claim classes. The charter records the fitted build and its
-explicit cut list. This tool binds both layers into ``mvr/build_spec.json`` and
-fingerprints every governed input so an old contract cannot survive a changed
-charter or decision log.
+This module has three deliberately separate jobs:
+
+1. Freeze charter implementation constraints and kernel claim authorization.
+2. Run a deterministic *naive-capability tripwire* over common code carriers.
+3. Require a current host-model semantic review for behavioral assurance.
+
+The tripwire catches obvious spellings only. A clear tripwire is not proof that a
+forbidden behavior is absent; semantic program properties are not decidable in
+general. Kernel authority remains limited to finite claim classes.
 
 Usage:
   python scripts/twin_build_spec.py --root . --emit
-  python scripts/twin_build_spec.py --root . --check src
-
-The checker is deliberately offline. Receipt authenticity remains the job of
-``verify_receipts.py``; this contract reports receipt presence without upgrading
-it to live verification.
+  python scripts/twin_build_spec.py --root . --review-request src
+  # Host model reads the request and writes mvr/semantic-review.json.
+  python scripts/twin_build_spec.py --root . --check src --require-semantic-review
 """
 import argparse
 import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
+from datetime import datetime, timezone
 
 
-SPEC_VERSION = "1.1"
+SPEC_VERSION = "2.0"
+CONTRACT_FORMAT = "mvr_build_contract_v2"
 CONTRACT_PATH = os.path.join("mvr", "build_spec.json")
+HISTORY_PATH = os.path.join("mvr", "build-contract-history.jsonl")
+REVIEW_REQUEST_PATH = os.path.join("mvr", "semantic-review-request.json")
+REVIEW_PATH = os.path.join("mvr", "semantic-review.json")
+
 CODE_EXTENSIONS = {
-    ".c", ".cc", ".cpp", ".cs", ".go", ".html", ".java", ".js", ".jsx",
-    ".kt", ".php", ".py", ".rb", ".rs", ".svelte", ".swift", ".ts",
-    ".tsx", ".vue",
+    ".c", ".cc", ".cfg", ".conf", ".cpp", ".cs", ".dockerfile", ".env",
+    ".go", ".hcl", ".html", ".ipynb", ".java", ".js", ".json", ".jsx",
+    ".kt", ".php", ".py", ".rb", ".rs", ".sol", ".sql", ".svelte",
+    ".swift", ".tf", ".tfvars", ".toml", ".ts", ".tsx", ".vue", ".yaml",
+    ".yml",
+}
+CODE_FILENAMES = {
+    "compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml",
+    "dockerfile", "makefile",
 }
 SKIP_DIRS = {
     ".git", ".venv", "build", "dist", "mvr-coding-agent-twin", "mvr-twin",
@@ -40,7 +56,7 @@ NEGATED = re.compile(
 CAPABILITY_PATTERNS = {
     "fund_custody": re.compile(
         r"\bcustod(?:y|ial)|hold(?:s|ing)?\s+(?:customer\s+|member\s+)?(?:money|funds)|"
-        r"wallet balance|store[- ]of[- ]value|e[- ]?money\b",
+        r"wallet balance|stored?[_ -]?value|member[_ -]?float|e[- ]?money\b",
         re.I,
     ),
     "deposit_taking": re.compile(
@@ -49,7 +65,8 @@ CAPABILITY_PATTERNS = {
     ),
     "digital_lending": re.compile(
         r"\bdigital lending|loan book|loan api|approve[_ ]?loan|issue[_ ]?loan|"
-        r"credit (?:advance|financing|line)|asset[- ]backed credit|bnpl|buy now pay later|"
+        r"disburse[_ ]?advance|schedule[_ ]?repayment|credit (?:advance|financing|line)|"
+        r"asset[- ]backed credit|bnpl|buy now pay later|"
         r"underwrit(?:e|es|ing)[^\n]{0,30}(?:loan|credit|advance)\b",
         re.I,
     ),
@@ -92,6 +109,10 @@ def read_json(path, fallback):
         return fallback
 
 
+def sha256_bytes(value):
+    return hashlib.sha256(value).hexdigest()
+
+
 def sha256_file(path):
     if not os.path.exists(path):
         return None
@@ -100,6 +121,11 @@ def sha256_file(path):
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def canonical_json_digest(value):
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return sha256_bytes(raw)
 
 
 def latest_entry(root):
@@ -111,6 +137,38 @@ def latest_entry(root):
         if isinstance(data, dict):
             return data, path
     return {}, None
+
+
+def _inside(root, path):
+    try:
+        return os.path.commonpath([os.path.abspath(root), os.path.abspath(path)]) == os.path.abspath(root)
+    except ValueError:
+        return False
+
+
+def discover_charter(root, explicit=None):
+    root = os.path.abspath(root)
+    if explicit:
+        path = os.path.abspath(explicit)
+        return (path, None) if _inside(root, path) and os.path.isfile(path) else (None, "explicit charter missing or outside project")
+    entry, _ = latest_entry(root)
+    ref = entry.get("charter_ref") if isinstance(entry, dict) else None
+    if ref:
+        path = os.path.abspath(os.path.join(root, str(ref)))
+        if _inside(root, path) and os.path.isfile(path):
+            return path, None
+        return None, f"decision-log charter_ref is missing or outside project: {ref}"
+    root_charter = os.path.join(root, "charter.md")
+    if os.path.isfile(root_charter):
+        return root_charter, None
+    return None, "no charter_ref and no root charter.md"
+
+
+def project_has_twin_case(root):
+    return any(os.path.exists(os.path.join(root, path)) for path in (
+        "charter.md", CONTRACT_PATH, os.path.join("mvr", "decision-log.json"),
+        os.path.join("mvr", "decision-log.seed.json"),
+    ))
 
 
 def heading_section(text, predicate):
@@ -134,39 +192,72 @@ def heading_section(text, predicate):
     return out
 
 
-def clean_bullet(line):
+def clean_markup(line):
     value = re.sub(r"^\s*[-*+]\s+", "", line).strip()
     value = re.sub(r"\*\*([^*]+):\*\*", r"\1:", value)
     return value.strip()
 
 
+def _cut_value(value):
+    match = re.search(
+        r"(?:explicitly\s+)?not\s+building(?:\s*\([^)]*\))?\s*:\*{0,2}\s*(.+)",
+        value,
+        re.I,
+    )
+    return match.group(1).strip() if match else None
+
+
 def charter_constraints(charter):
-    build_lines = heading_section(charter, lambda h: "the build" in h)
+    build_lines = heading_section(charter, lambda heading: "the build" in heading)
     separate_cut = heading_section(
         charter,
-        lambda h: "explicitly not building" in h or h.startswith("not building"),
+        lambda heading: "explicitly not building" in heading or heading.startswith("not building"),
     )
     features = []
-    cut_lines = []
+    cuts = []
     for raw in build_lines:
-        if not re.match(r"^\s*[-*+]\s+", raw):
+        value = clean_markup(raw)
+        if not value:
             continue
-        value = clean_bullet(raw)
+        cut = _cut_value(value)
         lowered = value.lower()
-        if lowered.startswith("explicitly not building"):
-            cut_lines.append(value.split(":", 1)[-1].strip())
+        if cut:
+            cuts.append(cut)
         elif "demo will not prove" in lowered or "demo does not prove" in lowered:
             continue
         elif lowered.startswith(("build:", "build this:")):
             features.append(value.split(":", 1)[-1].strip())
-        elif lowered.startswith(("for:", "distributed through:")):
-            continue
-        elif value:
+        elif re.match(r"^\s*[-*+]\s+", raw) and not lowered.startswith(("for:", "distributed through:")):
             features.append(value)
     for raw in separate_cut:
-        if re.match(r"^\s*[-*+]\s+", raw):
-            cut_lines.append(clean_bullet(raw))
-    return [item for item in features if item], [item for item in cut_lines if item]
+        value = clean_markup(raw)
+        if value:
+            cuts.append(_cut_value(value) or value)
+    for raw in charter.splitlines():
+        cut = _cut_value(clean_markup(raw))
+        if cut:
+            cuts.append(cut)
+    return _dedupe(features), _dedupe(cuts)
+
+
+def _dedupe(values):
+    out = []
+    seen = set()
+    for value in values:
+        key = re.sub(r"\s+", " ", str(value).strip()).lower()
+        if key and key not in seen:
+            seen.add(key)
+            out.append(str(value).strip())
+    return out
+
+
+def capability_free_reason(charter):
+    match = re.search(
+        r"(?:code\s+)?capability\s+disposition:\*{0,2}\s*capability[-_ ]free\s*[-:]\s*(.+)",
+        charter,
+        re.I,
+    )
+    return match.group(1).strip() if match else None
 
 
 def capabilities_in(text, honor_negation=False):
@@ -177,6 +268,16 @@ def capabilities_in(text, honor_negation=False):
         for name, pattern in CAPABILITY_PATTERNS.items()
         for match in [pattern.search(text)]
         if match
+    }
+
+
+def constraint_record(reason, source="charter:explicit_cut_list"):
+    normalized = re.sub(r"\s+", " ", reason.strip()).lower()
+    return {
+        "constraint_id": sha256_bytes(normalized.encode("utf-8"))[:16],
+        "reason": reason[:600],
+        "capabilities": sorted(capabilities_in(reason)),
+        "source": source,
     }
 
 
@@ -198,10 +299,75 @@ def preregistration_state(charter_path):
     }
 
 
-def build_contract(root, charter_path=None):
+def contract_path(root):
+    return os.path.join(os.path.abspath(root), CONTRACT_PATH)
+
+
+def _git_head_contract(root):
+    try:
+        proc = subprocess.run(
+            ["git", "-C", root, "show", f"HEAD:{CONTRACT_PATH.replace(os.sep, '/')}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        data = json.loads(proc.stdout)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+def _history_contract(root):
+    path = os.path.join(root, HISTORY_PATH)
+    last = None
+    try:
+        with open(path, encoding="utf-8-sig") as handle:
+            for line in handle:
+                if line.strip():
+                    row = json.loads(line)
+                    if isinstance(row, dict):
+                        last = row.get("active_contract")
+    except Exception:
+        return None
+    return last if isinstance(last, dict) else None
+
+
+def prior_contract(root):
+    current = read_json(contract_path(root), None)
+    if isinstance(current, dict):
+        return current
+    history = _history_contract(root)
+    if history:
+        return history
+    return _git_head_contract(root)
+
+
+def _valid_constraint_override(entry, dropped_capabilities, dropped_constraints):
+    override = entry.get("build_contract_override") if isinstance(entry, dict) else None
+    if not isinstance(override, dict):
+        return False, None
+    identity_ok = all(str(override.get(key, "")).strip() for key in (
+        "reviewer", "signature_ref", "note",
+    )) and override.get("basis") == "named_human_override"
+    allowed_caps = {str(value) for value in override.get("allow_removed_capabilities") or []}
+    allowed_constraints = {str(value) for value in override.get("allow_removed_constraint_ids") or []}
+    coverage_ok = set(dropped_capabilities).issubset(allowed_caps) and set(dropped_constraints).issubset(allowed_constraints)
+    return identity_ok and coverage_ok, override
+
+
+def _active_snapshot(contract):
+    return {
+        "forbidden_constraints": contract.get("forbidden_constraints") or [],
+        "forbidden_capabilities": contract.get("forbidden_capabilities") or [],
+        "contract_level": contract.get("contract_level"),
+        "verdict_status": contract.get("verdict_status"),
+    }
+
+
+def build_contract(root, charter_path=None, previous=None):
     root = os.path.abspath(root)
-    charter_path = os.path.abspath(charter_path or os.path.join(root, "charter.md"))
-    charter = read_text(charter_path)
+    charter_path, charter_error = discover_charter(root, charter_path)
+    charter = read_text(charter_path) if charter_path else ""
     entry, decision_path = latest_entry(root)
     packet_path = os.path.join(root, "mvr", "committee_packet.json")
     packet = read_json(packet_path, {})
@@ -218,19 +384,66 @@ def build_contract(root, charter_path=None):
         not_authorized_use = []
 
     features, cut_lines = charter_constraints(charter)
+    constraints = [constraint_record(value) for value in cut_lines]
+    capability_free = capability_free_reason(charter)
+    status_match = re.search(r"\*\*Status:\*\*\s*([^|\n]+)", charter[:1600], re.I)
+    verdict_status = status_match.group(1).strip().lower() if status_match else None
+
+    previous = previous if isinstance(previous, dict) else None
+    prior_constraints = {
+        item.get("constraint_id"): item
+        for item in (previous or {}).get("forbidden_constraints") or []
+        if isinstance(item, dict) and item.get("constraint_id")
+    }
+    prior_capabilities = {
+        item.get("capability"): item
+        for item in (previous or {}).get("forbidden_capabilities") or []
+        if isinstance(item, dict) and item.get("capability")
+    }
+    current_constraint_ids = {item["constraint_id"] for item in constraints}
+    current_capabilities = {
+        capability
+        for item in constraints
+        for capability in item.get("capabilities") or []
+    }
+    dropped_constraints = []
+    for constraint_id, prior_item in prior_constraints.items():
+        if constraint_id in current_constraint_ids:
+            continue
+        prior_item_capabilities = set(prior_item.get("capabilities") or [])
+        if prior_item_capabilities and prior_item_capabilities.issubset(current_capabilities):
+            continue
+        dropped_constraints.append(constraint_id)
+    dropped_constraints = sorted(dropped_constraints)
+    dropped_capabilities = sorted(set(prior_capabilities) - current_capabilities)
+    override_ok, override = _valid_constraint_override(entry, dropped_capabilities, dropped_constraints)
+    weakening_blocked = bool(dropped_constraints or dropped_capabilities) and not override_ok
+    if weakening_blocked:
+        for constraint_id in dropped_constraints:
+            inherited = dict(prior_constraints[constraint_id])
+            inherited["source"] = "history:carried_forward_without_signed_override"
+            constraints.append(inherited)
+        current_constraint_ids = {item["constraint_id"] for item in constraints}
+        current_capabilities = {
+            capability
+            for item in constraints
+            for capability in item.get("capabilities") or []
+        }
+
     forbidden = []
-    seen = set()
-    for line in cut_lines:
-        for capability, signal in capabilities_in(line).items():
-            if capability in seen:
-                continue
-            seen.add(capability)
-            forbidden.append({
-                "capability": capability,
-                "reason": line[:400],
-                "matched_signal": signal,
-                "source": "charter:explicit_cut_list",
-            })
+    for capability in sorted(current_capabilities):
+        reasons = [item["reason"] for item in constraints if capability in item.get("capabilities", [])]
+        forbidden.append({
+            "capability": capability,
+            "reason": reasons[0] if reasons else "carried from charter constraint history",
+            "constraint_ids": [item["constraint_id"] for item in constraints if capability in item.get("capabilities", [])],
+            "source": "charter_or_history",
+        })
+
+    redirect_like = verdict_status in {
+        "redirect", "redirected", "abstain", "abstained", "provisional_not_authorized",
+    }
+    extraction_suspect = bool(redirect_like and not constraints and not capability_free)
 
     claims_sent = packet.get("claims_sent") or []
     proposed = []
@@ -247,11 +460,15 @@ def build_contract(root, charter_path=None):
         for key, value in receipt_map.items()
         if re.fullmatch(r"[0-9a-fA-F]{64}", str(value))
     }
-    prereg = preregistration_state(charter_path) if os.path.exists(charter_path) else {
-        "status": "not_verified", "reason": "charter_missing"
+    prereg = preregistration_state(charter_path) if charter_path else {
+        "status": "not_verified", "reason": charter_error or "charter_missing"
     }
     provisional = bool(packet.get("provisional")) or not receipt_hashes
-    if prereg.get("status") == "verified" and receipt_hashes and not provisional:
+    if extraction_suspect:
+        contract_level = "extraction_suspect"
+    elif weakening_blocked:
+        contract_level = "constraint_weakening_blocked"
+    elif prereg.get("status") == "verified" and receipt_hashes and not provisional:
         contract_level = "frozen_charter_kernel_receipted"
     elif receipt_hashes and not provisional:
         contract_level = "draft_charter_kernel_receipted"
@@ -279,44 +496,83 @@ def build_contract(root, charter_path=None):
                     "required_fields": lane.get("required_fields") or [],
                 })
 
-    status_match = re.search(r"\*\*Status:\*\*\s*([^|\n]+)", charter[:1200], re.I)
+    blocking_reasons = []
+    if charter_error:
+        blocking_reasons.append(charter_error)
+    if extraction_suspect:
+        blocking_reasons.append("redirect-like charter has no extracted cut-list and no explicit capability-free disposition")
+    if weakening_blocked:
+        blocking_reasons.append("previous constraints were removed without a complete named-human override")
+
     return {
-        "format": "mvr_build_contract_v1",
+        "format": CONTRACT_FORMAT,
         "spec_version": SPEC_VERSION,
         "contract_level": contract_level,
-        "verdict_status": status_match.group(1).strip() if status_match else None,
+        "verdict_status": verdict_status,
+        "blocking_reasons": blocking_reasons,
+        "extraction": {
+            "status": "suspect" if extraction_suspect else "complete",
+            "capability_free_reason": capability_free,
+            "cut_line_count": len(cut_lines),
+        },
         "authority": {
             "authorized_claim_classes": authorized_use,
             "not_authorized_claim_classes": not_authorized_use,
             "kernel_receipts_present": receipt_hashes,
             "receipt_verification": "not_performed_offline",
             "verify_command": "python scripts/verify_receipts.py --root . --online-strict",
+            "boundary": "kernel authority covers finite claim classes, not semantic code behavior",
         },
         "charter_preregistration": prereg,
         "source_fingerprints": source_fingerprints,
         "build_features": features,
         "proposed_regulated_capabilities": proposed,
+        "forbidden_constraints": constraints,
         "forbidden_capabilities": forbidden,
+        "constraint_history": {
+            "prior_contract_sha256": canonical_json_digest(_active_snapshot(previous)) if previous else None,
+            "dropped_constraint_ids": dropped_constraints,
+            "dropped_capabilities": dropped_capabilities,
+            "named_human_override_valid": override_ok,
+            "override": override if override_ok else None,
+        },
         "required_instrumentation": required_instrumentation,
+        "semantic_review": {
+            "required": bool(constraints),
+            "request_path": REVIEW_REQUEST_PATH.replace("\\", "/"),
+            "review_path": REVIEW_PATH.replace("\\", "/"),
+            "assurance": "model_attested_not_deterministic_proof",
+        },
         "agent_instruction": (
-            "Implement only build_features. Do not implement forbidden_capabilities. "
-            "Do not convert authorized claim classes into product-capability permission. "
-            "Run twin_build_spec.py --check before commit and export."
+            "Implement only build_features. Treat forbidden_constraints as the fitted build cut-list. "
+            "Run the deterministic tripwire, then obtain a fresh host-model semantic review. "
+            "A clear tripwire alone is not semantic assurance."
         ),
     }
 
 
-def contract_path(root):
-    return os.path.join(os.path.abspath(root), CONTRACT_PATH)
+def _append_history(root, contract):
+    path = os.path.join(root, HISTORY_PATH)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    event = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "contract_sha256": canonical_json_digest(contract),
+        "active_contract": _active_snapshot(contract),
+    }
+    with open(path, "a", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def write_contract(root, charter_path=None):
-    contract = build_contract(root, charter_path)
+    root = os.path.abspath(root)
+    previous = prior_contract(root)
+    contract = build_contract(root, charter_path, previous)
     output = contract_path(root)
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, "w", encoding="utf-8", newline="\n") as handle:
         json.dump(contract, handle, indent=2, ensure_ascii=False)
         handle.write("\n")
+    _append_history(root, contract)
     return contract, output
 
 
@@ -329,10 +585,11 @@ def load_contract(root):
 
 def validate_contract(root, contract):
     errors = []
-    if contract.get("format") != "mvr_build_contract_v1":
+    if contract.get("format") != CONTRACT_FORMAT:
         errors.append("unsupported contract format")
     if contract.get("spec_version") != SPEC_VERSION:
         errors.append("contract version is stale")
+    errors.extend(str(value) for value in contract.get("blocking_reasons") or [])
     fingerprints = contract.get("source_fingerprints") or {}
     if not fingerprints:
         errors.append("source fingerprints are missing")
@@ -344,17 +601,18 @@ def validate_contract(root, contract):
         current = sha256_file(path)
         if current != item["sha256"]:
             errors.append(f"{name} changed after build contract emission")
-    return errors
+    return _dedupe(errors)
 
 
 def is_code_path(path):
-    return os.path.splitext(str(path))[1].lower() in CODE_EXTENSIONS
+    name = os.path.basename(str(path)).lower()
+    return name in CODE_FILENAMES or os.path.splitext(name)[1] in CODE_EXTENSIONS
 
 
 def is_governed_code_path(path):
     normalized = str(path).replace("\\", "/")
     parts = {part.lower() for part in normalized.split("/")}
-    return is_code_path(normalized) and not parts.intersection({"mvr-coding-agent-twin", "mvr-twin"})
+    return is_code_path(normalized) and not parts.intersection({"mvr", "mvr-coding-agent-twin", "mvr-twin"})
 
 
 def iter_code_files(root, targets):
@@ -379,6 +637,7 @@ def iter_code_files(root, targets):
 
 
 def scan_code(root, targets, contract):
+    """Return obvious lexical hits. An empty result is *not* semantic assurance."""
     reasons = {
         item.get("capability"): item.get("reason")
         for item in contract.get("forbidden_capabilities") or []
@@ -391,12 +650,8 @@ def scan_code(root, targets, contract):
         text = read_text(path)
         for line_number, line in enumerate(text.splitlines(), 1):
             stripped = line.strip()
-            comment_only = stripped.startswith(("#", "//", "/*", "*", "<!--"))
-            line_capabilities = capabilities_in(
-                line,
-                honor_negation=comment_only,
-            )
-            for capability, signal in line_capabilities.items():
+            comment_only = stripped.startswith(("#", "//", "/*", "*", "<!--", "--"))
+            for capability, signal in capabilities_in(line, honor_negation=comment_only).items():
                 if capability in reasons:
                     findings.append({
                         "path": os.path.relpath(path, root).replace("\\", "/"),
@@ -404,41 +659,178 @@ def scan_code(root, targets, contract):
                         "capability": capability,
                         "signal": signal,
                         "charter_reason": reasons[capability],
+                        "assurance": "naive_lexical_tripwire",
                     })
     return findings
 
 
+def code_manifest(root, targets):
+    return [
+        {
+            "path": os.path.relpath(path, root).replace("\\", "/"),
+            "sha256": sha256_file(path),
+        }
+        for path in iter_code_files(root, targets)
+    ]
+
+
+def review_request_digest(request):
+    value = dict(request)
+    value.pop("request_sha256", None)
+    return canonical_json_digest(value)
+
+
+def write_review_request(root, targets, contract=None):
+    root = os.path.abspath(root)
+    contract = contract or load_contract(root)
+    errors = validate_contract(root, contract)
+    if errors:
+        raise ValueError("cannot request semantic review from invalid contract: " + "; ".join(errors))
+    files = code_manifest(root, targets)
+    request = {
+        "format": "mvr_semantic_review_request_v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "contract_sha256": canonical_json_digest(contract),
+        "contract_level": contract.get("contract_level"),
+        "forbidden_constraints": contract.get("forbidden_constraints") or [],
+        "files": files,
+        "question": (
+            "Review the listed files semantically, not by keyword. Does any code implement, enable, "
+            "or scaffold a forbidden constraint despite renaming, indirection, configuration, data flow, "
+            "or another file type? Cite file and line for every finding."
+        ),
+        "review_schema": {
+            "format": "mvr_semantic_code_review_v1",
+            "request_sha256": "copy request_sha256 from this request",
+            "reviewer_kind": "host_model | independent_model | human",
+            "reviewer_id": "required stable reviewer or agent id",
+            "model_id": "required for model reviewers",
+            "reviewed_at": "ISO-8601",
+            "verdict": "pass | block",
+            "findings": [{
+                "path": "relative path", "line": 1, "constraint_id": "id",
+                "reason": "behavioral explanation",
+            }],
+            "attestation": "I reviewed behavior against every forbidden constraint in the request.",
+        },
+        "assurance_boundary": (
+            "This is model-attested semantic review, not deterministic proof or kernel authorization."
+        ),
+    }
+    request["request_sha256"] = review_request_digest(request)
+    path = os.path.join(root, REVIEW_REQUEST_PATH)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(request, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    return request, path
+
+
+def validate_semantic_review(root, targets, contract=None):
+    root = os.path.abspath(root)
+    contract = contract or load_contract(root)
+    if not (contract.get("semantic_review") or {}).get("required"):
+        return {"status": "not_required", "errors": [], "verdict": "pass"}
+    request = read_json(os.path.join(root, REVIEW_REQUEST_PATH), None)
+    review = read_json(os.path.join(root, REVIEW_PATH), None)
+    errors = []
+    if not isinstance(request, dict):
+        errors.append("semantic review request is missing")
+        return {"status": "missing", "errors": errors, "verdict": None}
+    if request.get("format") != "mvr_semantic_review_request_v1":
+        errors.append("semantic review request format is invalid")
+    expected_request_hash = review_request_digest(request)
+    if request.get("request_sha256") != expected_request_hash:
+        errors.append("semantic review request hash is invalid")
+    if request.get("contract_sha256") != canonical_json_digest(contract):
+        errors.append("semantic review request targets a different contract")
+    if request.get("files") != code_manifest(root, targets):
+        errors.append("semantic review request is stale for the current code files")
+    if not isinstance(review, dict):
+        errors.append("semantic review is missing")
+        return {"status": "missing", "errors": errors, "verdict": None}
+    if review.get("format") != "mvr_semantic_code_review_v1":
+        errors.append("semantic review format is invalid")
+    if review.get("request_sha256") != expected_request_hash:
+        errors.append("semantic review targets a different request")
+    if review.get("reviewer_kind") not in {"host_model", "independent_model", "human"}:
+        errors.append("semantic review reviewer_kind is invalid")
+    if not str(review.get("reviewer_id", "")).strip():
+        errors.append("semantic review requires reviewer_id")
+    if review.get("reviewer_kind") in {"host_model", "independent_model"} and not str(review.get("model_id", "")).strip():
+        errors.append("semantic model review requires model_id")
+    try:
+        datetime.fromisoformat(str(review.get("reviewed_at", "")).replace("Z", "+00:00"))
+    except Exception:
+        errors.append("semantic review reviewed_at must be ISO-8601")
+    if review.get("verdict") not in {"pass", "block"}:
+        errors.append("semantic review verdict must be pass or block")
+    if review.get("attestation") != "I reviewed behavior against every forbidden constraint in the request.":
+        errors.append("semantic review attestation is missing or altered")
+    findings = review.get("findings")
+    if not isinstance(findings, list):
+        errors.append("semantic review findings must be a list")
+    elif review.get("verdict") == "block" and not findings:
+        errors.append("blocking semantic review requires at least one finding")
+    status = "invalid" if errors else ("current_block" if review.get("verdict") == "block" else "current_pass")
+    return {
+        "status": status,
+        "errors": errors,
+        "verdict": review.get("verdict"),
+        "reviewer_kind": review.get("reviewer_kind"),
+        "reviewer_id": review.get("reviewer_id"),
+        "model_id": review.get("model_id"),
+        "findings": findings if isinstance(findings, list) else [],
+        "assurance": "model_attested_not_deterministic_proof",
+    }
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Bind MVR authority and charter constraints into code generation.")
+    parser = argparse.ArgumentParser(description="Freeze MVR build constraints and run code tripwire/review checks.")
     parser.add_argument("--root", default=os.getcwd())
     parser.add_argument("--emit", action="store_true")
     parser.add_argument("--check", nargs="+", metavar="PATH")
+    parser.add_argument("--review-request", nargs="+", metavar="PATH")
+    parser.add_argument("--require-semantic-review", action="store_true")
     args = parser.parse_args()
     root = os.path.abspath(args.root)
 
-    if args.emit or not args.check:
+    if args.emit or (not args.check and not args.review_request):
         contract, output = write_contract(root)
-        print(f"MVR BUILD CONTRACT: wrote {output}")
+        print(f"MVR BUILD CONSTRAINT CONTRACT: wrote {output}")
         print(f"  level: {contract['contract_level']}")
-        print(f"  build features: {len(contract['build_features'])}")
-        print(f"  forbidden capabilities: {[item['capability'] for item in contract['forbidden_capabilities']]}")
+        print(f"  cut-list constraints: {len(contract['forbidden_constraints'])}")
+        print(f"  naive capability tripwires: {[item['capability'] for item in contract['forbidden_capabilities']]}")
+        if contract.get("blocking_reasons"):
+            print("MVR BUILD CONSTRAINT BLOCK: " + "; ".join(contract["blocking_reasons"]), file=sys.stderr)
+            return 2
+
+    if args.review_request:
+        try:
+            request, path = write_review_request(root, args.review_request)
+        except (ValueError, OSError) as exc:
+            print(f"MVR SEMANTIC REVIEW REQUEST BLOCK: {exc}", file=sys.stderr)
+            return 2
+        print(f"MVR SEMANTIC REVIEW REQUEST: wrote {path}")
+        print(f"  files: {len(request['files'])} | request_sha256: {request['request_sha256']}")
+        print("  Host model: review the exact files, then write mvr/semantic-review.json using review_schema.")
 
     if args.check:
         try:
             contract = load_contract(root)
         except ValueError as exc:
-            print(f"MVR BUILD CONTRACT BLOCK: {exc}", file=sys.stderr)
+            print(f"MVR BUILD CONSTRAINT BLOCK: {exc}", file=sys.stderr)
             return 2
         errors = validate_contract(root, contract)
         if errors:
-            print("MVR BUILD CONTRACT BLOCK: contract is stale or malformed:", file=sys.stderr)
+            print("MVR BUILD CONSTRAINT BLOCK: contract is stale, weakened, or malformed:", file=sys.stderr)
             for error in errors:
                 print(f"  - {error}", file=sys.stderr)
             print("Regenerate with: python scripts/twin_build_spec.py --root . --emit", file=sys.stderr)
             return 2
         findings = scan_code(root, args.check, contract)
         if findings:
-            print("MVR BUILD CONTRACT BLOCK: redirected-away capability found in code:", file=sys.stderr)
+            print("MVR NAIVE-CAPABILITY TRIPWIRE HIT:", file=sys.stderr)
             for item in findings[:80]:
                 print(
                     f"  {item['path']}:{item['line']} {item['capability']} via {item['signal']!r}\n"
@@ -446,7 +838,28 @@ def main():
                     file=sys.stderr,
                 )
             return 1
-        print(f"MVR BUILD CONTRACT PASS: {len(list(iter_code_files(root, args.check)))} code file(s) checked.")
+        print(
+            f"MVR NAIVE-CAPABILITY TRIPWIRE CLEAR: {len(list(iter_code_files(root, args.check)))} "
+            "code file(s) checked. This is NOT semantic assurance."
+        )
+        if args.require_semantic_review:
+            review = validate_semantic_review(root, args.check, contract)
+            if review["status"] != "current_pass":
+                print("MVR SEMANTIC REVIEW BLOCK:", file=sys.stderr)
+                for error in review.get("errors") or ["review verdict is block"]:
+                    print(f"  - {error}", file=sys.stderr)
+                for finding in review.get("findings") or []:
+                    print(f"  - {finding}", file=sys.stderr)
+                print(
+                    "Run --review-request for the exact paths, then have the host model write "
+                    "mvr/semantic-review.json.",
+                    file=sys.stderr,
+                )
+                return 3
+            print(
+                f"MVR SEMANTIC REVIEW CURRENT: {review.get('reviewer_kind')} "
+                f"{review.get('model_id') or ''}. Model-attested; not deterministic proof."
+            )
     return 0
 
 

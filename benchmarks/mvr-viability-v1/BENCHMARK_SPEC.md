@@ -75,3 +75,7 @@ Report two bars separately:
 - Full-system bar: requires `kernel_verified` treatment outputs, blind separate-arm authorship, symmetric verdict collection with zero `legacy_heuristic` rows, plus the same delta and guardrails.
 
 Anything less is either no value or value bought with over-caution, fabrication, or false confidence.
+
+## 8. Capability-Level Extension (not yet earned)
+
+The 12-case benchmark is controlled-beta evidence. A Fable-class or frontier-parity claim requires a successor run with at least 50 blind cases across at least three market families and three arms: host alone, host plus doctrine/research without kernel access, and host plus the full Twin. Every arm must preserve opaque agent ID, exact prompt, start/end timestamps, and hashes of every artifact. Score verdict quality, semantic code-constraint detection, evidence discipline, calibration honesty, false positives, false negatives, token cost, and wall time. Publish misses and per-axis ablation deltas, not only the aggregate headline.

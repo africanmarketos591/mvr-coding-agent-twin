@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 
 GATE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "hooks", "pre_commit_claim_gate.py"))
 BUILD_SPEC = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "twin_build_spec.py"))
+sys.path.insert(0, os.path.dirname(BUILD_SPEC))
+import twin_build_spec as build_spec  # noqa: E402
 FAILS = []
 
 
@@ -21,6 +23,24 @@ def run_gate(repo):
     p = subprocess.run([sys.executable, GATE], capture_output=True, text=True, cwd=repo,
                        env=dict(os.environ, CLAUDE_PROJECT_DIR=repo))
     return p.returncode, p.stderr
+
+
+def semantic_pass(repo, targets):
+    contract = build_spec.load_contract(repo)
+    request, _ = build_spec.write_review_request(repo, targets, contract)
+    review = {
+        "format": "mvr_semantic_code_review_v1",
+        "request_sha256": request["request_sha256"],
+        "reviewer_kind": "host_model",
+        "reviewer_id": "precommit-test-session",
+        "model_id": "precommit-test-model",
+        "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        "verdict": "pass",
+        "findings": [],
+        "attestation": "I reviewed behavior against every forbidden constraint in the request.",
+    }
+    with open(os.path.join(repo, build_spec.REVIEW_PATH), "w", encoding="utf-8") as handle:
+        json.dump(review, handle)
 
 
 def main():
@@ -120,7 +140,7 @@ def main():
         check("pre-commit override receipted distinctly",
               any(e.get("tool") == "git-pre-commit" and e.get("event") == "allow_override_claim" and e.get("entry_id") == "DL-4" for e in events))
 
-    # The authority-to-code contract is mandatory once a root charter and code coexist.
+    # The build-constraint contract and semantic review are mandatory once a Twin case and code coexist.
     with tempfile.TemporaryDirectory() as d:
         git(d, "init", "-q")
         git(d, "config", "user.email", "t@t.t"); git(d, "config", "user.name", "t")
@@ -150,16 +170,18 @@ def main():
             [sys.executable, BUILD_SPEC, "--root", d, "--emit"],
             capture_output=True, text=True,
         )
-        git(d, "add", "mvr/build_spec.json")
-        rc, _ = run_gate(d)
-        check("current build contract permits fitted code", emitted.returncode == 0 and rc == 0)
+        semantic_pass(d, ["src/app.py"])
+        git(d, "add", "mvr/build_spec.json", "mvr/build-contract-history.jsonl",
+            "mvr/semantic-review-request.json", "mvr/semantic-review.json")
+        rc, err = run_gate(d)
+        check("current build contract permits fitted code", emitted.returncode == 0 and rc == 0, err)
 
         open(os.path.join(d, "src", "app.py"), "w").write(
             "def approve_loan(user): return issue_loan(user)\n"
         )
         git(d, "add", "src/app.py")
         rc, err = run_gate(d)
-        check("build contract blocks redirected capability at commit", rc == 1 and "digital_lending" in err)
+        check("tripwire blocks obvious redirected capability at commit", rc == 1 and "digital_lending" in err)
 
         open(os.path.join(d, "src", "app.py"), "w").write("def ledger(): return True\n")
         open(os.path.join(d, "charter.md"), "a").write("Changed constraint.\n")
