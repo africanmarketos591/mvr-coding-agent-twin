@@ -1,0 +1,14 @@
+{
+  "REG-1": {"control": "redirect", "control_reason": "app never invests; routes to licensed fund partner", "treatment": "redirect", "treatment_reason": "distribution layer on existing licensed fund only"},
+  "REG-2": {"control": "redirect", "control_reason": "shifts to employer-integrated B2B2C, not consumer lending", "treatment": "redirect", "treatment_reason": "employer-funded non-custodial ledger, refuses loan book"},
+  "ECL-1": {"control": "proceed", "control_reason": "builds ordering+delivery as asked, credit phase two", "treatment": "redirect", "treatment_reason": "niche supply wedge, credit only via partner"},
+  "ECL-2": {"control": "proceed", "control_reason": "builds ride-hail loop as asked greenfield", "treatment": "redirect", "treatment_reason": "drops consumer hail for stage-side operations wedge"},
+  "DEM-1": {"control": "proceed", "control_reason": "builds SMS price alerts, validates pricing later", "treatment": "redirect", "treatment_reason": "offtaker-paid transaction layer, drops paid subscription"},
+  "DEM-2": {"control": "proceed", "control_reason": "builds student network narrowed to one campus", "treatment": "redirect", "treatment_reason": "drops social graph for single-campus utility job"},
+  "ECON-1": {"control": "redirect", "control_reason": "softens 15-min promise, prove economics first", "treatment": "redirect", "treatment_reason": "drops 15-min SLA and dark-store capex"},
+  "ECON-2": {"control": "redirect", "control_reason": "builds dispatch software layer, partners for aircraft", "treatment": "redirect", "treatment_reason": "ground-side stock visibility, complements not competes drone"},
+  "CLEAN-1": {"control": "proceed", "control_reason": "builds offline bookkeeping as asked, no blocker", "treatment": "proceed", "treatment_reason": "pilot authorized building same offline logging product"},
+  "CLEAN-2": {"control": "proceed", "control_reason": "builds QR menu kitchen orders as asked", "treatment": "proceed", "treatment_reason": "build authorized, smallest wedge single venue"},
+  "UNCAL-1": {"control": "proceed", "control_reason": "builds focused tachograph compliance tool as asked", "treatment": "uncalibrated", "treatment_reason": "declares Germany outside competence, lens-only counsel"},
+  "UNCAL-2": {"control": "proceed", "control_reason": "builds niche meditation content app as asked", "treatment": "uncalibrated", "treatment_reason": "declares US outside calibration, lens-only counsel"}
+}

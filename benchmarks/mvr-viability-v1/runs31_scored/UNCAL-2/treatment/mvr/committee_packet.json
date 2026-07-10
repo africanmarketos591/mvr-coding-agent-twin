@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-07-10T05:08:39.305824+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "creator_economy_individual"
+  ],
+  "subject": "Guided meditation and sleep subscription app for the US market",
+  "market_scope": "US",
+  "claims_sent": [
+    "US consumers will subscribe to a guided meditation and sleep app"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "influencer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "narrative_looping",
+        "cultural_calibration",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "retailer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "channel_permission",
+        "embeddedness",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "US consumers will subscribe to a guided meditation and sleep app",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "8e5c463b9c9d113457e7595acf13046593ac5a9d9be37ce322771086a639b125",
+    "provenance_hash": "c5f1c93db608f0f22ce94f4df317cc1bf0cabd3eab0e290059cddd401d457a2a",
+    "response_hash": "90534ee245795277bc6202863be4adc484fc5c2a21a9cafff0ee540045164cbb"
+  }
+}

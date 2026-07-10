@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-07-10T05:07:40.246936+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "agritech_aggregator"
+  ],
+  "subject": "SMS crop market-price alerts for smallholder farmers",
+  "market_scope": "KE",
+  "claims_sent": [
+    "Smallholder farmers will pay ~20 KES per week for daily SMS crop price alerts"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "farmer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "embeddedness",
+        "continuity",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "distributor",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "trust",
+        "continuity",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "beneficiary",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "absence_sensitivity",
+        "permission",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "public_official",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "Smallholder farmers will pay ~20 KES per week for daily SMS crop price alerts",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "4c6dda1c1aa2ad756ad636cb526ad14234a74143413669b28128c4293320bcc5",
+    "provenance_hash": "0a9ab4bd5eb16f4bbd24426c8dc1a5ad2c62135daab94f5431a04694862e68e4",
+    "response_hash": "7d7e18e24edc07845c0f6b60ff7c84807e9abd6baccc70efcd79b7a64e3b2bd3"
+  }
+}

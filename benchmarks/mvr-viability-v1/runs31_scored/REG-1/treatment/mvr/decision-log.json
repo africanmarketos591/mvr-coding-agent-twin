@@ -1,0 +1,31 @@
+[
+  {
+    "entry_id": "DL-042c5167-4d4a-4c25-a425-45d40f5cb239",
+    "timestamp": "2026-07-10T05:09:11.874034+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "charter.md",
+    "archetype": "fintech_platform",
+    "market_scope": "KE",
+    "redirect_pattern": "<model sets if redirected>",
+    "verdict": "abstained",
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "kernel_receipts": {
+      "immutable_audit_hash": "180de665180f55232c33edff79a65fa15589432152dafa717ea7dda46e5fc7d4",
+      "provenance_hash": "6b74f299f51910f1c379b8ec244b48de662d2d937f0045c8ba8c0350b65d5cec",
+      "response_hash": "41aab9acc081414edb2ee07072878dab2b0fc5845040dfd3e07fff25183ffc07"
+    },
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting",
+        "partnership_claims"
+      ]
+    }
+  }
+]

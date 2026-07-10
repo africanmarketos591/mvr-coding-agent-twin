@@ -1,0 +1,200 @@
+{
+  "status": "ok",
+  "entity_archetype": "agritech_aggregator",
+  "label": "Agritech aggregator (smallholder <-> off-taker)",
+  "category_risks": [
+    "localized trust",
+    "permission to operate",
+    "channel acceptance",
+    "guardian alignment"
+  ],
+  "required_public_metrics": [
+    "regulatory_authorization_status",
+    "years_in_operation",
+    "active_farmers_k",
+    "active_producing_farmers_k",
+    "off_taker_contracts_count",
+    "digital_platform_uptime_pct",
+    "collection_network_coverage_score",
+    "seasonal_fulfilment_rate_pct",
+    "input_repayment_rate_pct",
+    "post_harvest_loss_pct",
+    "active_collection_points",
+    "reputation_index_score"
+  ],
+  "required_local_evidence": [
+    {
+      "stakeholder_class": "farmer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "embeddedness",
+        "continuity",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "distributor",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "trust",
+        "continuity",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "beneficiary",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "absence_sensitivity",
+        "permission",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "public_official",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    }
+  ],
+  "minimum_guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "recommended_telemetry_sources": [
+    {
+      "source_type": "hris",
+      "label": "HRIS",
+      "accepted_metrics": [
+        "staff_churn_rate",
+        "local_staff_turnover_pct"
+      ],
+      "default_stakeholder_class": "internal_operations"
+    },
+    {
+      "source_type": "erp_inventory",
+      "label": "ERP / Inventory",
+      "accepted_metrics": [
+        "inventory_stockout_freq",
+        "service_downtime_hours"
+      ],
+      "default_stakeholder_class": "distributor"
+    },
+    {
+      "source_type": "compliance",
+      "label": "Compliance",
+      "accepted_metrics": [
+        "compliance_incident_rate",
+        "regulatory_fines_usd",
+        "total_revenue_usd",
+        "fraud_chargeback_rate"
+      ],
+      "default_stakeholder_class": "guardian"
+    },
+    {
+      "source_type": "program_monitoring",
+      "label": "Program monitoring",
+      "accepted_metrics": [
+        "beneficiary_satisfaction_score",
+        "service_delivery_completion_pct",
+        "community_satisfaction_score",
+        "complaint_resolution_rate_pct",
+        "safeguarding_incident_rate"
+      ],
+      "default_stakeholder_class": "beneficiary"
+    },
+    {
+      "source_type": "fleet_operations",
+      "label": "Fleet operations",
+      "accepted_metrics": [
+        "on_time_delivery_pct",
+        "delivery_failure_rate_pct",
+        "route_completion_rate_pct",
+        "vehicle_downtime_pct"
+      ],
+      "default_stakeholder_class": "distributor"
+    },
+    {
+      "source_type": "field_operations",
+      "label": "Field operations",
+      "accepted_metrics": [
+        "field_visit_completion_pct",
+        "issue_resolution_rate_pct",
+        "community_satisfaction_score",
+        "regulatory_compliance_score",
+        "agent_count",
+        "active_agents",
+        "coverage_zones",
+        "avg_daily_transactions",
+        "complaint_rate_pct"
+      ],
+      "default_stakeholder_class": "internal_operations"
+    }
+  ],
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "failure_modes": [
+    "public reality looks strong but local relational evidence is thin",
+    "guardian veto emerges late",
+    "channel economics fail under stress"
+  ],
+  "response_meta": {
+    "model_version": "v6.32.0",
+    "evaluated_at": "2026-07-10T05:07:39.427Z",
+    "registry_snapshot_id": "v6.32.0:registry",
+    "release_channel": "stable"
+  },
+  "response_contract_version": "2026-05-01.v1"
+}

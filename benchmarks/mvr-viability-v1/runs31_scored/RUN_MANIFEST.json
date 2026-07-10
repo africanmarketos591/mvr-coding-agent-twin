@@ -1,0 +1,43 @@
+{
+  "benchmark": "MVR-VIABILITY-BENCH v1",
+  "twin_version": "1.1.0-beta.31",
+  "run_type": "BLIND two-agent",
+  "date": "2026-07-10T05:20:32.387201+00:00",
+  "arm_authorship": {
+    "control": "independent blind subagent (agent alone, no Twin), given only neutral briefs, forbidden from reading any answer-key/mapping/score file",
+    "treatment": "independent blind subagent (agent + MVR Twin beta.31, live kernel), given only neutral briefs, forbidden from reading any answer-key/mapping/score file",
+    "orchestrator": "did NOT author either arm; held the key and scored only"
+  },
+  "blinding": "cases relabeled to shuffled neutral ids (c01..c12); category/verdict never exposed to arms; mapping kept private",
+  "answer_key_sha256": "7adcca33572420123e0a89f81f5ab69ce8dc30e44d9e598a793e01075ba2e793",
+  "scorer": [
+    "score_benchmark.py v1.2",
+    "score_benchmark_v13.py (ledger-verified receipts)"
+  ],
+  "scanner_version": "1.1.0-beta.31",
+  "results": {
+    "keyword_scorer": {
+      "control_vgs": 27.6,
+      "treatment_vgs": 87.5,
+      "delta": 59.9,
+      "note": "asymmetric verdict read; inflated"
+    },
+    "blind_judge_symmetric": {
+      "control_vgs": 43.6,
+      "treatment_vgs": 89.8,
+      "delta": 46.2,
+      "note": "CITABLE headline"
+    },
+    "fabrication": {
+      "control": 0,
+      "treatment": 0
+    },
+    "false_calibration": {
+      "control": 2,
+      "treatment": 0
+    },
+    "treatment_receipts": "12/12 ledger-verified (immutable_audit_hash)",
+    "judge": "third independent blind subagent; verdicts in _judge_verdicts.json",
+    "edge_concentration": "eclipse (ECL-1/2), demand-illusion (DEM-1/2), calibration-honesty (UNCAL-1/2); ties on named-regulation, unit-econ, clean"
+  }
+}

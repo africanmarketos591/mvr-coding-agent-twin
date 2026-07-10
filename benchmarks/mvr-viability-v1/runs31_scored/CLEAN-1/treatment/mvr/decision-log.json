@@ -1,0 +1,31 @@
+[
+  {
+    "entry_id": "DL-f34b6da3-4c45-4c36-9dbd-07b426c1b48d",
+    "timestamp": "2026-07-10T05:08:30.830475+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "charter.md",
+    "archetype": "b2b_saas_platform",
+    "market_scope": "KE",
+    "redirect_pattern": "<model sets if redirected>",
+    "verdict": "abstained",
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "kernel_receipts": {
+      "immutable_audit_hash": "c1833930e0e02bfeb931f18686194b802d5fc2c69ad88a34c1259327ec6a5690",
+      "provenance_hash": "f0791f48509c1bfc757abff66022dfaddbec45bc4a95eb192c40d62e953833ef",
+      "response_hash": "33b8f6b6a4dc52e49173a1c0ede631858d0679135eab1605099fe995ecb647a2"
+    },
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting",
+        "partnership_claims"
+      ]
+    }
+  }
+]

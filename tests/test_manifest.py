@@ -24,6 +24,7 @@ def main():
         os.makedirs(os.path.join(d, "mvr"))
         open(os.path.join(d, "mvr", "state.json"), "w", encoding="utf-8").write("{}\n")
         out = os.path.join(d, "HASH_MANIFEST_test-version.json")
+        open(out, "w", encoding="utf-8").write("{\"old\": true}\n")
         manifest = generate_manifest.build_manifest(d)
         generate_manifest.write_manifest(manifest, out)
 
@@ -31,8 +32,16 @@ def main():
         check("manifest has no UTF-8 BOM", not raw.startswith(b"\xef\xbb\xbf"))
         parsed = json.loads(raw.decode("utf-8"))
         check("strict JSON parse succeeds", parsed["version"] == "test-version")
+        check("canonical text hash mode declared", parsed["hash_mode"] == "sha256-canonical-lf-text-v1")
         check("runtime mvr/state.json excluded", "mvr\\state.json" not in parsed["files"])
         check("normal files included", "README.md" in parsed["files"])
+        check("manifest never hashes itself", "HASH_MANIFEST_test-version.json" not in parsed["files"])
+
+        crlf = os.path.join(d, "line-endings.txt")
+        open(crlf, "wb").write(b"first\r\nsecond\r\n")
+        crlf_hash = generate_manifest.sha256(crlf)
+        open(crlf, "wb").write(b"first\nsecond\n")
+        check("LF and CRLF release text hash identically", generate_manifest.sha256(crlf) == crlf_hash)
 
     print()
     if FAILS:

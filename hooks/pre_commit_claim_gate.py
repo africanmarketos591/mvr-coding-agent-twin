@@ -22,6 +22,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from claim_gate import MAX_LOG_AGE_DAYS, audit, authorization_result, classify_escalating_content, classify_path  # noqa: E402
 from claim_scan_policy import binary_claim_carrier  # noqa: E402
 
+SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts")
+sys.path.insert(0, SCRIPTS_DIR)
+from twin_build_spec import (  # noqa: E402
+    contract_path,
+    is_governed_code_path,
+    load_contract,
+    scan_code,
+    validate_contract,
+)
+
 from datetime import datetime, timezone, timedelta  # noqa: E402
 
 
@@ -61,6 +71,55 @@ def fail(root, claim_class, path, reason_code, msg):
     sys.exit(1)
 
 
+def enforce_build_contract(root, paths):
+    """Bind staged code to the current charter instead of relying on model memory."""
+    code_paths = [path for path in paths if is_governed_code_path(path)]
+    if not code_paths or not os.path.exists(os.path.join(root, "charter.md")):
+        return
+    if not os.path.exists(contract_path(root)):
+        fail(
+            root,
+            "build_contract",
+            code_paths[0],
+            "build_contract_missing",
+            "a root charter.md exists and shippable code is staged, but mvr/build_spec.json is missing. "
+            "Run scripts/twin_build_spec.py --root . --emit (or preregister.py --in-place charter.md), "
+            "then stage the contract with the code.",
+        )
+    try:
+        contract = load_contract(root)
+    except ValueError as exc:
+        fail(root, "build_contract", code_paths[0], "build_contract_unreadable", str(exc))
+    errors = validate_contract(root, contract)
+    if errors:
+        fail(
+            root,
+            "build_contract",
+            code_paths[0],
+            "build_contract_stale",
+            "mvr/build_spec.json no longer matches its governed inputs: "
+            + "; ".join(errors)
+            + ". Regenerate it before committing code.",
+        )
+    findings = scan_code(root, code_paths, contract)
+    if findings:
+        first = findings[0]
+        fail(
+            root,
+            "build_contract",
+            first["path"],
+            "forbidden_capability_in_code",
+            f"staged code implements redirected-away capability '{first['capability']}' "
+            f"via {first['signal']!r}. Charter reason: {first['charter_reason']}",
+        )
+    audit(root, {
+        "event": "build_contract_pass",
+        "paths_checked": code_paths,
+        "contract_level": contract.get("contract_level"),
+        "tool": "git-pre-commit",
+    })
+
+
 def main():
     root = repo_root()
     paths = staged_paths()
@@ -82,6 +141,8 @@ def main():
                 "If it carries investor, rollout, board, partnership, credit, or regulated-market claims, "
                 "move it under claims/ and run PRE-CLAIM.\n"
             )
+
+    enforce_build_contract(root, paths)
 
     claim_files = [(p, classify_path(p)) for p in paths]
     claim_files = [(p, c) for p, c in claim_files if c]

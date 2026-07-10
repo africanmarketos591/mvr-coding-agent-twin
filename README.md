@@ -67,7 +67,7 @@ Release boundary:
 - Good to prepare a controlled beta or named developer preview.
 - Do not present the public free install as the full Twin until the free-tier Skeptic decision above is resolved.
 - Do not onboard beta users until citation discipline is active: named incumbents, regulations, figures, and failure precedents need source/date or `UNKNOWN - not verified`.
-- Every beta Build Charter starts the Consequence Ledger; preregister from charter #1 and verify with `python scripts/preregister.py --verify <charter.md>`.
+- Every beta Build Charter starts the Consequence Ledger; preregister from charter #1 with `python scripts/preregister.py --in-place charter.md`, retain the emitted build contract, and verify with `python scripts/preregister.py --verify charter.md`.
 - Do not claim global portability. The package downgrades to lens-only outside calibrated African/high-context markets.
 - Do not sell signed/certified artifacts until the D6 reviewer/signature role is filled.
 
@@ -92,6 +92,7 @@ Release boundary:
 - **Draft settlement from usage:** `scripts/twin_settlement_read.py` reads aggregate telemetry and writes `mvr/settlement-draft.json` for human countersign. It never writes `settled=true`, never appends hit/miss by itself, and requires field corroboration before stronger claims.
 - **Outcome-delta visibility:** `scripts/twin_scorecard.py` reflects reviewed settlements as Twin-vs-solo survival rates. It is an adoption/value dashboard, not a kernel calibration input.
 - **Delta Report:** `scripts/twin_delta_report.py` writes `MVR_DELTA_REPORT.md` after a build so the user can see what changed versus an unconstrained build. It grounds authorization in `mvr/decision-log.json` and labels the counterfactual as a hypothesis.
+- **Authority-to-code contract:** `scripts/twin_build_spec.py` compiles the fitted charter, kernel claim-authorization envelope, explicit cut list, and evidence bill into `mvr/build_spec.json`. It fingerprints every governed input, so changed market judgment makes the old contract stale, and the git gate blocks staged code that reintroduces a redirected-away capability. Kernel claim authorization and charter implementation constraints remain explicitly separate.
 - **Product-surface fabrication scan:** `scripts/twin_fabrication_scan.py` runs before export and flags unhedged licence numbers, licensed partners, hard fee/capital/cover figures, and unauthorized regulated capabilities in demos/plans/source files and founder-facing fieldkit artifacts that are not backed by current-format evidence or local Twin authorization. With no `--targets`, it scans root product docs, `mvr/fieldkit/gate_costs.md`, `mvr/fieldkit/NEXT_ACTIONS.md`, and common app folders such as `src`, `app`, `frontend`, `backend`, `scaffold`, and `*-app`.
 - **Outbound egress scanning:** `adapters/egress_scanner.py` exposes the same classifier for MCP proxies, CI publish steps, and webhook wrappers. It scans; the host enforces.
 - **Outcome priors:** `scripts/build_priors.py` can turn settled decision-log entries into `governance/outcome_priors.json` for PRE-CHARTER reading. These priors are advisory only; they do not mutate the kernel, authorize claims, or replace calibrated API-side learning. Real buckets require `archetype`, `market_scope`, and `redirect_pattern` in the decision log.
@@ -120,6 +121,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `CLAUDE.md` — the Twin core: laws, committee protocol, checkpoints, refusal boundaries. **Read this first.**
 - `llms.txt` — machine-readable entrypoint for AI agents and fetchers.
 - `REPLICATION_RECEIPTS.md` — public-safe verification record with misses and remaining limits.
+- `benchmarks/mvr-viability-v1/` — public 12-case blind-run artifacts, answer key, symmetric judge record, ledger-aware scorer, and the explicit authorship-reconstruction limitation.
 - `hooks/heartbeat.py` + `memory/state.format.md` — the real-time counsel channel (see protocol section above); tested in `tests/test_heartbeat.py` (8/8).
 - `hooks/response_claim_sentinel.py` — optional final-response/Stop-hook counsel for claim-shaped assistant prose; writes advisory receipts, never blocks.
 - `hooks/claim_scan_policy.py` — hardened content-scan policy shared by the harness and git gates; covers document/data/notebook claim carriers and root-only safe filename rules.
@@ -134,7 +136,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `memory/passport.schema.json` — Operator Passport v0 (inferred → mirror-corrected → attestation-upgradeable via `/v1/field-signal/*`).
 - `memory/decision-log.format.md` — append-only machine-readable log; the claim gate reads `mvr/decision-log.json`.
 - `templates/BUILD_CHARTER.template.md`, `templates/MIRROR.template.md`, `templates/PASSPORT.template.json`.
-- `scripts/preregister.py` — computes a canonical charter hash, verifies embedded hashes, and emits the anchor block plus decision-log skeleton (Wayback/Zenodo/git per the Preregistration Protocol). A hash is not valid unless `--verify` passes after the final header is inserted.
+- `scripts/preregister.py` — computes a canonical charter hash, verifies embedded hashes, emits the anchor block plus decision-log skeleton, and with `--in-place charter.md` automatically emits the authority-to-code contract. A hash is not valid unless `--verify` passes after the final header is inserted.
 - `scripts/run_smoke_from_keyfile.py` + `scripts/keyfile_loader.py` — internal rehearsal helper for local key files; prevents label-slug extraction from masquerading as an enterprise key.
 - `scripts/generate_manifest.py` — strict UTF-8 no-BOM manifest generator for release parity checks.
 - `scripts/verify_receipts.py` — PRE-EXPORT kernel receipt verifier; confirms authority hashes against the live ledger route.
@@ -150,6 +152,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/twin_settlement_read.py` — reads product telemetry into a draft-only settlement suggestion; never auto-settles.
 - `scripts/twin_scorecard.py` — renders outcome delta from reviewed settlement entries.
 - `scripts/twin_delta_report.py` — renders the per-build Delta Report from `charter.md` and `mvr/decision-log.json`.
+- `scripts/twin_build_spec.py` — emits and checks the stale-resistant authority-to-code contract in `mvr/build_spec.json`.
 - `scripts/twin_fabrication_scan.py` — PRE-EXPORT scanner for fabricated-as-real credentials, licensed partners, and fee/capital figures in shippable surfaces.
 - `scripts/settle.py` — settlement pulse runner: emits the quarterly public-record checklist per charter; silence-detection notes for instrumented builds.
 - `scripts/settlement_daemon.py` + `adapters/pulse_collectors.py` — schedulable draft-only settlement pulse collector; never auto-settles.
@@ -157,7 +160,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `adapters/egress_scanner.py` — reusable outbound scanner for host/proxy egress enforcement.
 - `scripts/build_priors.py` — advisory local prior builder from settled decision logs; outputs `governance/outcome_priors.json` without mutating kernel calibration or authorizing claims.
 - `tests/smoke_test.py` — live kernel round-trip; `tests/test_claim_gate.py` — hook logic, offline.
-- `tests/test_preregister.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration integrity and safe key-file parsing.
+- `tests/test_preregister.py`, `tests/test_twin_build_spec.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration integrity, authority-to-code enforcement, and safe key-file parsing.
 - `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_passport_check.py` — adversarial scan-policy and Operator Passport gate coverage.
 - `tests/test_twin_committee.py` — one-command committee regression coverage, including outage/provisional behavior.
 - `tests/test_twin_attest.py`, `tests/test_twin_home.py`, `tests/test_twin_public_research.py` — attestation, cross-project memory, and public-source ledger coverage.

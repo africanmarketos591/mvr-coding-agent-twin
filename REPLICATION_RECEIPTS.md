@@ -30,6 +30,7 @@ Not yet claimed:
 - Ledger inflation is mechanically rejected.
 - Manifest generation is Python-only, strict UTF-8, no BOM.
 - Internal key-file parsing ignores human labels and accepts only explicit key fields.
+- The authority-to-code contract blocks code that reintroduces a capability explicitly removed by the frozen charter, and invalidates itself when governed inputs change.
 
 ## Rehearsal Runs
 
@@ -63,6 +64,16 @@ Ledger status:
 
 Not yet fully preregistered until public git and Wayback anchors are recorded through `scripts/ledger_audit.py --add-anchor`.
 
+### MVR-VIABILITY-BENCH v1 Blind Two-Agent Run
+
+Result: control 43.6, treatment 89.8, delta +46.2 on 12 cases under a symmetric blind-judge verdict pass.
+
+Integrity results: treatment fabrication 0; treatment false-calibration 0; treatment receipts 12/12 verified live against the kernel ledger. The earlier keyword score of +59.9 is rejected because it interpreted control and treatment asymmetrically.
+
+The raw arms, answer key, judge record, manifest, scorer, and full review are published under `benchmarks/mvr-viability-v1/`. Codex independently reran the packaged scorer and reproduced the corrected headline exactly.
+
+Validity limit: separate blind authorship is attested in the run manifest, but the preserved package lacks immutable agent-run IDs and full orchestration transcripts. This is strong controlled-beta evidence, not yet independently peer-audited science. The next run must preserve opaque agent IDs, prompts, timestamps, and artifact hashes.
+
 ## Defect Classes Found And Closed
 
 - Hook matcher gap.
@@ -76,15 +87,17 @@ Not yet fully preregistered until public git and Wayback anchors are recorded th
 - Duplicate preregistration header ambiguity.
 - Ledger preregistration inflation risk.
 - Manifest UTF-8 BOM/release-process risk.
+- Code-generation drift after a correct charter.
+- Stale charter/decision-log authority surviving into later code.
+- Benchmark verdict asymmetry between structured treatment artifacts and control prose.
 
 Each class now has a tool, test, or binding rule intended to prevent recurrence.
 
 ## Remaining Human Gates
 
-- Public git + Wayback anchors for rehearsal charters.
-- Founder decision on TWIN-scoped/free-tier Skeptic access.
-- D6 reviewer/signature role.
-- Separated Round-3 human operator and scorer.
-- First external cohort or accelerator run.
+- Wayback/second anchors for rehearsal charters where still pending.
+- D6 reviewer/signature role before signed or certified artifacts are sold.
+- First external user cohort and the preregistered Absence Test.
+- Independent human scoring of a future benchmark run with immutable run identities.
 
 The next meaningful evidence should come from an outside user's charter, not another internal review.

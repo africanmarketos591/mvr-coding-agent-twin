@@ -3,6 +3,7 @@ import json, os, subprocess, sys, tempfile
 from datetime import datetime, timezone
 
 GATE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "hooks", "pre_commit_claim_gate.py"))
+BUILD_SPEC = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "twin_build_spec.py"))
 FAILS = []
 
 
@@ -118,6 +119,53 @@ def main():
         check("pre-commit explicit override allowed", rc == 0)
         check("pre-commit override receipted distinctly",
               any(e.get("tool") == "git-pre-commit" and e.get("event") == "allow_override_claim" and e.get("entry_id") == "DL-4" for e in events))
+
+    # The authority-to-code contract is mandatory once a root charter and code coexist.
+    with tempfile.TemporaryDirectory() as d:
+        git(d, "init", "-q")
+        git(d, "config", "user.email", "t@t.t"); git(d, "config", "user.name", "t")
+        os.makedirs(os.path.join(d, "src"), exist_ok=True)
+        os.makedirs(os.path.join(d, "mvr"), exist_ok=True)
+        open(os.path.join(d, "charter.md"), "w").write(
+            "# Charter\n**Status:** redirect\n## 5. THE BUILD\n"
+            "- **Build:** a wage ledger.\n"
+            "- **Explicitly NOT building:** a digital loan book.\n"
+        )
+        open(os.path.join(d, "src", "app.py"), "w").write("def ledger(): return True\n")
+        json.dump([{
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "decision_authorization": {
+                "authorized_use": ["internal_planning"],
+                "not_authorized_use": ["national_rollout"],
+            },
+            "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+        }], open(os.path.join(d, "mvr", "decision-log.json"), "w"))
+        json.dump({"provisional": False, "claims_sent": ["digital loans"]},
+                  open(os.path.join(d, "mvr", "committee_packet.json"), "w"))
+        git(d, "add", "charter.md", "src/app.py", "mvr/decision-log.json", "mvr/committee_packet.json")
+        rc, err = run_gate(d)
+        check("code plus charter requires build contract", rc == 1 and "build_spec.json is missing" in err)
+
+        emitted = subprocess.run(
+            [sys.executable, BUILD_SPEC, "--root", d, "--emit"],
+            capture_output=True, text=True,
+        )
+        git(d, "add", "mvr/build_spec.json")
+        rc, _ = run_gate(d)
+        check("current build contract permits fitted code", emitted.returncode == 0 and rc == 0)
+
+        open(os.path.join(d, "src", "app.py"), "w").write(
+            "def approve_loan(user): return issue_loan(user)\n"
+        )
+        git(d, "add", "src/app.py")
+        rc, err = run_gate(d)
+        check("build contract blocks redirected capability at commit", rc == 1 and "digital_lending" in err)
+
+        open(os.path.join(d, "src", "app.py"), "w").write("def ledger(): return True\n")
+        open(os.path.join(d, "charter.md"), "a").write("Changed constraint.\n")
+        git(d, "add", "charter.md", "src/app.py")
+        rc, err = run_gate(d)
+        check("stale build contract blocks code", rc == 1 and "no longer matches" in err)
 
     print()
     if FAILS:

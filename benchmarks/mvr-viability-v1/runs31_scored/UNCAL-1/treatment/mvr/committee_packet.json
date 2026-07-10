@@ -1,0 +1,171 @@
+{
+  "generated_at": "2026-07-10T05:08:26.263898+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "b2b_saas_platform"
+  ],
+  "subject": "Driver-hours and tachograph compliance SaaS for German long-haul carriers",
+  "market_scope": "DE",
+  "claims_sent": [
+    "German long-haul carriers will pay for SaaS managing driver hours, tachograph and EU Mobility Package compliance"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "service_provider",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "embeddedness",
+        "infrastructural_intimacy",
+        "continuity",
+        "trust",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "investor_board",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "permission",
+        "trust",
+        "continuity",
+        "guardian_strength",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "lender_creditor",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "permission",
+        "continuity",
+        "trust",
+        "guardian_strength",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "upstream_supplier",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "trust",
+        "embeddedness",
+        "fractal_trust",
+        "channel_permission",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "media_press",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "whispered_credibility",
+        "trust",
+        "narrative_looping",
+        "permission",
+        "guardian_strength",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "German long-haul carriers will pay for SaaS managing driver hours, tachograph and EU Mobility Package compliance",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "2a9ca509bf8a4361e0e50c96b651fcf3321a2570c7e7219810a19b6e969a1239",
+    "provenance_hash": "4097bd8c075724f89bf73098629e9d48ce945449716aca069db53eecb82078e9",
+    "response_hash": "309fa7b06460943e2826205ad8776407b84220deb20dda9869f7d9dc2444c10e"
+  }
+}

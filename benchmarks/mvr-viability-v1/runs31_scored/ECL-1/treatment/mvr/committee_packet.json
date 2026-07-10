@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-07-10T05:08:59.217721+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "ecommerce_platform"
+  ],
+  "subject": "B2B FMCG restocking marketplace with embedded credit for Lagos retailers",
+  "market_scope": "NG",
+  "claims_sent": [
+    "Lagos informal shop owners will order FMCG stock via app and repay embedded supplier credit"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "retailer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "channel_permission",
+        "embeddedness",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "distributor",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "trust",
+        "continuity",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "Lagos informal shop owners will order FMCG stock via app and repay embedded supplier credit",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "fec418e21632ce6e8ba80eb2d2c4e81a9d943fa08fe057374d4d32edabc4cbf8",
+    "provenance_hash": "540579aa7f0d57d395778fb27225382e6c7abc6ad67f1d98d75e93bd4e60ce78",
+    "response_hash": "e8ff356fde272d27405ce8801d2d38db26763aaff8ffb0b1e3bee07123415070"
+  }
+}

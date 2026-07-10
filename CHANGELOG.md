@@ -1,5 +1,16 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.32 - 2026-07-10 (authority-to-code contract)
+- **MVR judgment now binds code generation:** added `scripts/twin_build_spec.py`, which compiles the fitted charter, decision-log claim envelope, explicit cut list, evidence bill, and source fingerprints into `mvr/build_spec.json`.
+- **Stale authority fails closed:** changing `charter.md`, `mvr/decision-log.json`, or `mvr/committee_packet.json` invalidates the emitted contract before staged code can commit.
+- **Per-charter capability enforcement:** `--check` blocks product code that reintroduces redirected-away custody, lending, scoring, payment, certification, or collective-investment behavior.
+- **Automatic normal-path wiring:** `preregister.py --in-place charter.md` emits the build contract, and the universal git pre-commit gate requires a current contract whenever a root charter and shippable code coexist.
+- **Authority boundary kept honest:** kernel `authorized_use` remains claim-class authorization; charter cut-list constraints govern implementation. Receipt presence is reported but never mislabeled as live verification.
+- **Blind benchmark published and scorer hardened:** `benchmarks/mvr-viability-v1/` carries the raw 12-case arms, answer key, symmetric judge record, run manifest, and scorer v1.4. Both arms now use the same machine-readable verdict contract (or one blind judge); legacy prose inference is explicitly non-citable. The corrected result (43.6 control, 89.8 treatment, +46.2) reproduces with 12/12 treatment receipts verified, while the authorship-reconstruction limit remains visible.
+- **Cross-host manifest parity:** release manifests now declare `sha256-canonical-lf-text-v1`, so Windows CRLF worktrees and Git/Linux LF checkouts hash to the same release identity while binary assets remain byte-exact. Manifest files are excluded from their own file map, removing recursive self-hash drift on regeneration.
+- **Benchmark evidence is narrowly gate-managed:** only the canonical `benchmarks/mvr-viability-v1/` tree is exempt from claim-path scanning, allowing the public answer key and raw arms to commit. Arbitrary `benchmarks/*` claim files remain scanned.
+- **Regression coverage:** added `tests/test_twin_build_spec.py` and expanded preregistration/pre-commit tests for missing, stale, clean, and violating contracts.
+
 ## 1.1.0-beta.31 - 2026-07-09 (Delta Report and root agent instructions)
 - **Delta Report added:** `scripts/twin_delta_report.py` writes `MVR_DELTA_REPORT.md` from `charter.md` and `mvr/decision-log.json`, making the Twin's change visible while keeping the counterfactual labelled as a hypothesis.
 - **Root agent instructions added:** root `AGENTS.md` gives Codex and other agents that auto-read root instructions the short path: preflight, committee, charter, Delta Report, fabrication scan.

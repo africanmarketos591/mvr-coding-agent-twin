@@ -1,0 +1,377 @@
+{
+  "status": "challenge_ready",
+  "decision_reliability": {
+    "level": "advisory_proxy",
+    "authorized_for_decision": false,
+    "human_review_required": true,
+    "calibration_status": "fresh",
+    "evidence_status": "limited",
+    "uses_registry_prior": false,
+    "uses_heuristic_fallback": false,
+    "uses_operator_submitted_scores": false,
+    "not_authorized_for": [
+      "sole_basis_for_investment",
+      "credit_approval_without_committee_review",
+      "regulatory_certification"
+    ],
+    "reliability_vs_profile_note": null
+  },
+  "predictive_position": {
+    "claim_type": "calibrated_predictive_confidence",
+    "certainty_claimed": false,
+    "prediction_band": null,
+    "confidence": null,
+    "confidence_basis": [
+      "reliability:advisory_proxy",
+      "mode:utility"
+    ],
+    "main_failure_risks": []
+  },
+  "response_meta": {
+    "model_version": "v6.32.0",
+    "evaluated_at": "2026-07-10T05:08:42.480Z",
+    "response_profile": "full_advisory",
+    "output_mode": "client_safe",
+    "registry_snapshot_id": "v6.32.0:registry",
+    "policy_snapshot_id": "v6.32.0:policy",
+    "release_channel": "stable",
+    "extraction_guard": {
+      "active": true,
+      "route": "/v1/strategy-sparring",
+      "public_precision": "native_precision_for_internal_full",
+      "deterministic": true,
+      "risk_level": "low",
+      "risk_signals": [],
+      "policy": "The API returns bounded verdicts and rounded public/client-safe scores while keeping engine logic, calibration assets, and private labels server-side.",
+      "no_training": true,
+      "reverse_engineering_allowed": false
+    }
+  },
+  "confidence_field_legend": {
+    "verdict_confidence": {
+      "path": "verdict.confidence",
+      "label": "Verdict confidence",
+      "ui_hint": "Overall confidence in the headline recommendation (0-1), after engine caps and floors.",
+      "scope": "end_to_end"
+    },
+    "approval_confidence": {
+      "path": "verdict.approval_confidence",
+      "label": "Approval / deployment confidence",
+      "ui_hint": "Governance-oriented confidence for committee workflows; may differ from verdict.confidence when review or macro caps apply.",
+      "scope": "governance"
+    },
+    "local_relational_compatibility_confidence": {
+      "path": "local_relational_assessment.compatibility_confidence",
+      "label": "Local relational lane confidence",
+      "ui_hint": "Confidence in the localized relational score lane only; excludes public OSINT / entity-scale lane.",
+      "scope": "localized_relational"
+    },
+    "reconciled_confidence": {
+      "path": "reconciled_assessment.confidence",
+      "label": "Dual-lane reconciled confidence",
+      "ui_hint": "Blended confidence after reconciling public_reality with local_relational_assessment.",
+      "scope": "integrated"
+    }
+  },
+  "provenance_hash": "8767d4a1ea1972614cc6a66a39647a8d050b2e7dc3577726c3a43ee8c6e6dd30",
+  "global_safety_constraints": [
+    "Human approval is required before any intervention, pricing, routing, payment, or credit action.",
+    "Outputs are advisory decision-support signals, not autonomous execution instructions.",
+    "Use only lawful, consented, public, or governed enterprise evidence.",
+    "Never use these outputs to route unofficial payments, coerce stakeholders, manipulate markets, or exploit vulnerable communities.",
+    "Predictive routes must degrade when no fresh OSINT or field signal exists inside the configured freshness window."
+  ],
+  "immutable_audit_hash": "d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+  "audit_hash_calculated_before_log_sanitization": true,
+  "compute_limits": {
+    "scenario_path_limit": 3,
+    "consequence_order_limit": 3
+  },
+  "compliance_audit": {
+    "audit_class": "anti_corruption_guardrail",
+    "legal_posture": "FCPA-aware guardrails; not a legal safe-harbor certification",
+    "request_hash": "24db012bd0ad85581cd5a0427c553d4998973e1a1628be386b76cc22c9178967",
+    "response_profile": "full_advisory",
+    "evidence_bundle_hash": "9772ea26d65c51a1178198977c105228ae9e2fa66c9a0187792f9d3de28cd3eb",
+    "logging_required": true,
+    "autonomous_execution": false,
+    "tenant_id": "tenant_internal_mark",
+    "workspace_id": "workspace_internal_mvr_stress_tests",
+    "full_response_hash": "d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+    "immutable_audit_hash": "d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+    "anti_corruption_audit_hash": "d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+    "audit_hash_calculated_before_log_sanitization": true
+  },
+  "forbidden_actions": [
+    "autonomous payments",
+    "autonomous market interventions",
+    "exact crisis-date prediction",
+    "exploit-competitor recommendations",
+    "automatic credit underwriting",
+    "dynamic exploitative pricing",
+    "unofficial gatekeeper payment routing",
+    "bribery, coercion, or hidden influence"
+  ],
+  "claims": [
+    "Nairobi university students will adopt a dedicated social network; a 500-person waitlist proves demand"
+  ],
+  "challenges": [
+    {
+      "claim": "Nairobi university students will adopt a dedicated social network; a 500-person waitlist proves demand",
+      "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+    }
+  ],
+  "evidence_required": [
+    "Add missing core evidence lanes before board-level decisioning.",
+    "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+  ],
+  "unsafe_claims": [],
+  "red_team_summary": {
+    "status": "ok",
+    "red_team_verdict": "client_safe_only",
+    "geo_coverage": {
+      "status": "not_applicable",
+      "market_country": null,
+      "matched_items": 0,
+      "mismatched_items": 0,
+      "unknown_geo_items": 0
+    },
+    "attack_surface": {
+      "missing_lanes": [
+        "public_reality_pack",
+        "telemetry_proxy_pack",
+        "localized_observed_pack_or_survey_pack"
+      ],
+      "geo_coverage": {
+        "status": "not_applicable",
+        "market_country": null,
+        "matched_items": 0,
+        "mismatched_items": 0,
+        "unknown_geo_items": 0
+      },
+      "provenance_mix": {
+        "observed_share": 0,
+        "proxy_derived_share": 0,
+        "imputed_share": 0,
+        "dominant": "none"
+      },
+      "leak_scan_summary": {
+        "veto_candidates": [],
+        "channel_warnings": []
+      }
+    },
+    "findings": [
+      {
+        "severity": "high",
+        "code": "missing_core_evidence_lanes",
+        "detail": "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+      }
+    ],
+    "critical_findings": [
+      {
+        "severity": "high",
+        "code": "missing_core_evidence_lanes",
+        "detail": "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+      }
+    ],
+    "required_fixes": [
+      "Add missing core evidence lanes before board-level decisioning."
+    ],
+    "warnings": [],
+    "evidence_challenges": [
+      {
+        "severity": "high",
+        "code": "missing_core_evidence_lanes",
+        "detail": "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+      }
+    ],
+    "strict_mode_blockers": [
+      {
+        "severity": "high",
+        "code": "missing_core_evidence_lanes",
+        "detail": "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+      }
+    ],
+    "response_meta": {
+      "model_version": "v6.32.0",
+      "evaluated_at": "2026-07-10T05:08:42.480Z",
+      "response_profile": "full_advisory",
+      "output_mode": "client_safe",
+      "registry_snapshot_id": "v6.32.0:registry",
+      "policy_snapshot_id": "v6.32.0:policy",
+      "release_channel": "stable"
+    }
+  },
+  "response_contract_version": "2026-05-01.v1",
+  "evidence_recruitment_plan": {
+    "status": "recruit_more_evidence",
+    "capability": "conversational_evidence_recruitment",
+    "recruitment_turn_count": 0,
+    "max_recruitment_turns_before_breaker": 3,
+    "friendly_prompt": "I can start with an advisory view, but I cannot make this decision-grade yet. Please add regulator, association, or other guardian evidence. Upload the material you already have; the interface should extract dates, source anchors, and confidence metadata for the engine.",
+    "missing_lanes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "plain_language_missing_evidence": [
+      "regulator, association, or other guardian evidence"
+    ],
+    "blocking_gates": [
+      "sole_basis_for_investment",
+      "credit_approval_without_committee_review",
+      "regulatory_certification"
+    ],
+    "gate_specific_actions": [
+      {
+        "blocker": "guardian_or_regulatory_evidence",
+        "priority": "high",
+        "action": "Add guardian, regulator, association, or local permission evidence for the claimed decision scope.",
+        "decision_effect": "May improve evidence completeness or decision readiness; does not guarantee authorization.",
+        "accepted_evidence": [
+          "dated regulator correspondence",
+          "association or cooperative endorsement/objection",
+          "local council/community leader confirmation",
+          "license, filing, or compliance review"
+        ],
+        "minimum_metadata": [
+          "guardian_tier or stakeholder_class",
+          "blocking_power if known",
+          "stance",
+          "source_locator",
+          "freshness_date",
+          "evidence_geography"
+        ]
+      }
+    ],
+    "remediation_path": {
+      "status": "actionable_evidence_path",
+      "principle": "Follow these steps to repair evidence gaps; this does not authorize the decision or guarantee a future approval.",
+      "ordered_steps": [
+        {
+          "blocker": "guardian_or_regulatory_evidence",
+          "priority": "high",
+          "action": "Add guardian, regulator, association, or local permission evidence for the claimed decision scope.",
+          "decision_effect": "May improve evidence completeness or decision readiness; does not guarantee authorization.",
+          "accepted_evidence": [
+            "dated regulator correspondence",
+            "association or cooperative endorsement/objection",
+            "local council/community leader confirmation",
+            "license, filing, or compliance review"
+          ],
+          "minimum_metadata": [
+            "guardian_tier or stakeholder_class",
+            "blocking_power if known",
+            "stance",
+            "source_locator",
+            "freshness_date",
+            "evidence_geography"
+          ]
+        }
+      ],
+      "recommended_sequence": [
+        "repair source/provenance gaps",
+        "add missing stakeholder or telemetry lanes",
+        "rerun /v1/evidence-completeness",
+        "rerun /v1/decision-check only after gap closure"
+      ]
+    },
+    "accepted_uploads": [
+      "PDF source excerpts",
+      "spreadsheet exports",
+      "field notes",
+      "dealer or retailer survey files",
+      "telemetry dashboard exports",
+      "voice note transcripts with consent metadata",
+      "photos with source anchors"
+    ],
+    "required_provenance": [
+      "freshness_date",
+      "evidence_origin",
+      "collection_method",
+      "source_grade",
+      "provenance_ledger.source_doc_id",
+      "provenance_ledger.source_locator or source_url",
+      "provenance_ledger.extraction_method",
+      "provenance_ledger.extraction_confidence >= 0.85",
+      "human_reviewed=true plus named reviewer approval for AI-extracted or organ-attested material"
+    ],
+    "source_grounding_requirements": {
+      "pdf_or_image": [
+        "source_doc_id",
+        "source_hash",
+        "page_number",
+        "bounding_box",
+        "extracted_fact"
+      ],
+      "text_document": [
+        "source_doc_id",
+        "source_hash",
+        "char_start",
+        "char_end",
+        "extracted_fact"
+      ],
+      "spreadsheet": [
+        "source_doc_id",
+        "source_hash",
+        "sheet_name",
+        "row_number or cell_range",
+        "extracted_fact"
+      ],
+      "audio_or_video": [
+        "source_doc_id",
+        "source_hash",
+        "timestamp_start",
+        "timestamp_end",
+        "transcript_char_start/char_end",
+        "extracted_fact"
+      ],
+      "clickthrough_policy": "The wrapper should open the original artifact and highlight the supplied page/bounding-box, character range, row/cell, or timestamp anchor."
+    },
+    "next_routes": [
+      "/v1/evidence-intake",
+      "/v1/evidence-compiler",
+      "/v1/evidence-completeness",
+      "/v1/decision-check"
+    ],
+    "strict_authorization_goal": "compiled_evidence with public_reality_pack + telemetry_proxy_pack + localized_observed_pack_or_survey_pack where applicable"
+  },
+  "interaction_circuit_breaker": {
+    "tripped": false,
+    "max_turns": 3,
+    "current_turn": 0,
+    "state": "evidence_recruitment_active",
+    "policy": "Continue at most until turn 3, then halt and show checklist.",
+    "checklist": null
+  },
+  "abstention_reason_codes": [
+    "guardian_or_regulatory_evidence"
+  ],
+  "operational_trace": {
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ]
+  },
+  "answer": {
+    "format": "mvr_answer_v1",
+    "route": "/v1/strategy-sparring",
+    "summary": "MVR returned challenge_ready. Check decision_authorization and not_authorized_for before using it.",
+    "recommendation": "challenge_ready",
+    "confidence": null,
+    "authorization_status": null,
+    "use_boundary": "MVR outputs are evidence-governed decision support. They are not autonomous credit, investment, legal, regulatory, or procurement approval.",
+    "not_authorized_for": []
+  },
+  "stable_content_hash": "be193def9dd4b2578460af2120528053f72f9cfa025ddcca286da0b81e37a9cc",
+  "cite": {
+    "format": "mvr_cite_v1",
+    "route": "/v1/strategy-sparring",
+    "citation_policy": "For public citation, prefer snapshot-backed public_receipt_hash receipts when present. Do not cite sampled logs or internal diagnostics.",
+    "preferred_hash_kind": "immutable_snapshot_hash",
+    "public_receipt_hash": null,
+    "immutable_receipt_hash": "d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+    "verification_url": "https://africanmarketos.com/v1/ledger/verify/d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+    "stable_content_hash": "be193def9dd4b2578460af2120528053f72f9cfa025ddcca286da0b81e37a9cc",
+    "response_hash_header": "X-Response-Hash",
+    "public_snapshot_note": "For durable public verification, create or cite a decision snapshot. Response hashes are request receipts; snapshots are preferred for external publication."
+  },
+  "response_hash": "c3a7e368017dc5b7bca40879664305c4c472c673582e182b81a82fd4d807bfc2"
+}

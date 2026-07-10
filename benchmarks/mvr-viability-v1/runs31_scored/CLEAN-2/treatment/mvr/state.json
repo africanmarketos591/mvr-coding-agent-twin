@@ -1,0 +1,13 @@
+{
+  "last_kernel_sync": "2026-07-10T05:08:35.759237+00:00",
+  "last_route": "/v1/strategy-sparring",
+  "routes_called": [
+    "/v1/category-playbook/b2b_saas_platform",
+    "/v1/strategy-sparring"
+  ],
+  "verdict": "challenge_ready",
+  "calibrated_market": true,
+  "top_blockers": [
+    "guardian_or_regulatory_evidence"
+  ]
+}

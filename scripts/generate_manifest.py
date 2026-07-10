@@ -19,6 +19,7 @@ from pathlib import Path
 
 EXCLUDED_DIRS = {".git", "__pycache__"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
+BINARY_SUFFIXES = {".gif", ".jpeg", ".jpg", ".pdf", ".png"}
 EXCLUDED_RUNTIME_PATHS = {
     ("mvr", "state.json"),
     ("mvr", "passport.json"),
@@ -28,11 +29,10 @@ EXCLUDED_RUNTIME_PATHS = {
 
 
 def sha256(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
+    raw = Path(path).read_bytes()
+    if Path(path).suffix.lower() not in BINARY_SUFFIXES and b"\x00" not in raw[:8192]:
+        raw = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(raw).hexdigest()
 
 
 def included_files(package_dir):
@@ -45,6 +45,8 @@ def included_files(package_dir):
             path = root_path / name
             rel = path.relative_to(package_dir)
             parts = tuple(rel.parts)
+            if name.startswith("HASH_MANIFEST_") and name.endswith(".json"):
+                continue
             if path.suffix in EXCLUDED_SUFFIXES:
                 continue
             if parts in EXCLUDED_RUNTIME_PATHS:
@@ -59,6 +61,7 @@ def build_manifest(package_dir):
     return {
         "version": version,
         "generated": datetime.now().date().isoformat(),
+        "hash_mode": "sha256-canonical-lf-text-v1",
         "files": {
             rel: sha256(package_dir / rel)
             for rel in included_files(package_dir)

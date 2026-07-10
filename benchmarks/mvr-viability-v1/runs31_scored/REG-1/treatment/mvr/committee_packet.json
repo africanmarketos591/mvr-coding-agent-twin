@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-07-10T05:09:11.871323+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "fintech_platform"
+  ],
+  "subject": "Pooled diaspora and domestic investment fund app investing in stocks and MMFs",
+  "market_scope": "KE",
+  "claims_sent": [
+    "Kenyans at home and in the diaspora will pool monthly contributions into an app-managed fund invested in stocks and money-market funds for returns"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "retailer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "channel_permission",
+        "embeddedness",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "distributor",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "trust",
+        "continuity",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "Kenyans at home and in the diaspora will pool monthly contributions into an app-managed fund invested in stocks and money-market funds for returns",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "180de665180f55232c33edff79a65fa15589432152dafa717ea7dda46e5fc7d4",
+    "provenance_hash": "6b74f299f51910f1c379b8ec244b48de662d2d937f0045c8ba8c0350b65d5cec",
+    "response_hash": "41aab9acc081414edb2ee07072878dab2b0fc5845040dfd3e07fff25183ffc07"
+  }
+}

@@ -1,0 +1,31 @@
+[
+  {
+    "entry_id": "DL-275f2f32-d06d-4367-8bf8-a93cab8b1d78",
+    "timestamp": "2026-07-10T05:09:08.804354+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "charter.md",
+    "archetype": "logistics_platform",
+    "market_scope": "RW",
+    "redirect_pattern": "<model sets if redirected>",
+    "verdict": "abstained",
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "kernel_receipts": {
+      "immutable_audit_hash": "312d7a42cc88d945908f064cb79e3f77362f0c56fcaffd365ca6b9aa1bae241d",
+      "provenance_hash": "6f41e9d82e0ae80136c899b5e055f5ae14a35021a861c3f85e2949a8fa368531",
+      "response_hash": "b867118417c852636c290e886809fdb0cb8d9958b31346bba734c64900fe6857"
+    },
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting",
+        "partnership_claims"
+      ]
+    }
+  }
+]

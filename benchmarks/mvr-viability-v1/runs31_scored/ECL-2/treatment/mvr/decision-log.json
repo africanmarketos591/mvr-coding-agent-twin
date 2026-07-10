@@ -1,0 +1,31 @@
+[
+  {
+    "entry_id": "DL-50b89656-5d2e-44c3-ab29-5ceeb94f0b59",
+    "timestamp": "2026-07-10T05:08:21.739080+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "charter.md",
+    "archetype": "passenger_mobility",
+    "market_scope": "UG",
+    "redirect_pattern": "<model sets if redirected>",
+    "verdict": "abstained",
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "kernel_receipts": {
+      "immutable_audit_hash": "9fe1f3cce0ea7847fc1038af7710f04225caae1e61cfc39aec267ee0805dfb08",
+      "provenance_hash": "27a8e5491480acb0edeb08c471a31bd0fd02a89fbbc529d6f0d4164e30ead235",
+      "response_hash": "08ac8eef2bf6b49b7b388e3f51c53ec48e7eb4cf4412a1876e8d4524d2588ec8"
+    },
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting",
+        "partnership_claims"
+      ]
+    }
+  }
+]

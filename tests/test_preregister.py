@@ -64,6 +64,16 @@ def main():
             key in proc.stdout for key in ('"archetype"', '"market_scope"', '"redirect_pattern"')
         ))
 
+        auto = os.path.join(d, "charter.md")
+        write(auto, template)
+        proc = subprocess.run(
+            [sys.executable, preregister.__file__, "--in-place", auto],
+            capture_output=True,
+            text=True,
+        )
+        check("in-place preregistration emits build contract",
+              proc.returncode == 0 and os.path.exists(os.path.join(d, "mvr", "build_spec.json")), proc.stderr)
+
     print()
     if FAILS:
         print(f"FAILURES: {FAILS}")

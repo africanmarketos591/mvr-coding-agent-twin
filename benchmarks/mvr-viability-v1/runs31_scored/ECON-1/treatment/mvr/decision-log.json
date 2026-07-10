@@ -1,0 +1,31 @@
+[
+  {
+    "entry_id": "DL-ddba8b3e-398b-4d42-a15a-35d3650ce44b",
+    "timestamp": "2026-07-10T05:09:03.198894+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "charter.md",
+    "archetype": "ecommerce_platform",
+    "market_scope": "GH",
+    "redirect_pattern": "<model sets if redirected>",
+    "verdict": "abstained",
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "kernel_receipts": {
+      "immutable_audit_hash": "b8f644ac6608ee1108da63c9f00e3ab7b2a56ab674a296e5671e3d927d113f7d",
+      "provenance_hash": "1ba7ebd3b4ea5918ed5ad5cd009b5ee1bee0fcc51036e27293aea1a7423ac3ce",
+      "response_hash": "365701f15c2e0b59e12b91510067cafe914523f234108a5bbe29504fdb0ff71b"
+    },
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting",
+        "partnership_claims"
+      ]
+    }
+  }
+]

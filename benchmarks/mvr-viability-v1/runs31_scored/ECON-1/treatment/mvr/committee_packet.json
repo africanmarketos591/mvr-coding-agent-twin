@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-07-10T05:09:03.196408+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "ecommerce_platform"
+  ],
+  "subject": "15-minute dark-store grocery delivery for Accra",
+  "market_scope": "GH",
+  "claims_sent": [
+    "Accra consumers will adopt 15-minute grocery delivery from local dark stores at sustainable unit economics"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "retailer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "channel_permission",
+        "embeddedness",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "distributor",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "trust",
+        "continuity",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "Accra consumers will adopt 15-minute grocery delivery from local dark stores at sustainable unit economics",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "b8f644ac6608ee1108da63c9f00e3ab7b2a56ab674a296e5671e3d927d113f7d",
+    "provenance_hash": "1ba7ebd3b4ea5918ed5ad5cd009b5ee1bee0fcc51036e27293aea1a7423ac3ce",
+    "response_hash": "365701f15c2e0b59e12b91510067cafe914523f234108a5bbe29504fdb0ff71b"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-07-10T05:08:42.294546+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "creator_economy_individual"
+  ],
+  "subject": "Dedicated social network for Nairobi university students",
+  "market_scope": "KE",
+  "claims_sent": [
+    "Nairobi university students will adopt a dedicated social network; a 500-person waitlist proves demand"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "influencer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "narrative_looping",
+        "cultural_calibration",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "retailer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "channel_permission",
+        "embeddedness",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "Nairobi university students will adopt a dedicated social network; a 500-person waitlist proves demand",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+    "provenance_hash": "8767d4a1ea1972614cc6a66a39647a8d050b2e7dc3577726c3a43ee8c6e6dd30",
+    "response_hash": "c3a7e368017dc5b7bca40879664305c4c472c673582e182b81a82fd4d807bfc2"
+  }
+}

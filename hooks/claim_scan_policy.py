@@ -25,6 +25,7 @@ MVR_MANAGED_EXACT = {
     ("mvr", "decision-log.seed.json"),
     ("mvr", "gate-events.jsonl"),
     ("mvr", "committee_packet.json"),
+    ("mvr", "build_spec.json"),
     ("mvr", "settlement_map.json"),
     ("mvr", "settlement-draft.json"),
 }
@@ -32,6 +33,10 @@ MVR_MANAGED_EXACT = {
 MVR_MANAGED_PREFIXES = {
     ("mvr", "checkpoints"),
     ("mvr", "public_research"),
+}
+
+PACKAGE_MANAGED_PREFIXES = {
+    ("benchmarks", "mvr-viability-v1"),
 }
 
 TWIN_ARTIFACTS = {
@@ -123,11 +128,18 @@ def _is_mvr_managed(parts):
     return any(tuple_parts[:len(prefix)] == prefix for prefix in MVR_MANAGED_PREFIXES)
 
 
+def _is_package_managed(parts):
+    tuple_parts = tuple(parts)
+    return any(tuple_parts[:len(prefix)] == prefix for prefix in PACKAGE_MANAGED_PREFIXES)
+
+
 def should_scan_content(path):
     normalized, parts = _parts(path)
     if any(part in SKIP_SEGMENTS_ANY for part in parts):
         return False
     if _is_mvr_managed(parts):
+        return False
+    if _is_package_managed(parts):
         return False
     if "claims/" in normalized:
         return False
@@ -147,6 +159,8 @@ def binary_claim_carrier(path):
     if any(part in SKIP_SEGMENTS_ANY for part in parts):
         return False
     if _is_mvr_managed(parts):
+        return False
+    if _is_package_managed(parts):
         return False
     if "claims/" in normalized:
         return False

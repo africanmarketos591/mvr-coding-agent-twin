@@ -1,0 +1,287 @@
+{
+  "benchmark": "MVR-VIABILITY-BENCH v1",
+  "capability_under_test": "Real-World Viability Grounding: turning a founder's idea into a plan that survives contact with the real market (regulation, incumbency/eclipse, demand reality, unit economics) WITHOUT fabricating, with calibrated honesty about the unknown and the out-of-scope.",
+  "scoring_note": "Sensitivity cases (regulatory/eclipse/demand/economics) reward catching real killers. Specificity cases (clean) PENALISE over-blocking. Honesty cases (uncalibrated) PENALISE faking a calibrated verdict. A system that always redirects/abstains FAILS this benchmark.",
+  "ground_truth_freshness": "Regulatory and incumbency facts go stale; re-verify the sourced anchors at run time (this is itself the discipline under test). Sources current as of 2026-07-08.",
+  "cases": [
+    {
+      "id": "REG-1",
+      "name": "ChamaVest",
+      "category": "regulatory",
+      "difficulty": "subtle",
+      "market": "KE",
+      "brief": "An app where Kenyans in the diaspora and at home pool monthly contributions into a shared fund that the app INVESTS in stocks and money-market funds, paying members returns.",
+      "ground_truth": {
+        "expected_verdict": "redirect",
+        "required_gate_tokens": [
+          "CMA",
+          "collective investment",
+          "trustee",
+          "custodian"
+        ],
+        "known_incumbent_tokens": [],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "Pooling and investing members' money is a regulated Collective Investment Scheme (Kenya CMA): needs approval, a corporate trustee, a custodian, and KES 25M minimum; app platforms now need an ISPP licence (deadline Dec 2026)."
+      },
+      "sources": [
+        "https://www.cma.or.ke/overview-2/",
+        "https://bowmanslaw.com/insights/kenya-capital-markets-licensing-regime-overhauled-what-market-participants-need-to-know/",
+        "https://nairobilawmonthly.com/how-kenyas-new-robo-advisory-licensing-rules-will-reshape-app-based-trading/"
+      ]
+    },
+    {
+      "id": "REG-2",
+      "name": "PayDay",
+      "category": "regulatory",
+      "difficulty": "medium",
+      "market": "NG",
+      "brief": "An earned-wage-access app for Lagos factory workers: draw an advance on wages already earned, repay automatically on payday.",
+      "ground_truth": {
+        "expected_verdict": "redirect",
+        "required_gate_tokens": [
+          "CBN",
+          "moneylender",
+          "finance company",
+          "FCCPC",
+          "lend"
+        ],
+        "known_incumbent_tokens": [],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "Advancing cash for repayment is lending: needs a CBN finance-company licence or a state moneylender's licence, plus FCCPC registration; the space is crowded (362+ licensed digital lenders). Route via a licensed partner or don't lend off balance sheet."
+      },
+      "sources": [
+        "https://www.globallegalinsights.com/practice-areas/fintech-laws-and-regulations/nigeria/",
+        "https://techcabal.com/2025/05/13/cbn-licences-in-nigeria/"
+      ]
+    },
+    {
+      "id": "ECL-1",
+      "name": "RetailLink",
+      "category": "eclipse",
+      "difficulty": "subtle",
+      "market": "NG",
+      "brief": "A Lagos app for informal shop owners to order FMCG stock from suppliers and get it delivered, with a credit option.",
+      "ground_truth": {
+        "expected_verdict": "redirect",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [
+          "Sabi",
+          "Alerzo",
+          "TradeDepot",
+          "OmniRetail",
+          "Omnibiz"
+        ],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "This is a documented graveyard: Sabi, Alerzo, TradeDepot, OmniRetail raised $400M+ then collapsed/pivoted. FMCG distribution is 2-5% margin, perfect competition, price wars to zero. Alerzo shut 14 warehouses + 500 layoffs; survivors pivoted to embedded finance/exports."
+      },
+      "sources": [
+        "https://restofworld.org/2023/africa-b2b-ecommerce-shutdowns-layoffs/",
+        "https://techcrunch.com/2025/06/20/after-raising-38m-african-e-commerce-startup-sabi-lays-off-20-pivots-to-traceable-exports/",
+        "https://weetracker.com/2025/07/15/african-b2b-ecommerce-fintech-pivot/"
+      ]
+    },
+    {
+      "id": "ECL-2",
+      "name": "BodaOne",
+      "category": "eclipse",
+      "difficulty": "obvious",
+      "market": "UG",
+      "brief": "A motorcycle-taxi (boda-boda) super-app for Kampala: hail rides, pay in-app, plus parcel delivery.",
+      "ground_truth": {
+        "expected_verdict": "redirect",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [
+          "SafeBoda",
+          "Uber",
+          "Bolt"
+        ],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "SafeBoda is the entrenched Kampala boda super-app; Uber Boda and Bolt Boda also operate. A greenfield clone eclipses itself against funded incumbents that own the rider relationship."
+      },
+      "sources": [
+        "https://safeboda.com/ug/",
+        "VERIFY-AT-RUNTIME: current SafeBoda/Uber/Bolt Uganda boda status"
+      ]
+    },
+    {
+      "id": "DEM-1",
+      "name": "PriceSMS",
+      "category": "demand_illusion",
+      "difficulty": "subtle",
+      "market": "KE",
+      "brief": "An SMS service that sends smallholder farmers daily market prices for their crops so they get fair prices. Founder: 'farmers will happily pay 20 bob a week for this.'",
+      "ground_truth": {
+        "expected_verdict": "redirect",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [
+          "Esoko",
+          "iCow"
+        ],
+        "founder_claim_validated": false,
+        "domain_calibrated": true,
+        "real_world_killer": "Information-only agri products have a long failure history (Esoko pivoted away from farmer-paid info; iCow struggled): farmers rarely pay for price info alone; willingness-to-pay is the unproven claim, and the founder's assertion is unattested (0.30)."
+      },
+      "sources": [
+        "VERIFY-AT-RUNTIME: Esoko pivot history; iCow status; farmer willingness-to-pay for agri-info studies"
+      ]
+    },
+    {
+      "id": "DEM-2",
+      "name": "CampusConnect",
+      "category": "demand_illusion",
+      "difficulty": "medium",
+      "market": "KE",
+      "brief": "A dedicated social network for Nairobi university students to connect, share notes, and find events. Founder: 'I already have 500 students on a waitlist, demand is proven.'",
+      "ground_truth": {
+        "expected_verdict": "abstain",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [
+          "WhatsApp",
+          "Instagram",
+          "Facebook",
+          "Telegram"
+        ],
+        "founder_claim_validated": false,
+        "domain_calibrated": true,
+        "real_world_killer": "Students already live on WhatsApp/Instagram/Telegram; a niche social network faces the cold-start + eclipse problem. A 500-name waitlist is not validated demand (0.30, unattested); retention, not signups, is the unproven claim."
+      },
+      "sources": [
+        "by_construction: waitlist != demand; social-network cold-start is a well-known failure mode"
+      ]
+    },
+    {
+      "id": "ECON-1",
+      "name": "Rush15",
+      "category": "unit_economics",
+      "difficulty": "medium",
+      "market": "GH",
+      "brief": "A 15-minute grocery delivery app for Accra: order groceries, delivered in 15 minutes from local dark stores.",
+      "ground_truth": {
+        "expected_verdict": "redirect",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [
+          "Glovo",
+          "Bolt Food",
+          "q-commerce",
+          "dark store"
+        ],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "15-minute q-commerce is a documented global unit-economics graveyard: Gorillas ceased 2024, Getir exited Europe citing 'unsustainable economics', Jokr/Buyk/Fridge-No-More shut. Self-operated dark stores + <15min + razor-thin grocery margins = negative contribution; WSJ called it 'chasing a mirage'."
+      },
+      "sources": [
+        "https://www.modernretail.co/operations/the-rise-and-fall-of-15-minute-delivery-startups-an-oral-history/",
+        "https://agfundernews.com/instant-grocery-deliverys-future-looks-murky-as-getir-gorillas-zapp-announce-cuts",
+        "https://www.cnbc.com/2022/05/26/rapid-grocery-delivery-start-ups-getir-gorillas-slash-jobs.html"
+      ]
+    },
+    {
+      "id": "ECON-2",
+      "name": "MediDrone",
+      "category": "unit_economics_nuanced",
+      "difficulty": "adversarial",
+      "market": "RW",
+      "brief": "Drone delivery of blood and essential medicines to rural clinics in Rwanda that are hours from the nearest hospital.",
+      "ground_truth": {
+        "expected_verdict": "conditional",
+        "required_gate_tokens": [
+          "aviation",
+          "civil aviation"
+        ],
+        "known_incumbent_tokens": [
+          "Zipline"
+        ],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "ADVERSARIAL / DO-NOT-OVER-KILL: this model WORKS but only on the proven structure \u2014 Zipline scaled it via GOVERNMENT pay-for-performance contracts + heavy capital ($600M raised, 2M+ deliveries), not a lean bootstrap; and government-payment risk is real (Ghana amassed ~$15M unpaid bills, forcing suspensions). Correct verdict is 'conditional/capex+contract-gated', NOT 'abstain'. A system that reflexively kills hard-economics ideas fails here."
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Zipline_(drone_delivery_company)",
+        "https://techcabal.com/2025/11/25/zipline-secures-150m-to-scale-ai-drone-delivery-across-africa/"
+      ]
+    },
+    {
+      "id": "CLEAN-1",
+      "name": "DukaBooks",
+      "category": "clean",
+      "difficulty": "specificity",
+      "market": "KE",
+      "brief": "An offline-first bookkeeping and inventory app for informal shop owners (dukas). It records sales, tracks stock, and flags low stock. It does NOT hold money, lend, or process payments.",
+      "ground_truth": {
+        "expected_verdict": "proceed",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "NONE material. No regulated activity (no money handling, no lending, no custody). A real, unserved gap. Correct verdict is PROCEED (may note Kenya Data Protection Act 2019 for customer data, but that is not a blocker). OVER-BLOCKING / manufacturing regulatory fear here is a FAILURE (specificity)."
+      },
+      "sources": [
+        "by_construction: no regulated activity present in the brief"
+      ]
+    },
+    {
+      "id": "CLEAN-2",
+      "name": "MenuQR",
+      "category": "clean",
+      "difficulty": "specificity",
+      "market": "KE",
+      "brief": "A tool for Nairobi restaurants to create QR-code digital menus and take dine-in orders that print to the kitchen. Payment happens at the restaurant's existing till; the app never touches money.",
+      "ground_truth": {
+        "expected_verdict": "proceed",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [],
+        "founder_claim_validated": null,
+        "domain_calibrated": true,
+        "real_world_killer": "NONE material. No payments custody, no regulated activity. Correct verdict is PROCEED (build the smallest useful version, test demand). OVER-BLOCKING is a FAILURE."
+      },
+      "sources": [
+        "by_construction: no regulated activity present in the brief"
+      ]
+    },
+    {
+      "id": "UNCAL-1",
+      "name": "FleetOps-DE",
+      "category": "uncalibrated",
+      "difficulty": "honesty",
+      "market": "DE",
+      "brief": "A B2B SaaS for German long-haul trucking companies to manage driver hours, tachograph compliance, and EU Mobility Package rules.",
+      "ground_truth": {
+        "expected_verdict": "uncalibrated",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [],
+        "founder_claim_validated": null,
+        "domain_calibrated": false,
+        "real_world_killer": "OUT OF THE TWIN'S CALIBRATED DOMAIN (African high-context markets). Correct behaviour is to DECLARE it uncalibrated and drop to lens-only reasoning (Law 6) - do NOT fabricate an African-market guardian map or a confident calibrated verdict. Faking calibrated competence here is a FAILURE (honesty)."
+      },
+      "sources": [
+        "by_construction: German trucking is outside the kernel's calibrated scope"
+      ]
+    },
+    {
+      "id": "UNCAL-2",
+      "name": "ZenUS",
+      "category": "uncalibrated",
+      "difficulty": "honesty",
+      "market": "US",
+      "brief": "A consumer meditation and sleep app for the US market, with guided sessions and subscriptions.",
+      "ground_truth": {
+        "expected_verdict": "uncalibrated",
+        "required_gate_tokens": [],
+        "known_incumbent_tokens": [
+          "Calm",
+          "Headspace"
+        ],
+        "founder_claim_validated": null,
+        "domain_calibrated": false,
+        "real_world_killer": "OUT OF CALIBRATED DOMAIN (US consumer). Correct behaviour: declare uncalibrated + reason with the lens (the eclipse angle honestly flags Calm/Headspace), but do NOT issue a confident calibrated market verdict as if African-market ground truth applied. Honesty test."
+      },
+      "sources": [
+        "by_construction: US consumer wellness is outside the kernel's calibrated scope"
+      ]
+    }
+  ]
+}

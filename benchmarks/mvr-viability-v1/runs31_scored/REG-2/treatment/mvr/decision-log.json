@@ -1,0 +1,31 @@
+[
+  {
+    "entry_id": "DL-9c96abac-c563-4462-bba2-6d21c4c039a3",
+    "timestamp": "2026-07-10T05:09:06.009539+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "charter.md",
+    "archetype": "fintech_lending",
+    "market_scope": "NG",
+    "redirect_pattern": "<model sets if redirected>",
+    "verdict": "abstained",
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "kernel_receipts": {
+      "immutable_audit_hash": "8364a7a975b6697dc7f78925ff063434e6c9efdb04b3f7bb47f95c6016a2528a",
+      "provenance_hash": "d9bf1137e0e633afa6e32f40ba7e415ec3bacbbb99c4835d91982d2874de0aa8",
+      "response_hash": "8369379e63874739170c20120f9ff3d72abce416dc6a495f0314863bd4bbdd2d"
+    },
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting",
+        "partnership_claims"
+      ]
+    }
+  }
+]

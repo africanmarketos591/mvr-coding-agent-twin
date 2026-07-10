@@ -1,0 +1,202 @@
+{
+  "status": "ok",
+  "entity_archetype": "creator_economy_individual",
+  "label": "Creator / audience monetization individual",
+  "category_risks": [
+    "localized trust",
+    "permission to operate",
+    "channel acceptance",
+    "guardian alignment"
+  ],
+  "required_public_metrics": [
+    "verified_creator_status",
+    "active_followers_k",
+    "engaged_audience_k",
+    "engagement_rate_pct",
+    "brand_partnerships_count",
+    "platform_distribution_reach_score",
+    "content_cadence_per_month",
+    "sentiment_score"
+  ],
+  "required_local_evidence": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "influencer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "narrative_looping",
+        "cultural_calibration",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "retailer",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "channel_permission",
+        "embeddedness",
+        "infrastructural_intimacy",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    }
+  ],
+  "minimum_guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "recommended_telemetry_sources": [
+    {
+      "source_type": "crm",
+      "label": "CRM",
+      "accepted_metrics": [
+        "nps_score",
+        "customer_complaint_rate",
+        "complaint_rate_pct",
+        "avg_ticket_resolution_hours",
+        "churn_rate_pct",
+        "customer_count",
+        "active_customer_pct",
+        "retention_rate_pct",
+        "referral_rate_pct",
+        "avg_tenure_months"
+      ],
+      "default_stakeholder_class": "consumer"
+    },
+    {
+      "source_type": "hris",
+      "label": "HRIS",
+      "accepted_metrics": [
+        "staff_churn_rate",
+        "local_staff_turnover_pct"
+      ],
+      "default_stakeholder_class": "internal_operations"
+    },
+    {
+      "source_type": "compliance",
+      "label": "Compliance",
+      "accepted_metrics": [
+        "compliance_incident_rate",
+        "regulatory_fines_usd",
+        "total_revenue_usd",
+        "fraud_chargeback_rate"
+      ],
+      "default_stakeholder_class": "guardian"
+    },
+    {
+      "source_type": "pos",
+      "label": "Point of sale",
+      "accepted_metrics": [
+        "return_rate_pct",
+        "repeat_purchase_rate_90d",
+        "repeat_customer_rate_pct",
+        "stockout_rate",
+        "stockout_rate_pct",
+        "transaction_success_rate",
+        "successful_txn_rate_pct",
+        "failed_transaction_rate_pct",
+        "daily_transaction_count",
+        "avg_basket_value_usd",
+        "outlet_count",
+        "monthly_revenue_usd",
+        "sales_volume_usd",
+        "active_customer_retention_pct"
+      ],
+      "default_stakeholder_class": "consumer"
+    },
+    {
+      "source_type": "field_operations",
+      "label": "Field operations",
+      "accepted_metrics": [
+        "field_visit_completion_pct",
+        "issue_resolution_rate_pct",
+        "community_satisfaction_score",
+        "regulatory_compliance_score",
+        "agent_count",
+        "active_agents",
+        "coverage_zones",
+        "avg_daily_transactions",
+        "complaint_rate_pct"
+      ],
+      "default_stakeholder_class": "internal_operations"
+    }
+  ],
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "failure_modes": [
+    "public reality looks strong but local relational evidence is thin",
+    "guardian veto emerges late",
+    "channel economics fail under stress"
+  ],
+  "response_meta": {
+    "model_version": "v6.32.0",
+    "evaluated_at": "2026-07-10T05:08:38.833Z",
+    "registry_snapshot_id": "v6.32.0:registry",
+    "release_channel": "stable"
+  },
+  "response_contract_version": "2026-05-01.v1"
+}

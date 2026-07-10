@@ -2,6 +2,7 @@
 
 Usage:
   python scripts/preregister.py path/to/charter.md
+  python scripts/preregister.py --in-place path/to/charter.md
   python scripts/preregister.py --verify path/to/charter.md
 
 The canonical hash normalizes only the self-referential preregistration header
@@ -11,6 +12,7 @@ changes the hash and requires rerunning this script.
 
 Anchoring (public git commit / Wayback / Zenodo) is a human step by protocol -
 this script emits the exact instructions and a decision-log skeleton.
+For a root ``charter.md``, ``--in-place`` also emits ``mvr/build_spec.json``.
 """
 import argparse
 import hashlib
@@ -18,6 +20,7 @@ import json
 import re
 import sys
 import uuid
+import os
 from datetime import datetime, timezone
 
 
@@ -100,6 +103,14 @@ def main():
 
     if args.in_place:
         write_in_place(path, digest)
+        if os.path.basename(path).lower() == "charter.md":
+            from twin_build_spec import write_contract
+            root = os.path.dirname(os.path.abspath(path))
+            contract, output = write_contract(root, os.path.abspath(path))
+            print(
+                f"PASS: authority-to-code contract emitted: {output} "
+                f"({contract['contract_level']})"
+            )
         # fall through to print the registration block + skeleton for the log
 
     if args.verify:

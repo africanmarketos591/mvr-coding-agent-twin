@@ -66,8 +66,10 @@ def main():
         "build.py",
         "mvr/state.json",
         "mvr/decision-log.json",
+        "mvr/build_spec.json",
         "mvr/checkpoints/strategy_sparring.json",
         "mvr/public_research/source_ledger.json",
+        "benchmarks/mvr-viability-v1/answer_key.json",
         "claims/investor.md",
     ):
         check(f"not scanned {path}", should_scan_content(path) is False)
@@ -90,6 +92,8 @@ def main():
     check("bare twin dir pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
     cls, reason, tier = classify_escalating_content("mvr/deck.md", PITCH)
     check("unmanaged mvr pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
+    cls, reason, tier = classify_escalating_content("benchmarks/random-pitch.md", PITCH)
+    check("unmanaged benchmark pitch caught", cls is not None and tier in {"keyword", "semantic"}, reason)
 
     print()
     if FAILS:

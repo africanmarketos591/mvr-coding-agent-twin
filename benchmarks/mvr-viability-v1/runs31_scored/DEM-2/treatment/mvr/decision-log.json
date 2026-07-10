@@ -1,0 +1,31 @@
+[
+  {
+    "entry_id": "DL-ddc2e545-11bb-494e-bc71-8c053006e027",
+    "timestamp": "2026-07-10T05:08:42.297490+00:00",
+    "checkpoint": "pre_charter",
+    "charter_ref": "charter.md",
+    "archetype": "creator_economy_individual",
+    "market_scope": "KE",
+    "redirect_pattern": "<model sets if redirected>",
+    "verdict": "abstained",
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "kernel_receipts": {
+      "immutable_audit_hash": "d7831266b9441ff37d611caa522fb7ceef850c48e79975def7ed08d1af92713b",
+      "provenance_hash": "8767d4a1ea1972614cc6a66a39647a8d050b2e7dc3577726c3a43ee8c6e6dd30",
+      "response_hash": "c3a7e368017dc5b7bca40879664305c4c472c673582e182b81a82fd4d807bfc2"
+    },
+    "decision_authorization": {
+      "authorized_use": [
+        "internal_planning"
+      ],
+      "not_authorized_use": [
+        "national_rollout",
+        "capital_allocation",
+        "board_reporting",
+        "partnership_claims"
+      ]
+    }
+  }
+]

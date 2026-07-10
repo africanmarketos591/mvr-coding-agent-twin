@@ -1,0 +1,171 @@
+{
+  "generated_at": "2026-07-10T05:08:30.827806+00:00",
+  "kernel_version": "v6.32.0",
+  "provisional": false,
+  "archetypes": [
+    "b2b_saas_platform"
+  ],
+  "subject": "Offline-first bookkeeping and inventory app for informal dukas",
+  "market_scope": "KE",
+  "claims_sent": [
+    "Kenyan duka owners will adopt an offline bookkeeping and inventory app that never touches money"
+  ],
+  "guardian_map": [
+    {
+      "guardian_tier": "macro_regulator",
+      "required_fields": [
+        "guardian_strength",
+        "permission",
+        "stance",
+        "is_veto_holder"
+      ]
+    },
+    {
+      "guardian_tier": "meso_community",
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "stance",
+        "blocking_power"
+      ]
+    },
+    {
+      "guardian_tier": "micro_street",
+      "required_fields": [
+        "permission",
+        "trust",
+        "stance",
+        "is_veto_holder"
+      ]
+    }
+  ],
+  "evidence_bill": [
+    {
+      "stakeholder_class": "consumer",
+      "minimum_signal_count": 100,
+      "required_fields": [
+        "belonging",
+        "cultural_fit",
+        "trust",
+        "narrative_looping",
+        "absence_sensitivity",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "service_provider",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "embeddedness",
+        "infrastructural_intimacy",
+        "continuity",
+        "trust",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "investor_board",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "permission",
+        "trust",
+        "continuity",
+        "guardian_strength",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "lender_creditor",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "permission",
+        "continuity",
+        "trust",
+        "guardian_strength",
+        "fractal_trust",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "guardian",
+      "minimum_signal_count": 2,
+      "required_fields": [
+        "guardian_strength",
+        "trust",
+        "permission",
+        "whispered_credibility",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "upstream_supplier",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "trust",
+        "embeddedness",
+        "fractal_trust",
+        "channel_permission",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "media_press",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "whispered_credibility",
+        "trust",
+        "narrative_looping",
+        "permission",
+        "guardian_strength",
+        "reciprocity"
+      ]
+    },
+    {
+      "stakeholder_class": "internal_operations",
+      "minimum_signal_count": 25,
+      "required_fields": [
+        "continuity",
+        "cultural_fit",
+        "fractal_trust",
+        "embeddedness",
+        "reciprocity"
+      ]
+    }
+  ],
+  "sparring": {
+    "unsafe_claims": [],
+    "evidence_required": [
+      "Add missing core evidence lanes before board-level decisioning.",
+      "Missing core pack types: public_reality_pack, telemetry_proxy_pack, localized_observed_pack_or_survey_pack"
+    ],
+    "abstention_reason_codes": [
+      "guardian_or_regulatory_evidence"
+    ],
+    "challenges": [
+      {
+        "claim": "Kenyan duka owners will adopt an offline bookkeeping and inventory app that never touches money",
+        "challenge": "What evidence supports this claim, what stakeholder could falsify it, and which missing lane would change the decision?"
+      }
+    ]
+  },
+  "board_questions": [
+    "What public evidence proves entity-scale right to operate?",
+    "Which localized stakeholders can still block adoption?",
+    "Which evidence gaps must close before a board-safe decision?",
+    "Which telemetry signals are proxy-derived and require field confirmation?"
+  ],
+  "seats_sat": {
+    "advocate": "model",
+    "research": "model",
+    "spine": true,
+    "operator": "inference_0.30"
+  },
+  "kernel_receipts": {
+    "immutable_audit_hash": "c1833930e0e02bfeb931f18686194b802d5fc2c69ad88a34c1259327ec6a5690",
+    "provenance_hash": "f0791f48509c1bfc757abff66022dfaddbec45bc4a95eb192c40d62e953833ef",
+    "response_hash": "33b8f6b6a4dc52e49173a1c0ede631858d0679135eab1605099fe995ecb647a2"
+  }
+}
