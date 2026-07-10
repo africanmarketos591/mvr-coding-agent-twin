@@ -71,9 +71,21 @@ def _authority_hashes(entry):
     return found
 
 
+def authority_hashes(entry):
+    """Public classifier shared by run-audit tooling; content hashes never qualify."""
+    return _authority_hashes(entry if isinstance(entry, dict) else {})
+
+
 def authorizing_receipt_status(project_dir):
-    log_path = os.path.join(project_dir, "mvr", "decision-log.json")
-    if not os.path.exists(log_path):
+    log_path = next(
+        (
+            os.path.join(project_dir, "mvr", name)
+            for name in ("decision-log.json", "decision-log.seed.json")
+            if os.path.exists(os.path.join(project_dir, "mvr", name))
+        ),
+        None,
+    )
+    if not log_path:
         return "no_log", "no decision log present"
     try:
         entries = json.load(open(log_path, encoding="utf-8-sig"))
@@ -109,9 +121,11 @@ def main():
     print(f"[authorizing-receipt] {status}: {detail}")
     if status == "unverified":
         sys.exit(1)
+    if status in {"no_log", "no_receipt"}:
+        sys.exit(2)
     if status in {"offline", "no_key"}:
         sys.exit(3)
-    sys.exit(0)
+    sys.exit(0 if status == "verified" else 1)
 
 
 if __name__ == "__main__":

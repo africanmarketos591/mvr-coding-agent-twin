@@ -5,6 +5,7 @@ IMPORTANT: the kernel edge rejects default Python user agents; this client sets 
 Never hardcode keys. Never widen output parsing to hide abstentions — abstentions are results.
 """
 import json, os, tempfile, time, uuid, urllib.request, urllib.error
+from urllib.parse import quote
 from datetime import datetime, timezone
 
 BASE = os.environ.get("MVR_BASE_URL", "https://africanmarketos.com")
@@ -260,3 +261,79 @@ def get_attestation_status(request_id):
 def schema():
     """Auth + liveness probe (auth-check is currently unregistered upstream)."""
     return call("/v1/schema")
+
+
+# ---- Measured market-calibration and reality context ----
+
+CALIBRATED_COVERAGE_TIERS = {"africa_home_market"}
+
+
+def calibration_health():
+    """Namespace-wide operational health; not a per-country calibration decision."""
+    result = call("/v1/calibration-health")
+    if result[1] == 200:
+        update_state("/v1/calibration-health", result[2])
+    return result
+
+
+def market_profile(country, zone=None):
+    country = quote(str(country).upper(), safe="")
+    path = f"/v1/market-profile/{country}"
+    if zone:
+        path += "/" + quote(str(zone), safe="")
+    result = call(path)
+    if result[1] == 200:
+        update_state(path, result[2])
+    return result
+
+
+def market_calendar(country):
+    country = quote(str(country).upper(), safe="")
+    path = f"/v1/market-calendar/{country}"
+    result = call(path)
+    if result[1] == 200:
+        update_state(path, result[2])
+    return result
+
+
+def calibration_scope_from_response(response):
+    """Extract Law 6 scope from a decision response without inventing a local verdict."""
+    if not isinstance(response, dict):
+        return {"verdict": "unknown", "coverage_tier": None, "source": "kernel_decision_check"}
+    meta = response.get("response_meta") or {}
+    scope = meta.get("country_calibration_scope") or response.get("country_calibration_scope") or {}
+    tier = scope.get("coverage_tier") if isinstance(scope, dict) else None
+    if not tier:
+        verdict = "unknown"
+    elif tier in CALIBRATED_COVERAGE_TIERS:
+        verdict = "calibrated"
+    else:
+        verdict = "uncalibrated"
+    return {
+        "verdict": verdict,
+        "coverage_tier": tier,
+        "source": "kernel_decision_check.response_meta.country_calibration_scope",
+        "boundary": (
+            "calibrated market verdicts permitted"
+            if verdict == "calibrated"
+            else "lens-only reasoning; do not represent market judgment as calibrated measurement"
+        ),
+    }
+
+
+def calibration_probe(subject, archetype, country, stakeholder_scope=None):
+    """Measure Law 6 scope through the kernel before the committee offers a status choice."""
+    payload = {
+        "mode": "compiled_evidence",
+        "case_type": "greenfield_entry",
+        "subject": {
+            "entity_name": str(subject),
+            "entity_type": "company",
+            "entity_archetype": str(archetype),
+        },
+        "market_scope": {"country": str(country).upper(), "regulatory_velocity": "stable"},
+        "stakeholder_scope": stakeholder_scope or ["consumer", "guardian", "channel_gatekeeper"],
+        "analysis_date": datetime.now(timezone.utc).date().isoformat(),
+        "compiled_pack": {"public_reality_pack": [], "telemetry_proxy_pack": []},
+    }
+    return decision_check(payload)

@@ -32,6 +32,8 @@ Not yet claimed:
 - Internal key-file parsing ignores human labels and accepts only explicit key fields.
 - The build-constraint contract invalidates stale inputs, fails on empty redirects, carries prior constraints across weakened re-emits, and catches obvious lexical capability reintroductions. Lexical clearance is not semantic assurance.
 - A current reviewer attestation can be bound to the exact contract, every first-party text-file hash, and disclosed opaque-file hashes. Host self-review can still be wrong and is not independent assurance; opaque bytes are not semantically analyzed; neither is kernel authority.
+- The Cursor free-plan field run is a visible provenance miss: the doctrine improved the product direction, but no Twin scripts ran and the host invented governance-shaped JSON. `twin_verify_run.py` rejects that workspace. This is evidence of lens transfer and an OOBE/provenance gap, not treatment evidence for the capability score.
+- Run-evidence exit 0 requires live authority verification. Offline/no-key runs are inconclusive even when local JSON is structurally valid; a copied valid receipt plus locally consistent files still cannot prove which host process authored each byte.
 
 ## Rehearsal Runs
 

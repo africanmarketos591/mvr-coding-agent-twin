@@ -59,7 +59,7 @@ RESERVED_ROOT_FILES = {
     "charter.md", "mirror.md", "preflight.md", "operator_log.md",
     "scorer_sheet.md", "transcript.md", "transcript_report.md",
 }
-REVIEW_REQUEST_FORMAT = "mvr_semantic_review_request_v2"
+REVIEW_REQUEST_FORMAT = "mvr_semantic_review_request_v3"
 REVIEW_FORMAT = "mvr_semantic_code_review_v2"
 REVIEW_ATTESTATION = (
     "I reviewed every text file against every forbidden constraint; opaque files "
@@ -88,7 +88,7 @@ CAPABILITY_PATTERNS = {
         re.I,
     ),
     "credit_scoring": re.compile(
-        r"\bcredit[-_ ]?scor(?:e|es|ing)|creditworthiness|loan eligibility|"
+        r"\bcredit[-_ ]?scor(?:e|es|ing)|savings[-_ ]?scor(?:e|es|ing)|creditworthiness|loan eligibility|"
         r"eligibility_for_loan\b",
         re.I,
     ),
@@ -786,6 +786,20 @@ def code_manifest(root, targets):
     return review_scope(root, targets)["files"]
 
 
+def normalize_review_targets(root, targets):
+    root = os.path.abspath(root)
+    normalized = []
+    for target in targets:
+        path = os.path.abspath(target if os.path.isabs(target) else os.path.join(root, target))
+        if not _inside(root, path):
+            raise ValueError(f"review target escapes project root: {target}")
+        if not os.path.exists(path):
+            raise ValueError(f"review target does not exist: {target}")
+        relative = os.path.relpath(path, root).replace("\\", "/")
+        normalized.append(relative)
+    return sorted(set(normalized))
+
+
 def review_request_digest(request):
     value = dict(request)
     value.pop("request_sha256", None)
@@ -804,6 +818,7 @@ def write_review_request(root, targets, contract=None):
         "created_at": datetime.now(timezone.utc).isoformat(),
         "contract_sha256": canonical_json_digest(contract),
         "contract_level": contract.get("contract_level"),
+        "targets": normalize_review_targets(root, targets),
         "forbidden_constraints": contract.get("forbidden_constraints") or [],
         "scope_policy": {
             "text_coverage": "all_first_party_non_binary_text_classified_by_content",
@@ -866,6 +881,13 @@ def validate_semantic_review(root, targets, contract=None, require_independent=F
         errors.append("semantic review request hash is invalid")
     if request.get("contract_sha256") != canonical_json_digest(contract):
         errors.append("semantic review request targets a different contract")
+    try:
+        normalized_targets = normalize_review_targets(root, targets)
+    except ValueError as exc:
+        normalized_targets = []
+        errors.append(str(exc))
+    if request.get("targets") != normalized_targets:
+        errors.append("semantic review request targets do not match the checked paths")
     try:
         current_scope = review_scope(root, targets)
     except ValueError as exc:

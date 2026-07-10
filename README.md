@@ -24,17 +24,18 @@ Built 2026-07-06 by Claude Fable 5 as its own mirror: the instruction layer enco
 
 ## Install
 
-1. Copy this directory into the project root (or reference it).
-2. Run `python mvr-coding-agent-twin/scripts/install.py --root .` from the project root.
+1. Copy/clone this directory into the project root (or reference it). Call the actual directory `<TWIN_DIR>`; it might be `./mvr-twin` or `./mvr-coding-agent-twin`. Do not assume `scripts/` exists at the project root and never replace a failed clone with handwritten Twin-shaped artifacts.
+2. Run `python <TWIN_DIR>/scripts/install.py --root .` from the project root.
    - Universal: installs `mvr/.gitignore` and the git pre-commit claim gate.
    - Cursor: installs `.cursor/rules/mvr-twin.mdc`, merges `.cursor/hooks.json`, and adds `.cursor/mcp.json`.
    - Claude Code: merge `settings-hooks.json` into `.claude/settings.json` for full write-time claim gate + heartbeat.
    - Optional counsel: merge `settings-hooks.response-sentinel.json` only on hosts that support final-response/Stop hooks.
 3. Set env `MVR_API_KEY` (sandbox eval key: `mvr-demo-key-2026`, non-commercial STANDARD scope; production/evaluation keys via https://africanmarketos.com/get-api-key). Never paste keys into repo files.
 4. The host agent reads `CLAUDE.md` (Claude Code does this natively; for Codex/others, load it as the system/project instruction).
-5. Run `python mvr-coding-agent-twin/scripts/install.py --root . --verify` for offline suites.
-6. Run `python mvr-coding-agent-twin/tests/smoke_test.py` - must print `ALL PASS` before first use with a PRO/ENTERPRISE-scope evaluation key. The public sandbox key verifies `/v1/schema`, category playbooks, and `/v1/decision-check`, but `/v1/strategy-sparring` is correctly plan-gated and will return `403` on STANDARD scope. (Note: the kernel edge rejects default Python user agents; the client in `spine/mvr_client.py` sets a proper UA. Do not bypass it.)
+5. Run `python <TWIN_DIR>/scripts/install.py --root . --verify` for offline suites.
+6. Run `python <TWIN_DIR>/tests/smoke_test.py` - must print `ALL PASS` before first use with a PRO/ENTERPRISE-scope evaluation key. The public sandbox key verifies `/v1/schema`, category playbooks, and `/v1/decision-check`, but `/v1/strategy-sparring` is correctly plan-gated and will return `403` on STANDARD scope. (Note: the kernel edge rejects default Python user agents; the client in `spine/mvr_client.py` sets a proper UA. Do not bypass it.)
 7. **REQUIRED before first commit:** verify `mvr/.gitignore` exists - the Operator Passport is personal data and must never reach a shared or public repo (SECURITY.md, Repository hygiene).
+8. **REQUIRED before calling a run verified:** `python <TWIN_DIR>/scripts/twin_verify_run.py --root . --stage build --keyfile <keyfile>`. No key/offline is exit 3 (`inconclusive`), never a pass.
 
 Internal rehearsal key files: use `python scripts/run_smoke_from_keyfile.py <keyfile>` instead of regex-scanning for `mvr-...`. The helper only accepts explicit `X-API-Key:`, `MVR_API_KEY=`, `API_KEY=`, or `Authorization: Bearer` fields and never prints the key.
 
@@ -85,6 +86,7 @@ Release boundary:
 - **Attestation recorder:** `scripts/twin_attest.py` records real counterparty attestation into `mvr/passport.json` after a signed note, MOU, or field-signal id exists. It refuses to self-upgrade reach without an attestation reference.
 - **Cross-project home memory:** `scripts/twin_home.py` can pull attested reach and aggregate settled priors into a user-owned `~/.mvr-twin` home and export them into the next project. It carries no raw evidence packs.
 - **One-command committee:** `scripts/twin_committee.py` runs the PRE-CHARTER spine calls, unions guardian/evidence requirements, and writes `charter.draft.md`, `mvr/committee_packet.json`, and `mvr/decision-log.seed.json`. It does not write the pivot, fitted build, source ledger, or settlement criteria, and it never authorizes claims.
+- **Measured calibration boundary:** the committee now obtains `country_calibration_scope.coverage_tier` from a kernel decision check. `africa_home_market` permits calibrated market judgment; global provisional tiers produce `uncalibrated_lens_only`; missing scope makes the run provisional. `calibration-health`, market profile, and market calendar are thin canonical spine reads, not a second client.
 - **Pre-code preflight:** `scripts/twin_preflight.py` writes `PREFLIGHT.md` before feature code. It forces ECLIPSE, PERMISSION, and RAILS answers so clone risk and licence/rail blockers appear in the plan, not after the build.
 - **Public-source research pack:** `scripts/twin_public_research.py` writes and validates `mvr/public_research/source_ledger.json`, pushing host agents to browse/search public sources for researchable facts and mark each claim as `verified`, `unknown`, or `rejected`. Verified regulation, licence-cost, and guardian claims require regulator/official/registry-grade sources.
 - **Fieldkit next actions:** `scripts/twin_fieldkit.py` converts the committee evidence bill and UNKNOWN counterparties into local field-signal request drafts, grounded survey questions, outreach asks, gate-cost notes, and `NEXT_ACTIONS.md`. It submits nothing.
@@ -125,6 +127,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `CAPABILITY_CLAIM.md` — the earned controlled-beta claim, explicit exclusions, and measurable future Fable-class acceptance bar.
 - `reviews/PEER_CRITIQUE_RESPONSE_beta32.md` — reproduced peer critique, architectural correction, and remaining semantic-review limit.
 - `reviews/PEER_CRITIQUE_RESPONSE_beta33.md` — carrier-manifest reproduction, content-classified correction, and independent-review boundary.
+- `reviews/CURSOR_FIELD_TEST_RESPONSE.md` — third-party free-plan OOBE/provenance verdict, generated-app safety findings, and accepted/rejected proposals.
 - `benchmarks/mvr-viability-v1/` — public 12-case blind-run artifacts, answer key, symmetric judge record, ledger-aware scorer, and the explicit authorship-reconstruction limitation.
 - `hooks/heartbeat.py` + `memory/state.format.md` — the real-time counsel channel (see protocol section above); tested in `tests/test_heartbeat.py` (8/8).
 - `hooks/response_claim_sentinel.py` — optional final-response/Stop-hook counsel for claim-shaped assistant prose; writes advisory receipts, never blocks.
@@ -132,7 +135,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `hooks/claim_semantic_tier.py` — wrapper for the escalate-only semantic/multilingual classifier used by the gates and response sentinel.
 - `hooks/verify_authorizing_receipt.py` — optional online-strict helper that checks an authorizing entry's kernel hash against the live ledger.
 - `adapters/product_kit/mvr_telemetry.py` — zero-dependency aggregate telemetry kit copied into Twin-guided products for draft-only, consented settlement signals.
-- `spine/mvr_client.py` — kernel client (decision-check, category-playbook, strategy-sparring, evidence-completeness, field-signal request/submit). Env-keyed; never hardcode keys.
+- `spine/mvr_client.py` — canonical kernel client (decision-check, measured calibration scope, market profile/calendar, category playbook, strategy sparring, evidence completeness, field-signal request/submit). Env-keyed; never hardcode keys or create a parallel client for convenience.
 - `spine/checkpoints.md` — the counsel/authority contract: exactly when the spine MUST be called.
 - `hooks/claim_gate.py` + `settings-hooks.json` — PreToolUse gate: claim-bearing artifacts under `claims/` cannot be written unless the latest decision-log entry authorizes that use class. Code is never blocked (the kernel itself authorizes `internal_planning`).
 - `lens/angles.md` — the tethered booster: 10 MVR thinking angles, each with its kernel tether.
@@ -144,6 +147,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/run_smoke_from_keyfile.py` + `scripts/keyfile_loader.py` — internal rehearsal helper for local key files; prevents label-slug extraction from masquerading as an enterprise key.
 - `scripts/generate_manifest.py` — strict UTF-8 no-BOM manifest generator for release parity checks.
 - `scripts/verify_receipts.py` — PRE-EXPORT kernel receipt verifier; confirms authority hashes against the live ledger route.
+- `scripts/twin_verify_run.py` — stage-aware run-evidence audit. It verifies live kernel authority plus current local contracts/hashes while refusing to equate an arbitrary offline 64-hex string with provenance.
 - `scripts/submit_outcome_feedback.py` — dry-run-first bridge from settled local outcomes to governed kernel outcome-feedback review.
 - `scripts/passport_check.py` — Operator Passport structure + consent validator; exits nonzero when the passport is missing, invalid, or not consented for per-run disclosure.
 - `scripts/twin_attest.py` — records attested counterparties into the local passport only when a real attestation reference exists.
@@ -166,7 +170,8 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `tests/smoke_test.py` — live kernel round-trip; `tests/test_claim_gate.py` — hook logic, offline.
 - `tests/test_preregister.py`, `tests/test_twin_build_spec.py`, `tests/test_build_spec_redteam.py`, `tests/test_carrier_coverage_gap.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration, both peer red-teams, content-classified review scope, reviewer independence, semantic-review freshness, constraint history, and safe key-file parsing.
 - `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_passport_check.py` — adversarial scan-policy and Operator Passport gate coverage.
-- `tests/test_twin_committee.py` — one-command committee regression coverage, including outage/provisional behavior.
+- `tests/test_twin_committee.py`, `tests/test_twin_kernel_context.py` — one-command committee and measured calibration-scope coverage, including outage and Law 6 uncalibrated behavior.
+- `tests/test_twin_verify_run.py` — forged-shaped, fake-hash, outage, live-authority, build, and export evidence states.
 - `tests/test_twin_attest.py`, `tests/test_twin_home.py`, `tests/test_twin_public_research.py` — attestation, cross-project memory, and public-source ledger coverage.
 - `tests/test_twin_preflight.py`, `tests/test_twin_fieldkit.py` — reasoning-brake and fieldkit action coverage.
 - `tests/test_instrument_by_default.py`, `tests/test_twin_scorecard.py`, `tests/test_twin_delta_report.py` — instrumentation and outcome visibility coverage.

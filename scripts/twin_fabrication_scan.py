@@ -73,7 +73,7 @@ CAPABILITY_NEGATION = re.compile(
 REGULATED_CAPABILITIES = [
     (
         "credit_scoring",
-        re.compile(r"\bcredit[-_\s]?scor(?:e|ing)|eligibility_for_loan|loan eligibility\b", re.I),
+        re.compile(r"\bcredit[-_\s]?scor(?:e|ing)|savings[-_\s]?scor(?:e|ing)|eligibility_for_loan|loan eligibility\b", re.I),
     ),
     (
         "mobile_money_integration",

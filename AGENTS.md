@@ -2,14 +2,18 @@
 
 When the user asks you to build a startup, product, MVP, marketplace, platform, or regulated workflow:
 
-1. Do not write feature code first. Run `python scripts/twin_preflight.py` and answer ECLIPSE, PERMISSION, and RAILS.
-2. Run the committee: `python scripts/twin_committee.py --idea "..." --archetype ... --market ... --keyfile <key>`.
-3. Complete the Build Charter, then run `python scripts/preregister.py --in-place charter.md`. This freezes it and emits the history-bound `mvr/build_spec.json`.
-4. Build only the fitted wedge. Run `python scripts/twin_build_spec.py --root . --review-request src`; review every manifested text file semantically against every forbidden constraint, acknowledge each opaque file, and write `mvr/semantic-review.json` using the request schema.
-5. Before a local commit, run `python scripts/twin_build_spec.py --root . --check src --require-semantic-review`. Before PRE-EXPORT or capability evaluation, use `--require-independent-review`; the code-producing host cannot grade its own work for that bar. A clear lexical tripwire alone is not semantic assurance.
-6. Ship `MIRROR.md` with the build, then run `python scripts/twin_delta_report.py --root .` so the user can see what changed versus an unconstrained build.
+Let `<TWIN_DIR>` mean the directory containing this `AGENTS.md`; it may be nested as `./mvr-twin` rather than copied to the project root. Never silently replace `<TWIN_DIR>` with the project root.
+
+0. **Prove the package exists before imitating it.** Confirm `<TWIN_DIR>/VERSION`, `<TWIN_DIR>/scripts/install.py`, and `<TWIN_DIR>/scripts/twin_committee.py` exist, then run `python <TWIN_DIR>/scripts/install.py --root . --verify`. If clone/download, installation, or verification fails, stop and report **lens-only / Twin not executed**. Never hand-author `mvr/committee_packet.json`, `mvr/decision-log*.json`, `mvr/build_spec.json`, kernel receipts, route-call lists, or semantic-review requests to resemble tool output.
+1. Do not write feature code first. Run `python <TWIN_DIR>/scripts/twin_preflight.py --idea "..." --archetype ... --country ... --keyfile <key> --root .` and answer ECLIPSE, PERMISSION, and RAILS.
+2. Run the committee: `python <TWIN_DIR>/scripts/twin_committee.py --idea "..." --archetype ... --subject "..." --market ... --keyfile <key> --root .`.
+3. Complete the Build Charter, then run `python <TWIN_DIR>/scripts/preregister.py --in-place charter.md`. This freezes it and emits the history-bound `mvr/build_spec.json`.
+4. Build only the fitted wedge. Run `python <TWIN_DIR>/scripts/twin_build_spec.py --root . --review-request <product-paths>`; review every manifested text file semantically against every forbidden constraint, acknowledge each opaque file, and write `mvr/semantic-review.json` using the request schema.
+5. Before a local commit, run `python <TWIN_DIR>/scripts/twin_build_spec.py --root . --check <product-paths> --require-semantic-review`. Before PRE-EXPORT or capability evaluation, use `--require-independent-review`; the code-producing host cannot grade its own work for that bar. A clear lexical tripwire alone is not semantic assurance.
+6. Ship `MIRROR.md` with the build, then run `python <TWIN_DIR>/scripts/twin_delta_report.py --root .` so the user can see what changed versus an unconstrained build.
 7. Never treat buildability as market validation. A working demo proves only that code can run.
 8. Do not create investor, launch, board, partnership, rollout, or grant claim artifacts unless the latest `mvr/decision-log.json` entry authorizes that class.
-9. Before export, run `python scripts/twin_fabrication_scan.py --root .`.
+9. Before export, run `python <TWIN_DIR>/scripts/twin_fabrication_scan.py --root .`.
+10. Audit the run: `python <TWIN_DIR>/scripts/twin_verify_run.py --root . --stage export --keyfile <key>`. Only exit `0` may be called verified. Exit `3` is inconclusive, not a pass.
 
 Full doctrine lives in `CLAUDE.md`. This file is the short universal entry point for agents that auto-read root `AGENTS.md`.

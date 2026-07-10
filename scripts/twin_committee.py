@@ -15,6 +15,7 @@ the packet is marked provisional and claim authorization remains impossible.
 import argparse
 import json
 import os
+import re
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -65,9 +66,9 @@ def union_evidence(playbooks):
     return list(lanes.values())
 
 
-def extract_receipts(*responses):
+def extract_receipts(**responses):
     receipts = {}
-    for response in responses:
+    for label, response in responses.items():
         if not isinstance(response, dict):
             continue
         for key in (
@@ -78,7 +79,8 @@ def extract_receipts(*responses):
             "decision_check_id",
         ):
             if response.get(key):
-                receipts[key] = response[key]
+                output_key = key if key not in receipts else f"{label}_{key}"
+                receipts[output_key] = response[key]
     return receipts
 
 
@@ -95,6 +97,11 @@ def add_guardian_tiers(guardian_map, tiers):
         if key and key not in seen:
             guardian_map.append(tier)
             seen.add(key)
+
+
+def market_country(market):
+    match = re.search(r"(?:^|[^A-Z])([A-Z]{2})(?:$|[^A-Z])", str(market).upper())
+    return match.group(1) if match else None
 
 
 def write_json(path, value):
@@ -127,21 +134,26 @@ def draft_charter(args, packet, seed_entry_id):
     if not rows:
         rows.append("| kernel_unavailable_or_no_lanes | unknown | rerun committee when spine is reachable |")
 
-    status_line = (
-        "PROVISIONAL - spine unavailable; no claim authorization."
-        if packet["provisional"]
-        else "Spine sat; abstention codes below are evidence requirements, not approval."
-    )
-    status_choices = (
-        "provisional_not_authorized"
-        if packet["provisional"]
-        else "{pilot_only|build_authorized|redirected}"
-    )
+    calibration = packet.get("calibration_scope") or {}
+    uncalibrated = calibration.get("verdict") == "uncalibrated"
+    if packet["provisional"]:
+        status_line = "PROVISIONAL - spine unavailable or calibration unknown; no claim authorization."
+        status_choices = "provisional_not_authorized"
+    elif uncalibrated:
+        status_line = "Spine sat, but the market is outside calibrated scope; Law 6 requires lens-only reasoning."
+        status_choices = "uncalibrated_lens_only"
+    else:
+        status_line = "Spine sat; abstention codes below are evidence requirements, not approval."
+        status_choices = "{pilot_only|build_authorized|redirected}"
     provisional_rule = (
         "\n> PROVISIONAL RULE: do not change Status to build_authorized, and do not place regulated "
         "implementation details in scaffold/export surfaces until a non-empty kernel receipt exists."
         if packet["provisional"]
-        else ""
+        else (
+            "\n> LAW 6: this market is outside measured calibration scope. Use lens-only reasoning, label "
+            "all market judgments uncalibrated, and do not trade them as kernel measurement."
+            if uncalibrated else ""
+        )
     )
 
     return f"""# BUILD CHARTER - {{PROJECT}} (DRAFT)
@@ -166,6 +178,7 @@ Board questions:
 Source ledger requirement: every named incumbent, regulation, licensing claim, figure, failure precedent, capital number, or health/credit/legal constraint must carry source/date or be marked `UNKNOWN - not verified`.
 
 ## 3. What the evidence machine said (quoted, not paraphrased)
+- calibration_scope: {json.dumps(calibration, ensure_ascii=False)}
 - unsafe_claims: {json.dumps(packet['sparring'].get('unsafe_claims', []), ensure_ascii=False)}
 - evidence_required: {json.dumps(packet['sparring'].get('evidence_required', []), ensure_ascii=False)}
 - abstention_reason_codes: {json.dumps(packet['sparring'].get('abstention_reason_codes', []), ensure_ascii=False)}
@@ -223,6 +236,35 @@ def main():
     _latency, schema_status, schema = safe_call(c.schema)
     provisional = schema_status != 200
 
+    country = market_country(args.market)
+    calibration_response = {}
+    calibration_scope = {
+        "verdict": "unknown",
+        "coverage_tier": None,
+        "source": "kernel_decision_check.response_meta.country_calibration_scope",
+        "boundary": "calibration could not be measured; provisional only",
+    }
+    if country and args.archetype:
+        _latency, calibration_status, calibration_response = safe_call(
+            c.calibration_probe,
+            args.subject,
+            args.archetype[0],
+            country,
+        )
+        if calibration_status == 200 and isinstance(calibration_response, dict):
+            calibration_scope = c.calibration_scope_from_response(calibration_response)
+            calibration_scope["country"] = country
+            write_json(os.path.join(checkpoints_dir, "calibration_scope.json"), {
+                "scope": calibration_scope,
+                "kernel_response": calibration_response,
+            })
+            if calibration_scope.get("verdict") == "unknown":
+                provisional = True
+        else:
+            provisional = True
+    else:
+        provisional = True
+
     playbooks = []
     guardian_map = []
     for archetype in args.archetype:
@@ -250,6 +292,7 @@ def main():
         "archetypes": args.archetype,
         "subject": args.subject,
         "market_scope": args.market,
+        "calibration_scope": calibration_scope,
         "claims_sent": claims[:10],
         "guardian_map": guardian_map,
         "evidence_bill": union_evidence(playbooks),
@@ -266,7 +309,11 @@ def main():
             "spine": not provisional,
             "operator": "passport" if os.path.exists(os.path.join(mvr_dir, "passport.json")) else "inference_0.30",
         },
-        "kernel_receipts": extract_receipts(schema, sparring),
+        "kernel_receipts": extract_receipts(
+            strategy_sparring=sparring,
+            calibration_probe=calibration_response,
+            schema=schema,
+        ),
     }
 
     write_json(os.path.join(mvr_dir, "committee_packet.json"), packet)
@@ -279,7 +326,12 @@ def main():
         "archetype": args.archetype[0] if args.archetype else None,
         "market_scope": args.market,
         "redirect_pattern": "<model sets if redirected>",
-        "verdict": "abstained" if packet["sparring"]["abstention_reason_codes"] else "pending",
+        "verdict": (
+            "uncalibrated"
+            if packet["calibration_scope"].get("verdict") == "uncalibrated"
+            else ("abstained" if packet["sparring"]["abstention_reason_codes"] else "pending")
+        ),
+        "calibration_scope": packet["calibration_scope"],
         "abstention_reason_codes": packet["sparring"]["abstention_reason_codes"],
         "kernel_receipts": packet["kernel_receipts"],
         "decision_authorization": {
@@ -300,6 +352,11 @@ def main():
 
     status = "SPINE_OK" if packet["seats_sat"]["spine"] else "SPINE_OUTAGE_PROVISIONAL"
     abstention = ", ".join(packet["sparring"]["abstention_reason_codes"]) or "none"
+    display_verdict = (
+        "uncalibrated"
+        if packet["calibration_scope"].get("verdict") == "uncalibrated"
+        else ("abstained" if abstention != "none" else "no-abstention")
+    )
     blockers = ", ".join(str(item) for item in packet["sparring"]["evidence_required"][:2]) or "none reported"
     guardians = ", ".join(
         str(item.get("guardian_tier") or item.get("tier") or item.get("name"))
@@ -310,7 +367,11 @@ def main():
     print("=" * 72)
     print("MVR COMMITTEE - status line")
     print(f"  seats: ADVOCATE[x] RESEARCH[model] {status} OPERATOR[{packet['seats_sat']['operator']}]")
-    print(f"  verdict: {'abstained' if abstention != 'none' else 'no-abstention'} ({abstention})")
+    print(f"  verdict: {display_verdict} ({abstention})")
+    print(
+        f"  calibration: {packet['calibration_scope'].get('verdict')} "
+        f"({packet['calibration_scope'].get('coverage_tier') or 'unknown'})"
+    )
     print(f"  top blockers: {blockers}")
     print(f"  guardian veto surface: {guardians}")
     print("  wrote: charter.draft.md | mvr/committee_packet.json | mvr/decision-log.seed.json")

@@ -76,11 +76,11 @@ def main():
         else (0.0, 404, {"status": "unverified"})
     )
 
-    def mk(receipts):
+    def mk(receipts, name="decision-log.json"):
         directory = tempfile.mkdtemp()
         mvr = os.path.join(directory, "mvr")
         os.makedirs(mvr)
-        with open(os.path.join(mvr, "decision-log.json"), "w", encoding="utf-8") as handle:
+        with open(os.path.join(mvr, name), "w", encoding="utf-8") as handle:
             json.dump([{"entry_id": "DL-1", "kernel_receipts": receipts}], handle)
         return directory
 
@@ -88,6 +88,7 @@ def main():
     try:
         os.environ["MVR_API_KEY"] = "test-key"
         check("real receipt verifies", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "verified")
+        check("committee seed receipt verifies", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}, "decision-log.seed.json"))[0] == "verified")
         check(
             "descriptive sparring receipt verifies",
             verifier.authorizing_receipt_status(mk({"strategy_sparring_immutable_receipt_hash": "a" * 64}))[0] == "verified",
@@ -98,6 +99,18 @@ def main():
         )
         check("forged receipt is caught", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "f" * 64}))[0] == "unverified")
         check("no-receipt entry is explicit", verifier.authorizing_receipt_status(mk({}))[0] == "no_receipt")
+        no_receipt_root = mk({})
+        old_argv = sys.argv[:]
+        sys.argv = ["verify_authorizing_receipt.py", no_receipt_root]
+        try:
+            try:
+                verifier.main()
+                no_receipt_exit = 0
+            except SystemExit as exc:
+                no_receipt_exit = exc.code
+        finally:
+            sys.argv = old_argv
+        check("online-strict helper never exits 0 without a receipt", no_receipt_exit == 2)
         verifier.c.call = lambda path, **kwargs: (0.0, 0, {"error": "kernel_unreachable"})
         check("offline is a distinct state", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "offline")
     finally:

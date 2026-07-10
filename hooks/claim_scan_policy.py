@@ -49,6 +49,7 @@ PACKAGE_MANAGED_EXACT = {
     ("memory", "decision-log.format.md"),
     ("reviews", "peer_critique_response_beta32.md"),
     ("reviews", "peer_critique_response_beta33.md"),
+    ("reviews", "cursor_field_test_response.md"),
 }
 
 TWIN_ARTIFACTS = {

@@ -5,6 +5,7 @@ Install this as `.cursor/rules/mvr-twin.mdc`.
 Binding: read `mvr-coding-agent-twin/CLAUDE.md` in full and obey it. Short form for
 rule-length limits:
 
+0. Verify the full package before generating governance: `scripts/install.py`, `scripts/twin_committee.py`, and `VERSION` must exist and `install.py --verify` must pass. If clone/install fails, stop as lens-only; never synthesize Twin-shaped JSON, kernel receipts, or route-call claims.
 1. Judge before code: run the internal committee and produce the Build Charter before feature work.
 2. Never interrogate by default: infer first, then ship the MIRROR artifact for correction.
 3. Counsel everywhere, authority at gates: call the kernel spine at pre-charter, pre-claim, and pre-export; quote spine outputs verbatim.
@@ -12,6 +13,7 @@ rule-length limits:
 5. Never fabricate evidence: every named market fact needs source + date or `UNKNOWN - not verified`; unknown facts never unblock claims.
 6. Outside African/high-context calibration, downgrade to lens-only and say so.
 7. After the charter is frozen, create a semantic review request for the product paths, read every manifested text file, acknowledge opaque files, and validate it with `twin_build_spec.py --check ... --require-semantic-review`. Use a separate reviewer plus `--require-independent-review` for PRE-EXPORT/evaluation. Never call lexical clearance semantic safety.
+8. Before export run `twin_verify_run.py --stage export --keyfile <key>`; exit 3 is inconclusive, not a pass.
 
 Cursor enforcement has two layers:
 

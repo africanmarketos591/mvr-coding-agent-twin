@@ -81,6 +81,7 @@ def main():
         "memory/decision-log.format.md",
         "reviews/PEER_CRITIQUE_RESPONSE_beta32.md",
         "reviews/PEER_CRITIQUE_RESPONSE_beta33.md",
+        "reviews/CURSOR_FIELD_TEST_RESPONSE.md",
         "claims/investor.md",
     ):
         check(f"not scanned {path}", should_scan_content(path) is False)

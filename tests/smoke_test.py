@@ -89,7 +89,12 @@ def main():
     auth = (d.get("decision_authorization") or {})
     check("internal_planning authorized at idea stage", "internal_planning" in (auth.get("authorized_use") or []))
     check("scale claims not authorized at idea stage", "national_rollout" in (auth.get("not_authorized_use") or []))
+    scope = spine.calibration_scope_from_response(d)
+    check("Law 6 calibration scope is kernel-measured", scope.get("coverage_tier") == "africa_home_market", scope)
     latency_budget("decision-check latency < 8s", lat < 8, f"{lat}s")
+
+    lat, st, d = spine.calibration_health()
+    check("calibration health route reachable", st == 200 and isinstance(d, dict), f"{st} {lat}s")
 
     print()
     if FAILS:

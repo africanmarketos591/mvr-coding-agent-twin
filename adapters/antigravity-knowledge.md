@@ -14,6 +14,7 @@ the FULL Twin experience — map these host features:
 - **Artifacts:** emit the Build Charter and MIRROR as Artifacts; attach browser recordings and
   screenshots as source-ledger evidence.
 - **Semantic code review:** after preregistration, run `scripts/twin_build_spec.py --review-request <paths>`, use a context-isolated reviewer subagent to read every manifested text file, acknowledge opaque files, inspect behavior against every raw cut-list constraint, and write `mvr/semantic-review.json`. Validate locally with `--require-semantic-review`; PRE-EXPORT/evaluation uses a reviewer distinct from the builder plus `--require-independent-review`. A clear lexical tripwire is not semantic assurance; the result is attestation, not kernel authority.
+- **Provenance before polish:** if package installation or a checkpoint fails, mark the run lens-only and do not synthesize expected JSON. Before export, `scripts/twin_verify_run.py --stage export --keyfile <key>` must exit 0; offline/no-key exit 3 is inconclusive.
 - **Knowledge base:** store settled-outcome digests as knowledge items so calibration context
   survives across sessions (never store raw personal passport data as shared knowledge).
 

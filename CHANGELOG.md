@@ -1,5 +1,15 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.35 - 2026-07-10 (run evidence, measured calibration, and nested-clone OOBE)
+- **Cursor free-plan finding recorded honestly:** the agent produced a useful custody redirect but never cloned or ran the Twin; it wrote invented governance schemas and placeholder receipts. The run is classified as lens transfer, not a Twin treatment.
+- **Run-evidence audit:** added `scripts/twin_verify_run.py` with four non-collapsible states: verified, rejected, incomplete, inconclusive. Exit 0 requires a live ledger-verified authority hash plus stage-local artifact consistency. An arbitrary offline 64-hex string can never pass, and the output does not claim to prove which process authored local files.
+- **Nested-clone OOBE hardened:** root/adaptor instructions define the actual Twin directory, require `install.py --verify` before governance, and forbid hand-authored committee packets, build specs, receipt hashes, route-call lists, or semantic-review requests after clone/checkpoint failure.
+- **Law 6 is kernel-measured:** the canonical spine exposes calibration health, market profile, market calendar, and a decision-check calibration probe. The committee records `country_calibration_scope.coverage_tier`; `africa_home_market` is calibrated, global provisional tiers emit `uncalibrated_lens_only`, and missing scope remains provisional.
+- **Receipt preservation widened:** committee receipt extraction keeps distinct authority hashes from sparring and calibration instead of overwriting duplicate field names. Online strict verification now accepts `decision-log.seed.json` before a finalized log exists and exits 2, never 0, when no authority receipt exists.
+- **Savings-score drift closed:** `savings_score` / `savings-score` now map to credit-scoring in both the build tripwire and product-surface export scanner, directly closing the field-test miss.
+- **Semantic request scope self-describes:** review-request v3 stores normalized target paths, allowing an independent verifier to reconstruct freshness checks instead of trusting caller-supplied paths.
+- **Selective kernel wiring, not route-count theater:** the live OpenAPI exposes 209 paths, but beta.35 wires only the measured calibration/read context consumed by current workflows. The proposed parallel extension client was rejected to preserve one auth/state/error boundary.
+
 ## 1.1.0-beta.34 - 2026-07-10 (content-classified review scope and independent review mode)
 - **Extension allowlist removed from semantic scope:** every first-party non-binary text file under the requested product paths is classified by content and hash-bound, so new languages and schemas do not need to be added one extension at a time.
 - **Previously blind carriers now governed:** Dart, MJS/CJS, Prisma, GraphQL, Gradle, Scala, Elixir, extensionless scripts, and other text carriers enter both staged-file governance and semantic-review freshness checks automatically.

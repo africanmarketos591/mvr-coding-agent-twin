@@ -1,6 +1,6 @@
 # BUILD CHARTER - {{project_name}}
 **Charter ID:** CH-{{uuid}} | **Date:** {{date}} | **Archetype:** {{archetype}} | **Market:** {{country}}/{{region}}
-**Status:** {{pilot_only | build_authorized | redirected}} | **Preregistration hash:** {{canonical_sha256}} (anchors: {{anchor_refs}})
+**Status:** {{pilot_only | build_authorized | redirected | uncalibrated_lens_only}} | **Preregistration hash:** {{canonical_sha256}} (anchors: {{anchor_refs}})
 
 > This charter is a dated, hashed, settleable prediction. Settlement checkpoints at the bottom were written before the build.
 > Hash rule: use `scripts/preregister.py` after the charter body is complete. The canonical hash ignores only this self-referential hash/anchor field; changing any prediction text, source, verdict, or settlement criterion requires rerunning `scripts/preregister.py --verify`.
@@ -19,6 +19,7 @@
 Rule: no named incumbent, regulation, licensing claim, market figure, failure precedent, capital number, market-share number, or health/credit/legal constraint may appear in user-facing sections unless it appears in this ledger as `verified`. For regulation, licence-cost, and guardian claims, verified means the source type is regulator, official, or registry. `UNKNOWN - not verified` facts may stay in the internal appendix only and cannot justify redirects or external recommendations. They never unblock claims either: claims stay denied by default until the decision log authorizes them, and in credit/health/legal categories an `UNKNOWN` regulatory status is itself grounds for continued non-authorization plus a verification task in the evidence bill (Section 7A).
 
 ## 3. What the evidence machine said (quoted, not paraphrased)
+- Calibration scope: country {{country}}, coverage tier {{coverage_tier}}, Law 6 status {{calibrated | uncalibrated_lens_only | unknown_provisional}}
 - Sparring: unsafe claims -> {{unsafe_claims_verbatim}}
 - Evidence bill before pilot / before scale -> {{evidence_required}}
 - Decision check (if pack existed): verdict {{verdict}}, confidence {{confidence}}, blockers {{abstention_codes}}

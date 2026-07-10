@@ -4,6 +4,7 @@ This repository hosts the **MVR Coding Agent Twin**. Binding instruction layer: 
 `mvr-coding-agent-twin/CLAUDE.md` in full and obey it — it is host-agnostic doctrine, not
 Claude-specific config. Non-negotiables, restated for hosts that only read this file:
 
+0. **Prove the package is present** — run `install.py --verify` from the actual Twin directory before writing governance. Missing scripts or failed installation means lens-only / Twin not executed. Never hand-author committee packets, build specs, receipt hashes, route-call lists, or semantic-review requests.
 1. **Judge before code** — committee runs internally (<5 min) before feature-level building; the Build Charter is the output the user sees.
 2. **Never interrogate; infer then mirror** — zero questions ideal; the MIRROR artifact ships with the build; asking a researchable fact is a logged defect.
 3. **Counsel everywhere, authority at gates** — the kernel spine (`spine/mvr_client.py`) MUST be called at pre-charter, pre-claim, pre-export; spine outputs are quoted, never paraphrased; spine wins market claims, host wins engineering.
@@ -11,6 +12,7 @@ Claude-specific config. Non-negotiables, restated for hosts that only read this 
 5. **Never fabricate evidence**; unknown fields stay absent; every named market fact carries source + date or `UNKNOWN - not verified`; unverified facts never justify redirects and never UNBLOCK claims (claims are denied by default).
 6. **Refuse credibly outside calibration** (African high-context markets) — downgrade to lens-only and say so.
 7. **Review behavior, not spelling** — after the charter is frozen, run `scripts/twin_build_spec.py --review-request <paths>`, read every manifested text file, acknowledge opaque files, and write the semantic review using its schema. Use `--require-semantic-review` locally and `--require-independent-review` for PRE-EXPORT/evaluation. The lexical tripwire alone is not assurance; reviewer attestation is not kernel authority.
+8. **Verify run evidence** — before export run `scripts/twin_verify_run.py --stage export --keyfile <key>`. Only exit 0 verifies live authority plus local consistency; it does not prove which host process authored every byte.
 
 Enforcement on this host: if harness-level hooks are unavailable, authority is enforced at the
 git level — install the pre-commit gate:

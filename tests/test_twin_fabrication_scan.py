@@ -172,6 +172,10 @@ def main():
         result = run_default(tempdir)
         check("unauthorized regulated capability flagged", result.returncode == 1 and "credit-score" in result.stdout)
 
+        write(os.path.join(tempdir, "roscha-app", "app.py"), "def savings_score(member): return member.payment_ratio\n")
+        result = run_default(tempdir)
+        check("unauthorized savings-score capability flagged", result.returncode == 1 and "credit_scoring" in result.stdout)
+
     with tempfile.TemporaryDirectory() as tempdir:
         write(os.path.join(tempdir, "roscha-app", "README.md"), "No credit scoring and no mobile money integration in this build.\n")
         result = run_default(tempdir)

@@ -129,6 +129,9 @@ def main():
         write(os.path.join(src, "wallet.sql"), "CREATE PROC approve_loan AS INSERT INTO loan_book VALUES(1);\n")
         carriers = bs.scan_code(root, ["src"], contract)
         check("Solidity and SQL are scanned", {"src/wallet.sol", "src/wallet.sql"}.issubset({item["path"] for item in carriers}))
+        write(os.path.join(src, "scores.py"), "def savings_score(member): return member.payment_ratio\n")
+        score_findings = bs.scan_code(root, ["src/scores.py"], contract)
+        check("savings-score engine trips credit-scoring cut", any(item["capability"] == "credit_scoring" for item in score_findings))
 
         write(
             os.path.join(root, "charter.md"),
