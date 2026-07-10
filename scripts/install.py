@@ -157,8 +157,9 @@ def main():
     print("      review every listed text file, acknowledge opaque files, then run --check <paths> --require-semantic-review.")
     print("      PRE-EXPORT/evaluation: use a separate reviewer and --require-independent-review.")
     print("      The deterministic scan is a naive-capability tripwire; a clear scan is not semantic assurance.")
-    print("NEXT  Before calling the run verified: twin_verify_run.py --root . --stage build --keyfile <key>.")
+    print("NEXT  Before calling Twin run evidence verified: twin_verify_run.py --root . --stage build --keyfile <key>.")
     print("      Exit 3 means inconclusive (offline/no key), never pass. Do not hand-author missing Twin artifacts.")
+    print("      Exit 0 does not replace app dependency, runtime, security, or production-readiness checks.")
 
     # 4. Optional verification
     if args.verify:

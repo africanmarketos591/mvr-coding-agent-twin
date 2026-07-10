@@ -117,6 +117,42 @@ def main():
             check("coherent build evidence verifies", result["status"] == "verified", result["status"])
             result = verifier.audit_run(root, stage="export")
             check("host self-review cannot verify export", result["status"] == "rejected", result["status"])
+
+        with tempfile.TemporaryDirectory() as root:
+            # Cursor beta.35 failure shape: a live receipt and self-review existed, but
+            # the product-surface tripwire failed while the run verifier returned 0.
+            os.makedirs(os.path.join(root, "src"))
+            with open(os.path.join(root, "charter.md"), "w", encoding="utf-8") as handle:
+                handle.write(
+                    "# Charter\n**Status:** redirect | **Preregistration hash:** <pending> (anchors: pending)\n"
+                    "## 5. THE BUILD\n- **Build:** contribution ledger.\n"
+                    "- **Explicitly NOT building:** a savings score or loan book.\n"
+                )
+            digest = verifier.prereg.digest_for(os.path.join(root, "charter.md"))
+            verifier.prereg.write_in_place(os.path.join(root, "charter.md"), digest)
+            committee_tree(root)
+            with open(os.path.join(root, "src", "app.py"), "w", encoding="utf-8") as handle:
+                handle.write("def approve_loan(member): return member.savings_score\n")
+            contract, _ = bs.write_contract(root)
+            request, _ = bs.write_review_request(root, ["src"], contract)
+            write_json(os.path.join(root, bs.REVIEW_PATH), {
+                "format": bs.REVIEW_FORMAT,
+                "request_sha256": request["request_sha256"],
+                "reviewer_kind": "host_model",
+                "reviewer_id": "cursor-session",
+                "model_id": "cursor-test-model",
+                "reviewed_at": "2026-07-10T00:00:00Z",
+                "verdict": "pass",
+                "findings": [],
+                "opaque_file_acknowledgements": [],
+                "attestation": bs.REVIEW_ATTESTATION,
+            })
+            os.environ["MVR_API_KEY"] = "test-key"
+            verifier.receipt_verifier.c.call = lambda *args, **kwargs: (0.01, 200, {"status": "verified"})
+            result = verifier.audit_run(root, stage="build")
+            details = " ".join(item["detail"] for item in result["checks"])
+            check("failed product tripwire cannot coexist with VERIFIED", result["status"] == "rejected", result["status"])
+            check("product tripwire failure is named", "approve_loan" in details or "digital_lending" in details, details)
     finally:
         verifier.receipt_verifier.c.call = old_call
         if old_key is None:

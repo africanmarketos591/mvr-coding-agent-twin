@@ -35,7 +35,7 @@ Built 2026-07-06 by Claude Fable 5 as its own mirror: the instruction layer enco
 5. Run `python <TWIN_DIR>/scripts/install.py --root . --verify` for offline suites.
 6. Run `python <TWIN_DIR>/tests/smoke_test.py` - must print `ALL PASS` before first use with a PRO/ENTERPRISE-scope evaluation key. The public sandbox key verifies `/v1/schema`, category playbooks, and `/v1/decision-check`, but `/v1/strategy-sparring` is correctly plan-gated and will return `403` on STANDARD scope. (Note: the kernel edge rejects default Python user agents; the client in `spine/mvr_client.py` sets a proper UA. Do not bypass it.)
 7. **REQUIRED before first commit:** verify `mvr/.gitignore` exists - the Operator Passport is personal data and must never reach a shared or public repo (SECURITY.md, Repository hygiene).
-8. **REQUIRED before calling a run verified:** `python <TWIN_DIR>/scripts/twin_verify_run.py --root . --stage build --keyfile <keyfile>`. No key/offline is exit 3 (`inconclusive`), never a pass.
+8. **REQUIRED before calling Twin run evidence verified:** `python <TWIN_DIR>/scripts/twin_verify_run.py --root . --stage build --keyfile <keyfile>`. No key/offline is exit 3 (`inconclusive`), never a pass. Exit 0 authenticates kernel authority and the governed, hash-bound build surface; it does **not** replace dependency installation, app tests, security review, or production-readiness checks. Every required product command must also exit 0.
 
 Internal rehearsal key files: use `python scripts/run_smoke_from_keyfile.py <keyfile>` instead of regex-scanning for `mvr-...`. The helper only accepts explicit `X-API-Key:`, `MVR_API_KEY=`, `API_KEY=`, or `Authorization: Bearer` fields and never prints the key.
 
@@ -128,6 +128,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `reviews/PEER_CRITIQUE_RESPONSE_beta32.md` — reproduced peer critique, architectural correction, and remaining semantic-review limit.
 - `reviews/PEER_CRITIQUE_RESPONSE_beta33.md` — carrier-manifest reproduction, content-classified correction, and independent-review boundary.
 - `reviews/CURSOR_FIELD_TEST_RESPONSE.md` — third-party free-plan OOBE/provenance verdict, generated-app safety findings, and accepted/rejected proposals.
+- `reviews/CURSOR_BETA35_RETRY_AUDIT.md` — independent retry audit separating genuine kernel authority from the failed build tripwire, failed runtime check, and unsafe generated prototype.
 - `benchmarks/mvr-viability-v1/` — public 12-case blind-run artifacts, answer key, symmetric judge record, ledger-aware scorer, and the explicit authorship-reconstruction limitation.
 - `hooks/heartbeat.py` + `memory/state.format.md` — the real-time counsel channel (see protocol section above); tested in `tests/test_heartbeat.py` (8/8).
 - `hooks/response_claim_sentinel.py` — optional final-response/Stop-hook counsel for claim-shaped assistant prose; writes advisory receipts, never blocks.
@@ -147,7 +148,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/run_smoke_from_keyfile.py` + `scripts/keyfile_loader.py` — internal rehearsal helper for local key files; prevents label-slug extraction from masquerading as an enterprise key.
 - `scripts/generate_manifest.py` — strict UTF-8 no-BOM manifest generator for release parity checks.
 - `scripts/verify_receipts.py` — PRE-EXPORT kernel receipt verifier; confirms authority hashes against the live ledger route.
-- `scripts/twin_verify_run.py` — stage-aware run-evidence audit. It verifies live kernel authority plus current local contracts/hashes while refusing to equate an arbitrary offline 64-hex string with provenance.
+- `scripts/twin_verify_run.py` — stage-aware run-evidence audit. It verifies live kernel authority, current local contracts/hashes, semantic-review freshness, and the deterministic tripwire over the review request's exact product targets. It refuses to equate an arbitrary offline 64-hex string with provenance and does not certify app runtime, security, demand, or production readiness.
 - `scripts/submit_outcome_feedback.py` — dry-run-first bridge from settled local outcomes to governed kernel outcome-feedback review.
 - `scripts/passport_check.py` — Operator Passport structure + consent validator; exits nonzero when the passport is missing, invalid, or not consented for per-run disclosure.
 - `scripts/twin_attest.py` — records attested counterparties into the local passport only when a real attestation reference exists.
@@ -171,7 +172,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `tests/test_preregister.py`, `tests/test_twin_build_spec.py`, `tests/test_build_spec_redteam.py`, `tests/test_carrier_coverage_gap.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration, both peer red-teams, content-classified review scope, reviewer independence, semantic-review freshness, constraint history, and safe key-file parsing.
 - `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_passport_check.py` — adversarial scan-policy and Operator Passport gate coverage.
 - `tests/test_twin_committee.py`, `tests/test_twin_kernel_context.py` — one-command committee and measured calibration-scope coverage, including outage and Law 6 uncalibrated behavior.
-- `tests/test_twin_verify_run.py` — forged-shaped, fake-hash, outage, live-authority, build, and export evidence states.
+- `tests/test_twin_verify_run.py` — forged-shaped, fake-hash, outage, live-authority, build, export, and live-receipt/failed-product-tripwire evidence states.
 - `tests/test_twin_attest.py`, `tests/test_twin_home.py`, `tests/test_twin_public_research.py` — attestation, cross-project memory, and public-source ledger coverage.
 - `tests/test_twin_preflight.py`, `tests/test_twin_fieldkit.py` — reasoning-brake and fieldkit action coverage.
 - `tests/test_instrument_by_default.py`, `tests/test_twin_scorecard.py`, `tests/test_twin_delta_report.py` — instrumentation and outcome visibility coverage.

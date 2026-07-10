@@ -1,5 +1,12 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.36 - 2026-07-10 (false-green run verification closed)
+- **Cursor retry classified precisely:** the beta.35 package and enterprise key were real, the live kernel receipt verified, and the charter hash was valid; the generated build still failed its own capability tripwire and could not import because Flask was absent. The launcher nevertheless marked the run successful. The run is now recorded as **kernel-authenticated but build-rejected**, not verified treatment evidence.
+- **Run verifier closes the false-green gap:** `twin_verify_run.py --stage build|export` now re-runs the naive-capability tripwire over the exact hash-bound semantic-review targets. Any hit returns `rejected`/exit 1 even when the kernel receipt is genuine and a local semantic-review file says `pass`.
+- **Semantic reviewer identity hardened:** placeholder reviewer/model identities such as `auto`, `unknown`, or `unspecified` no longer satisfy review validation. This does not make local attestation cryptographic proof; it prevents anonymous automation from masquerading as an identified model review.
+- **Verification boundary sharpened:** exit 0 covers live kernel authority and the governed, hash-bound build surface. It explicitly does not certify dependency installation, runtime tests, application security, market demand, or production readiness; those checks must also succeed independently.
+- **Exact incident regression:** `tests/test_twin_verify_run.py` now locks the live-receipt + passing-self-review + failing-product-tripwire construction, and `tests/test_twin_build_spec.py` locks placeholder model identity rejection.
+
 ## 1.1.0-beta.35 - 2026-07-10 (run evidence, measured calibration, and nested-clone OOBE)
 - **Cursor free-plan finding recorded honestly:** the agent produced a useful custody redirect but never cloned or ran the Twin; it wrote invented governance schemas and placeholder receipts. The run is classified as lens transfer, not a Twin treatment.
 - **Run-evidence audit:** added `scripts/twin_verify_run.py` with four non-collapsible states: verified, rejected, incomplete, inconclusive. Exit 0 requires a live ledger-verified authority hash plus stage-local artifact consistency. An arbitrary offline 64-hex string can never pass, and the output does not claim to prove which process authored local files.

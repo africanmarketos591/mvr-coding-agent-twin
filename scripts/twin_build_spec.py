@@ -65,6 +65,10 @@ REVIEW_ATTESTATION = (
     "I reviewed every text file against every forbidden constraint; opaque files "
     "are hash-bound but outside semantic review."
 )
+PLACEHOLDER_REVIEW_IDENTITIES = {
+    "auto", "automatic", "default", "host_model", "model", "n/a", "na", "none",
+    "not-specified", "not_specified", "unknown", "unspecified",
+}
 NEGATED = re.compile(
     r"\b(no|not|never|without|non[- ]custodial|blocked|forbidden|disabled|"
     r"does not|do not|must not|cannot|can't|will not)\b",
@@ -838,8 +842,8 @@ def write_review_request(root, targets, contract=None):
             "format": REVIEW_FORMAT,
             "request_sha256": "copy request_sha256 from this request",
             "reviewer_kind": "host_model | independent_model | human",
-            "reviewer_id": "required stable reviewer or agent id",
-            "model_id": "required for model reviewers",
+            "reviewer_id": "required stable reviewer or agent id; placeholders are invalid",
+            "model_id": "actual model identifier required for model reviewers; auto/unknown placeholders are invalid",
             "reviewed_at": "ISO-8601",
             "verdict": "pass | block",
             "findings": [{
@@ -907,10 +911,17 @@ def validate_semantic_review(root, targets, contract=None, require_independent=F
         errors.append("semantic review reviewer_kind is invalid")
     if require_independent and review.get("reviewer_kind") == "host_model":
         errors.append("independent semantic review required; host_model self-review does not qualify")
-    if not str(review.get("reviewer_id", "")).strip():
+    reviewer_id = str(review.get("reviewer_id", "")).strip()
+    model_id = str(review.get("model_id", "")).strip()
+    if not reviewer_id:
         errors.append("semantic review requires reviewer_id")
-    if review.get("reviewer_kind") in {"host_model", "independent_model"} and not str(review.get("model_id", "")).strip():
-        errors.append("semantic model review requires model_id")
+    elif reviewer_id.lower() in PLACEHOLDER_REVIEW_IDENTITIES:
+        errors.append("semantic review reviewer_id must identify the actual reviewer, not a placeholder")
+    if review.get("reviewer_kind") in {"host_model", "independent_model"}:
+        if not model_id:
+            errors.append("semantic model review requires model_id")
+        elif model_id.lower() in PLACEHOLDER_REVIEW_IDENTITIES:
+            errors.append("semantic review model_id must identify the actual model, not a placeholder")
     try:
         datetime.fromisoformat(str(review.get("reviewed_at", "")).replace("Z", "+00:00"))
     except Exception:

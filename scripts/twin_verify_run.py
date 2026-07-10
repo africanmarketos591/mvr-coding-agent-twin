@@ -1,7 +1,7 @@
 """Audit run evidence without claiming to prove which process authored local files.
 
 Exit contract:
-  0  VERIFIED      live kernel authority + stage-local artifact consistency
+  0  VERIFIED      live kernel authority + stage-local governed-surface consistency
   1  REJECTED      contradiction, forged/unverified receipt, or invalid artifact
   2  INCOMPLETE    required stage artifacts are missing
   3  INCONCLUSIVE  local structure may be coherent, but no live authority check
@@ -164,13 +164,42 @@ def audit_run(root, keyfile=None, stage="build"):
 
         review_request = _read_json(os.path.join(root, build_spec.REVIEW_REQUEST_PATH))
         if not contract_valid:
+            _record(checks, "build_surface_tripwire", "not_evaluated", "build contract is invalid")
             _record(checks, "semantic_review", "not_evaluated", "build contract is invalid")
         elif (contract or {}).get("semantic_review", {}).get("required"):
             targets = review_request.get("targets") if isinstance(review_request, dict) else None
             if not isinstance(targets, list) or not targets:
                 rejected = True
+                _record(checks, "build_surface_tripwire", "not_evaluated", "current review targets are missing")
                 _record(checks, "semantic_review", "fail", "current tool-format review request with explicit targets is missing")
             else:
+                try:
+                    findings = build_spec.scan_code(root, targets, contract)
+                except (OSError, ValueError) as exc:
+                    findings = []
+                    rejected = True
+                    _record(checks, "build_surface_tripwire", "fail", str(exc))
+                else:
+                    if findings:
+                        rejected = True
+                        sample = ", ".join(
+                            f"{item.get('path')}:{item.get('line')} {item.get('capability')}"
+                            for item in findings[:5]
+                        )
+                        suffix = "" if len(findings) <= 5 else f" (+{len(findings) - 5} more)"
+                        _record(
+                            checks,
+                            "build_surface_tripwire",
+                            "fail",
+                            f"{len(findings)} forbidden-capability lexical hit(s): {sample}{suffix}",
+                        )
+                    else:
+                        _record(
+                            checks,
+                            "build_surface_tripwire",
+                            "pass",
+                            "current hash-bound review targets are lexically clear; this is not semantic assurance",
+                        )
                 review = build_spec.validate_semantic_review(
                     root,
                     targets,
@@ -186,6 +215,7 @@ def audit_run(root, keyfile=None, stage="build"):
                     rejected = True
                     _record(checks, "semantic_review", "fail", "; ".join(review.get("errors") or ["review blocked"]))
         else:
+            _record(checks, "build_surface_tripwire", "not_required", "contract carries no forbidden constraints")
             _record(checks, "semantic_review", "not_required", "contract carries no forbidden constraints")
 
     old_key = os.environ.get("MVR_API_KEY")
@@ -226,8 +256,9 @@ def audit_run(root, keyfile=None, stage="build"):
         "stage": stage,
         "checks": checks,
         "boundary": (
-            "VERIFIED means live kernel authority and local artifact consistency. It does not "
-            "cryptographically prove which host process authored every file."
+            "VERIFIED means live kernel authority and consistency of the governed, hash-bound build surface. "
+            "It does not cryptographically prove which host process authored every file, or certify app "
+            "installability, runtime tests, security, market demand, or production readiness."
         ),
     }
 

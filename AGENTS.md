@@ -14,6 +14,6 @@ Let `<TWIN_DIR>` mean the directory containing this `AGENTS.md`; it may be neste
 7. Never treat buildability as market validation. A working demo proves only that code can run.
 8. Do not create investor, launch, board, partnership, rollout, or grant claim artifacts unless the latest `mvr/decision-log.json` entry authorizes that class.
 9. Before export, run `python <TWIN_DIR>/scripts/twin_fabrication_scan.py --root .`.
-10. Audit the run: `python <TWIN_DIR>/scripts/twin_verify_run.py --root . --stage export --keyfile <key>`. Only exit `0` may be called verified. Exit `3` is inconclusive, not a pass.
+10. Audit Twin evidence: `python <TWIN_DIR>/scripts/twin_verify_run.py --root . --stage export --keyfile <key>`. Only exit `0` verifies live authority plus the governed build surface. Exit `3` is inconclusive, not a pass. This does not certify app runtime, dependencies, security, or production readiness; all required product checks must also exit `0`.
 
 Full doctrine lives in `CLAUDE.md`. This file is the short universal entry point for agents that auto-read root `AGENTS.md`.

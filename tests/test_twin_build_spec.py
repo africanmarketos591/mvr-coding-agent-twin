@@ -120,8 +120,18 @@ def main():
         check("model semantic block is binding", bs.validate_semantic_review(root, ["src"], contract)["status"] == "current_block")
 
         write(os.path.join(src, "loans.py"), "def record_wages(amount):\n    return amount\n")
-        write_semantic_review(root, ["src"], contract, "pass")
+        review = write_semantic_review(root, ["src"], contract, "pass")
         check("fresh model semantic pass validates", bs.validate_semantic_review(root, ["src"], contract)["status"] == "current_pass")
+        review["model_id"] = "auto"
+        with open(os.path.join(root, bs.REVIEW_PATH), "w", encoding="utf-8") as handle:
+            json.dump(review, handle)
+        placeholder = bs.validate_semantic_review(root, ["src"], contract)
+        check(
+            "placeholder model identity cannot attest semantic review",
+            placeholder["status"] == "invalid" and any("actual model" in item for item in placeholder["errors"]),
+            placeholder["errors"],
+        )
+        write_semantic_review(root, ["src"], contract, "pass")
         write(os.path.join(src, "loans.py"), "def record_wages(amount, ref):\n    return amount\n")
         check("code change makes semantic review stale", bs.validate_semantic_review(root, ["src"], contract)["status"] == "invalid")
 
