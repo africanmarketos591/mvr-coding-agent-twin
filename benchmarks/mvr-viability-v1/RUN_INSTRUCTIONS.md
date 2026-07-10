@@ -96,6 +96,8 @@ Do not call a run independently reconstructable unless every arm has a distinct 
 
 For any future "frontier capability" claim, add a third ablation arm: the same host with Twin doctrine/research instructions but without kernel/spine access. The three-way comparison is `host alone` / `host + doctrine` / `host + full Twin`; without it, the kernel's marginal contribution is not isolated.
 
+For semantic code-constraint scoring, the code-producing agent may create a local self-review record, but that record is not the benchmark verdict. A separate opaque reviewer ID must read the hash-bound request and files, emit `reviewer_kind: independent_model` or `human`, and pass `twin_build_spec.py --check <paths> --require-independent-review`. Report host self-review and independent-review FP/FN separately.
+
 Full-system claims require a reachable kernel and non-empty kernel receipts in the treatment charters. If the kernel is down, the run is still valuable: it tests how much the Twin's doctrine, tools, research layer, and export scanners preserve judgment under outage conditions.
 
 ## What To Send For Review

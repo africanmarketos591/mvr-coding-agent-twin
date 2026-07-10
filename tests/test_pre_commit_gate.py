@@ -29,7 +29,7 @@ def semantic_pass(repo, targets):
     contract = build_spec.load_contract(repo)
     request, _ = build_spec.write_review_request(repo, targets, contract)
     review = {
-        "format": "mvr_semantic_code_review_v1",
+        "format": build_spec.REVIEW_FORMAT,
         "request_sha256": request["request_sha256"],
         "reviewer_kind": "host_model",
         "reviewer_id": "precommit-test-session",
@@ -37,7 +37,8 @@ def semantic_pass(repo, targets):
         "reviewed_at": datetime.now(timezone.utc).isoformat(),
         "verdict": "pass",
         "findings": [],
-        "attestation": "I reviewed behavior against every forbidden constraint in the request.",
+        "opaque_file_acknowledgements": [item["path"] for item in request["opaque_files"]],
+        "attestation": build_spec.REVIEW_ATTESTATION,
     }
     with open(os.path.join(repo, build_spec.REVIEW_PATH), "w", encoding="utf-8") as handle:
         json.dump(review, handle)
@@ -188,6 +189,36 @@ def main():
         git(d, "add", "charter.md", "src/app.py")
         rc, err = run_gate(d)
         check("stale build contract blocks code", rc == 1 and "no longer matches" in err)
+
+    # Previously omitted carriers must enter the contract even when no recognized extension is staged.
+    with tempfile.TemporaryDirectory() as d:
+        git(d, "init", "-q")
+        git(d, "config", "user.email", "t@t.t"); git(d, "config", "user.name", "t")
+        os.makedirs(os.path.join(d, "src"), exist_ok=True)
+        os.makedirs(os.path.join(d, "mvr"), exist_ok=True)
+        open(os.path.join(d, "charter.md"), "w").write(
+            "# Charter\n**Status:** redirect\n## 5. THE BUILD\n"
+            "- **Build:** a wage ledger.\n"
+            "- **Explicitly NOT building:** a digital loan book.\n"
+        )
+        open(os.path.join(d, "src", "app.dart"), "w").write("void ledger() {}\n")
+        json.dump([{
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "decision_authorization": {"authorized_use": ["internal_planning"]},
+            "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+        }], open(os.path.join(d, "mvr", "decision-log.json"), "w"))
+        json.dump({"provisional": False, "claims_sent": ["digital loans"]},
+                  open(os.path.join(d, "mvr", "committee_packet.json"), "w"))
+        subprocess.run([sys.executable, BUILD_SPEC, "--root", d, "--emit"], check=True, capture_output=True)
+        semantic_pass(d, ["src/app.dart"])
+        git(d, "add", ".")
+        rc, err = run_gate(d)
+        check("Dart-only fitted commit is governed and permitted", rc == 0, err)
+
+        open(os.path.join(d, "src", "app.dart"), "w").write("void approveLoan() {}\n")
+        git(d, "add", "src/app.dart")
+        rc, err = run_gate(d)
+        check("Dart-only forbidden capability is blocked", rc == 1 and "digital_lending" in err, err)
 
     print()
     if FAILS:

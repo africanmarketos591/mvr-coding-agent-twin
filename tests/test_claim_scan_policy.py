@@ -34,6 +34,7 @@ def main():
         "memory/pitch.md",
         "scripts/plan.md",
         "adapters/deck.md",
+        "reviews/deck.md",
         "docs/charter.md",
         "docs/preflight.md",
         "x/mirror.md",
@@ -74,7 +75,12 @@ def main():
         "mvr/checkpoints/strategy_sparring.json",
         "mvr/public_research/source_ledger.json",
         "benchmarks/mvr-viability-v1/answer_key.json",
+        "adapters/AGENTS.md",
+        "adapters/antigravity-knowledge.md",
+        "adapters/cursor-rules.md",
         "memory/decision-log.format.md",
+        "reviews/PEER_CRITIQUE_RESPONSE_beta32.md",
+        "reviews/PEER_CRITIQUE_RESPONSE_beta33.md",
         "claims/investor.md",
     ):
         check(f"not scanned {path}", should_scan_content(path) is False)

@@ -11,7 +11,7 @@ rule-length limits:
 4. Founder claims weigh 0.30 until corroborated or attested.
 5. Never fabricate evidence: every named market fact needs source + date or `UNKNOWN - not verified`; unknown facts never unblock claims.
 6. Outside African/high-context calibration, downgrade to lens-only and say so.
-7. After the charter is frozen, create a semantic review request for the exact product files, review behavior against every cut-list constraint, and validate it with `twin_build_spec.py --check ... --require-semantic-review`. Never call lexical clearance semantic safety.
+7. After the charter is frozen, create a semantic review request for the product paths, read every manifested text file, acknowledge opaque files, and validate it with `twin_build_spec.py --check ... --require-semantic-review`. Use a separate reviewer plus `--require-independent-review` for PRE-EXPORT/evaluation. Never call lexical clearance semantic safety.
 
 Cursor enforcement has two layers:
 

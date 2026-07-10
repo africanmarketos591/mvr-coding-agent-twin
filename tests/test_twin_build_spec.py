@@ -57,7 +57,7 @@ def charter(cut="a consumer loan book or credit scoring; no wallet holding funds
 def write_semantic_review(root, targets, contract, verdict="pass", findings=None):
     request, _ = bs.write_review_request(root, targets, contract)
     review = {
-        "format": "mvr_semantic_code_review_v1",
+        "format": bs.REVIEW_FORMAT,
         "request_sha256": request["request_sha256"],
         "reviewer_kind": "host_model",
         "reviewer_id": "test-reviewer-session",
@@ -65,7 +65,8 @@ def write_semantic_review(root, targets, contract, verdict="pass", findings=None
         "reviewed_at": "2026-07-10T00:00:00Z",
         "verdict": verdict,
         "findings": findings or [],
-        "attestation": "I reviewed behavior against every forbidden constraint in the request.",
+        "opaque_file_acknowledgements": [item["path"] for item in request["opaque_files"]],
+        "attestation": bs.REVIEW_ATTESTATION,
     }
     with open(os.path.join(root, bs.REVIEW_PATH), "w", encoding="utf-8") as handle:
         json.dump(review, handle)

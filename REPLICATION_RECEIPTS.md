@@ -31,7 +31,7 @@ Not yet claimed:
 - Manifest generation is Python-only, strict UTF-8, no BOM.
 - Internal key-file parsing ignores human labels and accepts only explicit key fields.
 - The build-constraint contract invalidates stale inputs, fails on empty redirects, carries prior constraints across weakened re-emits, and catches obvious lexical capability reintroductions. Lexical clearance is not semantic assurance.
-- A current model/human semantic review can be bound to the exact contract and file hashes. It is model-attested and can still be wrong; it is not kernel authority.
+- A current reviewer attestation can be bound to the exact contract, every first-party text-file hash, and disclosed opaque-file hashes. Host self-review can still be wrong and is not independent assurance; opaque bytes are not semantically analyzed; neither is kernel authority.
 
 ## Rehearsal Runs
 

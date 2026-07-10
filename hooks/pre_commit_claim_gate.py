@@ -77,7 +77,7 @@ def fail(root, claim_class, path, reason_code, msg):
 
 def enforce_build_contract(root, paths):
     """Bind staged code to the current charter instead of relying on model memory."""
-    code_paths = [path for path in paths if is_governed_code_path(path)]
+    code_paths = [path for path in paths if is_governed_code_path(path, root)]
     if not code_paths or not project_has_twin_case(root):
         return
     if not os.path.exists(contract_path(root)):
@@ -136,7 +136,9 @@ def enforce_build_contract(root, paths):
         "paths_checked": code_paths,
         "contract_level": contract.get("contract_level"),
         "semantic_review_status": review.get("status"),
-        "assurance": "model_attested_not_deterministic_proof",
+        "assurance": review.get("assurance"),
+        "text_file_count": review.get("text_file_count"),
+        "opaque_file_count": review.get("opaque_file_count"),
         "tool": "git-pre-commit",
     })
 

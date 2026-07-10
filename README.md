@@ -92,7 +92,7 @@ Release boundary:
 - **Draft settlement from usage:** `scripts/twin_settlement_read.py` reads aggregate telemetry and writes `mvr/settlement-draft.json` for human countersign. It never writes `settled=true`, never appends hit/miss by itself, and requires field corroboration before stronger claims.
 - **Outcome-delta visibility:** `scripts/twin_scorecard.py` reflects reviewed settlements as Twin-vs-solo survival rates. It is an adoption/value dashboard, not a kernel calibration input.
 - **Delta Report:** `scripts/twin_delta_report.py` writes `MVR_DELTA_REPORT.md` after a build so the user can see what changed versus an unconstrained build. It grounds authorization in `mvr/decision-log.json` and labels the counterfactual as a hypothesis.
-- **Build-constraint contract + semantic review:** `scripts/twin_build_spec.py` preserves the fitted charter's raw cut list, kernel claim envelope, history, and evidence bill in `mvr/build_spec.json`. A deterministic naive-capability tripwire catches obvious spellings across common code/IaC carriers; a clear tripwire is explicitly **not** semantic assurance. Governed code also requires a fresh host-model or human semantic review bound to the exact contract and file hashes. That review is model-attested, not kernel authority or mathematical proof.
+- **Build-constraint contract + semantic review:** `scripts/twin_build_spec.py` preserves the fitted charter's raw cut list, kernel claim envelope, history, and evidence bill in `mvr/build_spec.json`. A deterministic naive-capability tripwire catches obvious spellings; a clear tripwire is explicitly **not** semantic assurance. Semantic requests cover every first-party non-binary text file under the declared product paths by content rather than extension, disclose/hash-bind opaque files, and become stale when any covered byte changes. Host self-review is accountable local friction; `--require-independent-review` is required for PRE-EXPORT and capability evaluation. Neither is kernel authority or mathematical proof.
 - **Product-surface fabrication scan:** `scripts/twin_fabrication_scan.py` runs before export and flags unhedged licence numbers, licensed partners, hard fee/capital/cover figures, and unauthorized regulated capabilities in demos/plans/source files and founder-facing fieldkit artifacts that are not backed by current-format evidence or local Twin authorization. With no `--targets`, it scans root product docs, `mvr/fieldkit/gate_costs.md`, `mvr/fieldkit/NEXT_ACTIONS.md`, and common app folders such as `src`, `app`, `frontend`, `backend`, `scaffold`, and `*-app`.
 - **Outbound egress scanning:** `adapters/egress_scanner.py` exposes the same classifier for MCP proxies, CI publish steps, and webhook wrappers. It scans; the host enforces.
 - **Outcome priors:** `scripts/build_priors.py` can turn settled decision-log entries into `governance/outcome_priors.json` for PRE-CHARTER reading. These priors are advisory only; they do not mutate the kernel, authorize claims, or replace calibrated API-side learning. Real buckets require `archetype`, `market_scope`, and `redirect_pattern` in the decision log.
@@ -109,7 +109,7 @@ Release boundary:
 | Heartbeat (per-turn ambient state) | hook-native | hook-wire (adapter notes) | read `mvr/state.json` per turn (doctrine) | generated `beforeSubmitPrompt` hook where supported; otherwise read `mvr/state.json` |
 | Claim gate (harness-level) | hook-native | hook-wire (adapter notes) | limited | generated `preToolUse` hook where supported; version-dependent |
 | **Claim gate (git pre-commit — universal)** | ✔ | ✔ | ✔ | ✔ |
-| Semantic code-constraint review (model-attested) | native host review | native host review | native host review | native host review |
+| Semantic code-constraint review | native host review; separate reviewer for PRE-EXPORT | native subagent review; context-isolated for PRE-EXPORT | host review locally; separate reviewer for PRE-EXPORT | host review locally; separate reviewer for PRE-EXPORT |
 | Settlement daemon (`settle.py` on any scheduler) | ✔ | ✔ (scheduled tasks) | ✔ (cron) | ✔ (cron) |
 | Memory (passport, decision log, charters, receipts) | ✔ files | ✔ files | ✔ files | ✔ files |
 | Browser-verified research/settlement | roadmap (claude-in-chrome) | ✔ native (browser subagent) | — | — |
@@ -124,6 +124,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `REPLICATION_RECEIPTS.md` — public-safe verification record with misses and remaining limits.
 - `CAPABILITY_CLAIM.md` — the earned controlled-beta claim, explicit exclusions, and measurable future Fable-class acceptance bar.
 - `reviews/PEER_CRITIQUE_RESPONSE_beta32.md` — reproduced peer critique, architectural correction, and remaining semantic-review limit.
+- `reviews/PEER_CRITIQUE_RESPONSE_beta33.md` — carrier-manifest reproduction, content-classified correction, and independent-review boundary.
 - `benchmarks/mvr-viability-v1/` — public 12-case blind-run artifacts, answer key, symmetric judge record, ledger-aware scorer, and the explicit authorship-reconstruction limitation.
 - `hooks/heartbeat.py` + `memory/state.format.md` — the real-time counsel channel (see protocol section above); tested in `tests/test_heartbeat.py` (8/8).
 - `hooks/response_claim_sentinel.py` — optional final-response/Stop-hook counsel for claim-shaped assistant prose; writes advisory receipts, never blocks.
@@ -155,7 +156,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `scripts/twin_settlement_read.py` — reads product telemetry into a draft-only settlement suggestion; never auto-settles.
 - `scripts/twin_scorecard.py` — renders outcome delta from reviewed settlement entries.
 - `scripts/twin_delta_report.py` — renders the per-build Delta Report from `charter.md` and `mvr/decision-log.json`.
-- `scripts/twin_build_spec.py` — emits the history-bound build-constraint contract, runs the naive lexical tripwire, prepares semantic review requests, and validates model-attested reviews against exact file hashes.
+- `scripts/twin_build_spec.py` — emits the history-bound build-constraint contract, runs the naive lexical tripwire, manifests all first-party text plus disclosed opaque files, and validates host or independent reviews against exact hashes.
 - `scripts/twin_fabrication_scan.py` — PRE-EXPORT scanner for fabricated-as-real credentials, licensed partners, and fee/capital figures in shippable surfaces.
 - `scripts/settle.py` — settlement pulse runner: emits the quarterly public-record checklist per charter; silence-detection notes for instrumented builds.
 - `scripts/settlement_daemon.py` + `adapters/pulse_collectors.py` — schedulable draft-only settlement pulse collector; never auto-settles.
@@ -163,7 +164,7 @@ Rule of honesty: on hosts where the harness gate is "limited," authority lives i
 - `adapters/egress_scanner.py` — reusable outbound scanner for host/proxy egress enforcement.
 - `scripts/build_priors.py` — advisory local prior builder from settled decision logs; outputs `governance/outcome_priors.json` without mutating kernel calibration or authorizing claims.
 - `tests/smoke_test.py` — live kernel round-trip; `tests/test_claim_gate.py` — hook logic, offline.
-- `tests/test_preregister.py`, `tests/test_twin_build_spec.py`, `tests/test_build_spec_redteam.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration, the four peer-critic evasions, semantic-review freshness, constraint history, and safe key-file parsing.
+- `tests/test_preregister.py`, `tests/test_twin_build_spec.py`, `tests/test_build_spec_redteam.py`, `tests/test_carrier_coverage_gap.py`, `tests/test_keyfile_loader.py` — regression tests for preregistration, both peer red-teams, content-classified review scope, reviewer independence, semantic-review freshness, constraint history, and safe key-file parsing.
 - `tests/test_claim_scan_policy.py`, `tests/test_fuzz_claim_gate.py`, `tests/test_passport_check.py` — adversarial scan-policy and Operator Passport gate coverage.
 - `tests/test_twin_committee.py` — one-command committee regression coverage, including outage/provisional behavior.
 - `tests/test_twin_attest.py`, `tests/test_twin_home.py`, `tests/test_twin_public_research.py` — attestation, cross-project memory, and public-source ledger coverage.

@@ -26,28 +26,45 @@ import sys
 from datetime import datetime, timezone
 
 
-SPEC_VERSION = "2.0"
+SPEC_VERSION = "2.1"
 CONTRACT_FORMAT = "mvr_build_contract_v2"
 CONTRACT_PATH = os.path.join("mvr", "build_spec.json")
 HISTORY_PATH = os.path.join("mvr", "build-contract-history.jsonl")
 REVIEW_REQUEST_PATH = os.path.join("mvr", "semantic-review-request.json")
 REVIEW_PATH = os.path.join("mvr", "semantic-review.json")
 
-CODE_EXTENSIONS = {
-    ".c", ".cc", ".cfg", ".conf", ".cpp", ".cs", ".dockerfile", ".env",
-    ".go", ".hcl", ".html", ".ipynb", ".java", ".js", ".json", ".jsx",
-    ".kt", ".php", ".py", ".rb", ".rs", ".sol", ".sql", ".svelte",
-    ".swift", ".tf", ".tfvars", ".toml", ".ts", ".tsx", ".vue", ".yaml",
-    ".yml",
+# Semantic-review coverage is deliberately NOT a source-extension allowlist.
+# Known opaque formats are denied by type and all other first-party files are
+# classified by bytes. This keeps new languages and schema formats in scope.
+OPAQUE_BINARY_EXTENSIONS = {
+    ".7z", ".a", ".apk", ".avif", ".avi", ".avro", ".bmp", ".bz2",
+    ".class", ".db", ".dll", ".dmg", ".doc", ".docx", ".dylib", ".eot",
+    ".exe", ".feather", ".flac", ".gif", ".gz", ".heic", ".ico", ".iso",
+    ".jar", ".jpeg", ".jpg", ".key", ".m4a", ".mkv", ".mov", ".mp3",
+    ".mp4", ".numbers", ".o", ".obj", ".odp", ".ods", ".odt", ".ogg",
+    ".orc", ".otf", ".pages", ".parquet", ".pdf", ".pickle", ".pkl",
+    ".png", ".ppt", ".pptx", ".pyc", ".rar", ".so", ".sqlite",
+    ".sqlite3", ".tar", ".tgz", ".tif", ".tiff", ".ttf", ".wav",
+    ".wasm", ".war", ".webm", ".webp", ".woff", ".woff2", ".xls",
+    ".xlsx", ".xz", ".zip",
 }
-CODE_FILENAMES = {
-    "compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml",
-    "dockerfile", "makefile",
-}
+TEXT_BOMS = (
+    b"\xef\xbb\xbf", b"\xff\xfe", b"\xfe\xff", b"\xff\xfe\x00\x00", b"\x00\x00\xfe\xff",
+)
 SKIP_DIRS = {
     ".git", ".venv", "build", "dist", "mvr-coding-agent-twin", "mvr-twin",
     "node_modules", "__pycache__",
 }
+RESERVED_ROOT_FILES = {
+    "charter.md", "mirror.md", "preflight.md", "operator_log.md",
+    "scorer_sheet.md", "transcript.md", "transcript_report.md",
+}
+REVIEW_REQUEST_FORMAT = "mvr_semantic_review_request_v2"
+REVIEW_FORMAT = "mvr_semantic_code_review_v2"
+REVIEW_ATTESTATION = (
+    "I reviewed every text file against every forbidden constraint; opaque files "
+    "are hash-bound but outside semantic review."
+)
 NEGATED = re.compile(
     r"\b(no|not|never|without|non[- ]custodial|blocked|forbidden|disabled|"
     r"does not|do not|must not|cannot|can't|will not)\b",
@@ -64,7 +81,7 @@ CAPABILITY_PATTERNS = {
         re.I,
     ),
     "digital_lending": re.compile(
-        r"\bdigital lending|loan book|loan api|approve[_ ]?loan|issue[_ ]?loan|"
+        r"\bdigital lending|loan[-_ ]?book|loan[-_ ]?api|approve[-_ ]?loan|issue[-_ ]?loan|"
         r"disburse[_ ]?advance|schedule[_ ]?repayment|credit (?:advance|financing|line)|"
         r"asset[- ]backed credit|bnpl|buy now pay later|"
         r"underwrit(?:e|es|ing)[^\n]{0,30}(?:loan|credit|advance)\b",
@@ -95,9 +112,14 @@ CAPABILITY_PATTERNS = {
 
 def read_text(path):
     try:
-        with open(path, encoding="utf-8-sig", errors="replace") as handle:
-            return handle.read()
-    except OSError:
+        with open(path, "rb") as handle:
+            raw = handle.read()
+        if raw.startswith((b"\xff\xfe\x00\x00", b"\x00\x00\xfe\xff")):
+            return raw.decode("utf-32")
+        if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+            return raw.decode("utf-16")
+        return raw.decode("utf-8-sig", errors="replace")
+    except (OSError, UnicodeError):
         return ""
 
 
@@ -541,12 +563,14 @@ def build_contract(root, charter_path=None, previous=None):
             "required": bool(constraints),
             "request_path": REVIEW_REQUEST_PATH.replace("\\", "/"),
             "review_path": REVIEW_PATH.replace("\\", "/"),
-            "assurance": "model_attested_not_deterministic_proof",
+            "coverage": "all_first_party_non_binary_text_by_content",
+            "assurance": "reviewer_attested_not_deterministic_proof",
         },
         "agent_instruction": (
             "Implement only build_features. Treat forbidden_constraints as the fitted build cut-list. "
-            "Run the deterministic tripwire, then obtain a fresh host-model semantic review. "
-            "A clear tripwire alone is not semantic assurance."
+            "Run the deterministic tripwire, then obtain a fresh semantic review over every first-party "
+            "text carrier. A clear tripwire alone is not semantic assurance; host self-review is not "
+            "independent assurance."
         ),
     }
 
@@ -604,36 +628,130 @@ def validate_contract(root, contract):
     return _dedupe(errors)
 
 
+def review_file_kind(path):
+    """Classify a file by bytes, using extensions only to deny known binary formats."""
+    extension = os.path.splitext(os.path.basename(str(path)).lower())[1]
+    if extension in OPAQUE_BINARY_EXTENSIONS:
+        return "opaque", "known_binary_extension"
+    if os.path.islink(path):
+        return "opaque", "symbolic_link"
+    try:
+        with open(path, "rb") as handle:
+            sample = handle.read(16384)
+    except OSError:
+        return "opaque", "unreadable"
+    if not sample or sample.startswith(TEXT_BOMS):
+        return "text", "content_text"
+    if b"\x00" in sample:
+        return "opaque", "binary_nul_bytes"
+    try:
+        sample.decode("utf-8")
+        return "text", "content_text"
+    except UnicodeDecodeError:
+        control_count = sum(byte < 32 and byte not in {9, 10, 12, 13} for byte in sample)
+        if control_count / len(sample) <= 0.02:
+            return "text", "content_text_legacy_encoding"
+        return "opaque", "binary_control_bytes"
+
+
+def _relative_parts(root, path):
+    full = os.path.abspath(path if os.path.isabs(path) else os.path.join(root, path))
+    if not _inside(root, full):
+        return full, None
+    relative = os.path.relpath(full, root).replace("\\", "/")
+    return full, [part.lower() for part in relative.split("/") if part]
+
+
+def _reserved_product_path(root, path):
+    _, parts = _relative_parts(root, path)
+    if not parts:
+        return True
+    if parts[0] in {"mvr", "claims"} or any(part in {"mvr-coding-agent-twin", "mvr-twin"} for part in parts):
+        return True
+    if any(part in SKIP_DIRS for part in parts[:-1]):
+        return True
+    return len(parts) == 1 and parts[0] in RESERVED_ROOT_FILES
+
+
 def is_code_path(path):
-    name = os.path.basename(str(path)).lower()
-    return name in CODE_FILENAMES or os.path.splitext(name)[1] in CODE_EXTENSIONS
+    """Backward-compatible name: true for any reviewable text carrier."""
+    return os.path.isfile(path) and review_file_kind(path)[0] == "text"
 
 
-def is_governed_code_path(path):
-    normalized = str(path).replace("\\", "/")
-    parts = {part.lower() for part in normalized.split("/")}
-    return is_code_path(normalized) and not parts.intersection({"mvr", "mvr-coding-agent-twin", "mvr-twin"})
+def is_governed_code_path(path, root=None):
+    """Return whether a first-party text file belongs in the build review scope."""
+    root = os.path.abspath(root or os.getcwd())
+    full = path if os.path.isabs(path) else os.path.join(root, path)
+    return (
+        os.path.isfile(full)
+        and not _reserved_product_path(root, full)
+        and review_file_kind(full)[0] == "text"
+    )
+
+
+def review_scope(root, targets):
+    """Hash all first-party text and disclose opaque files under the exact targets."""
+    root = os.path.abspath(root)
+    text_files = []
+    opaque_files = []
+    excluded_paths = []
+    seen = set()
+
+    def add_file(candidate):
+        full = os.path.abspath(candidate)
+        if full in seen:
+            return
+        seen.add(full)
+        if not _inside(root, full):
+            raise ValueError(f"review target escapes project root: {candidate}")
+        relative = os.path.relpath(full, root).replace("\\", "/")
+        if _reserved_product_path(root, full):
+            excluded_paths.append({"path": relative, "reason": "twin_or_generated_governance"})
+            return
+        kind, reason = review_file_kind(full)
+        item = {"path": relative, "sha256": sha256_file(full)}
+        if kind == "text":
+            text_files.append(item)
+        else:
+            item["reason"] = reason
+            opaque_files.append(item)
+
+    for target in targets:
+        path = os.path.abspath(target if os.path.isabs(target) else os.path.join(root, target))
+        if not _inside(root, path):
+            raise ValueError(f"review target escapes project root: {target}")
+        if os.path.isfile(path):
+            add_file(path)
+            continue
+        if not os.path.isdir(path):
+            raise ValueError(f"review target does not exist: {target}")
+        for base, dirs, files in os.walk(path, topdown=True):
+            kept = []
+            for name in sorted(dirs):
+                candidate = os.path.join(base, name)
+                if name.lower() in SKIP_DIRS or _reserved_product_path(root, candidate):
+                    excluded_paths.append({
+                        "path": os.path.relpath(candidate, root).replace("\\", "/"),
+                        "reason": "dependency_generated_or_twin_directory",
+                    })
+                else:
+                    kept.append(name)
+            dirs[:] = kept
+            for name in sorted(files):
+                add_file(os.path.join(base, name))
+
+    key = lambda item: (item["path"], item.get("reason", ""))
+    return {
+        "files": sorted(text_files, key=key),
+        "opaque_files": sorted(opaque_files, key=key),
+        "excluded_paths": sorted(excluded_paths, key=key),
+    }
 
 
 def iter_code_files(root, targets):
-    seen = set()
-    for target in targets:
-        path = target if os.path.isabs(target) else os.path.join(root, target)
-        if os.path.isfile(path) and is_governed_code_path(path):
-            key = os.path.abspath(path)
-            if key not in seen:
-                seen.add(key)
-                yield key
-        elif os.path.isdir(path):
-            for base, dirs, files in os.walk(path):
-                dirs[:] = [name for name in dirs if name not in SKIP_DIRS]
-                for name in files:
-                    candidate = os.path.join(base, name)
-                    if is_governed_code_path(candidate):
-                        key = os.path.abspath(candidate)
-                        if key not in seen:
-                            seen.add(key)
-                            yield key
+    """Yield every reviewable text carrier; retained for scanner API compatibility."""
+    for item in review_scope(root, targets)["files"]:
+        yield os.path.join(root, item["path"])
 
 
 def scan_code(root, targets, contract):
@@ -665,13 +783,7 @@ def scan_code(root, targets, contract):
 
 
 def code_manifest(root, targets):
-    return [
-        {
-            "path": os.path.relpath(path, root).replace("\\", "/"),
-            "sha256": sha256_file(path),
-        }
-        for path in iter_code_files(root, targets)
-    ]
+    return review_scope(root, targets)["files"]
 
 
 def review_request_digest(request):
@@ -686,21 +798,29 @@ def write_review_request(root, targets, contract=None):
     errors = validate_contract(root, contract)
     if errors:
         raise ValueError("cannot request semantic review from invalid contract: " + "; ".join(errors))
-    files = code_manifest(root, targets)
+    scope = review_scope(root, targets)
     request = {
-        "format": "mvr_semantic_review_request_v1",
+        "format": REVIEW_REQUEST_FORMAT,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "contract_sha256": canonical_json_digest(contract),
         "contract_level": contract.get("contract_level"),
         "forbidden_constraints": contract.get("forbidden_constraints") or [],
-        "files": files,
+        "scope_policy": {
+            "text_coverage": "all_first_party_non_binary_text_classified_by_content",
+            "binary_policy": "known_or_detected_opaque_files_are_hash_bound_and_disclosed",
+            "excluded_directory_names": sorted(SKIP_DIRS),
+        },
+        "files": scope["files"],
+        "opaque_files": scope["opaque_files"],
+        "excluded_paths": scope["excluded_paths"],
         "question": (
-            "Review the listed files semantically, not by keyword. Does any code implement, enable, "
+            "Read every listed text file and review it semantically, not by keyword. Does any file implement, enable, "
             "or scaffold a forbidden constraint despite renaming, indirection, configuration, data flow, "
-            "or another file type? Cite file and line for every finding."
+            "or another file type? Cite file and line for every finding. Explicitly acknowledge every "
+            "opaque file; its bytes are bound for freshness but are not covered by text review."
         ),
         "review_schema": {
-            "format": "mvr_semantic_code_review_v1",
+            "format": REVIEW_FORMAT,
             "request_sha256": "copy request_sha256 from this request",
             "reviewer_kind": "host_model | independent_model | human",
             "reviewer_id": "required stable reviewer or agent id",
@@ -711,10 +831,12 @@ def write_review_request(root, targets, contract=None):
                 "path": "relative path", "line": 1, "constraint_id": "id",
                 "reason": "behavioral explanation",
             }],
-            "attestation": "I reviewed behavior against every forbidden constraint in the request.",
+            "opaque_file_acknowledgements": ["every path in request.opaque_files"],
+            "attestation": REVIEW_ATTESTATION,
         },
         "assurance_boundary": (
-            "This is model-attested semantic review, not deterministic proof or kernel authorization."
+            "This is reviewer-attested text-file coverage, not deterministic proof, binary analysis, "
+            "or kernel authorization. Host-model self-review is not independent assurance."
         ),
     }
     request["request_sha256"] = review_request_digest(request)
@@ -726,7 +848,7 @@ def write_review_request(root, targets, contract=None):
     return request, path
 
 
-def validate_semantic_review(root, targets, contract=None):
+def validate_semantic_review(root, targets, contract=None, require_independent=False):
     root = os.path.abspath(root)
     contract = contract or load_contract(root)
     if not (contract.get("semantic_review") or {}).get("required"):
@@ -737,24 +859,32 @@ def validate_semantic_review(root, targets, contract=None):
     if not isinstance(request, dict):
         errors.append("semantic review request is missing")
         return {"status": "missing", "errors": errors, "verdict": None}
-    if request.get("format") != "mvr_semantic_review_request_v1":
+    if request.get("format") != REVIEW_REQUEST_FORMAT:
         errors.append("semantic review request format is invalid")
     expected_request_hash = review_request_digest(request)
     if request.get("request_sha256") != expected_request_hash:
         errors.append("semantic review request hash is invalid")
     if request.get("contract_sha256") != canonical_json_digest(contract):
         errors.append("semantic review request targets a different contract")
-    if request.get("files") != code_manifest(root, targets):
-        errors.append("semantic review request is stale for the current code files")
+    try:
+        current_scope = review_scope(root, targets)
+    except ValueError as exc:
+        current_scope = {"files": [], "opaque_files": [], "excluded_paths": []}
+        errors.append(str(exc))
+    for field in ("files", "opaque_files", "excluded_paths"):
+        if request.get(field) != current_scope[field]:
+            errors.append(f"semantic review request is stale for current {field.replace('_', ' ')}")
     if not isinstance(review, dict):
         errors.append("semantic review is missing")
         return {"status": "missing", "errors": errors, "verdict": None}
-    if review.get("format") != "mvr_semantic_code_review_v1":
+    if review.get("format") != REVIEW_FORMAT:
         errors.append("semantic review format is invalid")
     if review.get("request_sha256") != expected_request_hash:
         errors.append("semantic review targets a different request")
     if review.get("reviewer_kind") not in {"host_model", "independent_model", "human"}:
         errors.append("semantic review reviewer_kind is invalid")
+    if require_independent and review.get("reviewer_kind") == "host_model":
+        errors.append("independent semantic review required; host_model self-review does not qualify")
     if not str(review.get("reviewer_id", "")).strip():
         errors.append("semantic review requires reviewer_id")
     if review.get("reviewer_kind") in {"host_model", "independent_model"} and not str(review.get("model_id", "")).strip():
@@ -765,7 +895,11 @@ def validate_semantic_review(root, targets, contract=None):
         errors.append("semantic review reviewed_at must be ISO-8601")
     if review.get("verdict") not in {"pass", "block"}:
         errors.append("semantic review verdict must be pass or block")
-    if review.get("attestation") != "I reviewed behavior against every forbidden constraint in the request.":
+    expected_opaque = sorted(item["path"] for item in (request.get("opaque_files") or []))
+    acknowledgements = review.get("opaque_file_acknowledgements")
+    if not isinstance(acknowledgements, list) or sorted(acknowledgements) != expected_opaque:
+        errors.append("semantic review must acknowledge every opaque file exactly")
+    if review.get("attestation") != REVIEW_ATTESTATION:
         errors.append("semantic review attestation is missing or altered")
     findings = review.get("findings")
     if not isinstance(findings, list):
@@ -781,7 +915,13 @@ def validate_semantic_review(root, targets, contract=None):
         "reviewer_id": review.get("reviewer_id"),
         "model_id": review.get("model_id"),
         "findings": findings if isinstance(findings, list) else [],
-        "assurance": "model_attested_not_deterministic_proof",
+        "assurance": (
+            "host_model_self_attested_not_independent_assurance"
+            if review.get("reviewer_kind") == "host_model"
+            else "independent_reviewer_attested_not_deterministic_proof"
+        ),
+        "text_file_count": len(request.get("files") or []),
+        "opaque_file_count": len(request.get("opaque_files") or []),
     }
 
 
@@ -792,6 +932,11 @@ def main():
     parser.add_argument("--check", nargs="+", metavar="PATH")
     parser.add_argument("--review-request", nargs="+", metavar="PATH")
     parser.add_argument("--require-semantic-review", action="store_true")
+    parser.add_argument(
+        "--require-independent-review",
+        action="store_true",
+        help="reject host-model self-review; use for PRE-EXPORT and capability evaluation",
+    )
     args = parser.parse_args()
     root = os.path.abspath(args.root)
 
@@ -812,8 +957,11 @@ def main():
             print(f"MVR SEMANTIC REVIEW REQUEST BLOCK: {exc}", file=sys.stderr)
             return 2
         print(f"MVR SEMANTIC REVIEW REQUEST: wrote {path}")
-        print(f"  files: {len(request['files'])} | request_sha256: {request['request_sha256']}")
-        print("  Host model: review the exact files, then write mvr/semantic-review.json using review_schema.")
+        print(
+            f"  text files: {len(request['files'])} | opaque files: {len(request['opaque_files'])} "
+            f"| request_sha256: {request['request_sha256']}"
+        )
+        print("  Reviewer: read every listed text file, acknowledge opaque files, then write mvr/semantic-review.json.")
 
     if args.check:
         try:
@@ -840,10 +988,15 @@ def main():
             return 1
         print(
             f"MVR NAIVE-CAPABILITY TRIPWIRE CLEAR: {len(list(iter_code_files(root, args.check)))} "
-            "code file(s) checked. This is NOT semantic assurance."
+            "text carrier(s) checked. This is NOT semantic assurance."
         )
-        if args.require_semantic_review:
-            review = validate_semantic_review(root, args.check, contract)
+        if args.require_semantic_review or args.require_independent_review:
+            review = validate_semantic_review(
+                root,
+                args.check,
+                contract,
+                require_independent=args.require_independent_review,
+            )
             if review["status"] != "current_pass":
                 print("MVR SEMANTIC REVIEW BLOCK:", file=sys.stderr)
                 for error in review.get("errors") or ["review verdict is block"]:
@@ -858,7 +1011,7 @@ def main():
                 return 3
             print(
                 f"MVR SEMANTIC REVIEW CURRENT: {review.get('reviewer_kind')} "
-                f"{review.get('model_id') or ''}. Model-attested; not deterministic proof."
+                f"{review.get('model_id') or ''}. {review.get('assurance')}."
             )
     return 0
 

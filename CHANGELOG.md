@@ -1,11 +1,19 @@
 # Changelog - MVR Coding Agent Twin
 
+## 1.1.0-beta.34 - 2026-07-10 (content-classified review scope and independent review mode)
+- **Extension allowlist removed from semantic scope:** every first-party non-binary text file under the requested product paths is classified by content and hash-bound, so new languages and schemas do not need to be added one extension at a time.
+- **Previously blind carriers now governed:** Dart, MJS/CJS, Prisma, GraphQL, Gradle, Scala, Elixir, extensionless scripts, and other text carriers enter both staged-file governance and semantic-review freshness checks automatically.
+- **Opaque files cannot disappear silently:** known or byte-detected binary files are listed with hashes and reasons in the review request. Reviewers must acknowledge the exact opaque-file list; changing one invalidates the request while remaining explicitly outside text-semantic assurance.
+- **Independent review is mechanically distinct:** `--require-independent-review` rejects `host_model` self-review. Local commits may retain host self-review as accountable friction; PRE-EXPORT and capability evaluation require an independent model or human.
+- **Claim plane kept separate:** `claims/` remains governed by finite claim-class authorization and is not re-routed through build-semantic review.
+- **Carrier critic made permanent:** `tests/test_carrier_coverage_gap.py` covers content-classified carriers, opaque accounting, post-review changes, and host-versus-independent reviewer status. The pre-commit suite includes a Dart-only case.
+
 ## 1.1.0-beta.33 - 2026-07-10 (peer-critique correction and semantic review boundary)
 - **beta.32 overclaim withdrawn:** `--check` is now a deterministic **naive-capability tripwire**, never behavioral proof. A clear result explicitly says it is not semantic assurance.
 - **Model-in-loop semantic review:** governed code requires a current host-model or human review bound to the exact contract and exact file hashes through `mvr/semantic-review-request.json` and `mvr/semantic-review.json`. The result is labelled model-attested, not kernel authority.
 - **Empty redirect extraction fails loud:** redirect-like charters with no extracted cut list become `extraction_suspect` unless they carry an explicit capability-free disposition. Inline prose and raw non-capability constraints are retained.
 - **Constraint laundering blocked:** re-emitting a weaker charter carries prior constraints forward. Removal requires a complete `named_human_override` naming reviewer, signature, reason, removed capability IDs, and removed constraint IDs.
-- **Carrier coverage widened:** SQL, Solidity, notebooks, Docker/Compose, common IaC/config formats, and environment/config files enter the lexical tripwire surface.
+- **Historical beta.33 carrier widening:** SQL, Solidity, notebooks, Docker/Compose, common IaC/config formats, and environment/config files entered the lexical tripwire surface, but coverage remained allowlist-based. The beta.33 peer review reproduced that residual; beta.34 replaces the allowlist for semantic scope.
 - **Non-root charters supported:** `decision-log.json` `charter_ref` is authoritative for discovery; missing or outside-project references fail validation.
 - **Peer red-team made permanent:** `tests/test_build_spec_redteam.py` encodes all four reproduced beta.32 evasions plus a clean-code control and the published-charter extraction regression.
 - **Capability claim made falsifiable:** `CAPABILITY_CLAIM.md` states the earned +46.2 controlled-beta claim, explicit exclusions, and the 50-case/three-market/ablation/provenance bar required before any Fable-class claim.

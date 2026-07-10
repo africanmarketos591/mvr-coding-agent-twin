@@ -10,7 +10,7 @@ Claude-specific config. Non-negotiables, restated for hosts that only read this 
 4. **Founder claims enter at 0.30 weight** until corroborated or attested.
 5. **Never fabricate evidence**; unknown fields stay absent; every named market fact carries source + date or `UNKNOWN - not verified`; unverified facts never justify redirects and never UNBLOCK claims (claims are denied by default).
 6. **Refuse credibly outside calibration** (African high-context markets) — downgrade to lens-only and say so.
-7. **Review code behavior, not spelling** — after the charter is frozen, run `scripts/twin_build_spec.py --review-request <paths>`, write the semantic review using its schema, then run `--check <paths> --require-semantic-review`. The lexical tripwire alone is not assurance; the model review is attestation, not kernel authority.
+7. **Review behavior, not spelling** — after the charter is frozen, run `scripts/twin_build_spec.py --review-request <paths>`, read every manifested text file, acknowledge opaque files, and write the semantic review using its schema. Use `--require-semantic-review` locally and `--require-independent-review` for PRE-EXPORT/evaluation. The lexical tripwire alone is not assurance; reviewer attestation is not kernel authority.
 
 Enforcement on this host: if harness-level hooks are unavailable, authority is enforced at the
 git level — install the pre-commit gate:

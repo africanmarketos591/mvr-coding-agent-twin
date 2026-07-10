@@ -13,7 +13,7 @@ the FULL Twin experience — map these host features:
   the settlement pulse checklist (registry, domain, listing, dormancy) end-to-end.
 - **Artifacts:** emit the Build Charter and MIRROR as Artifacts; attach browser recordings and
   screenshots as source-ledger evidence.
-- **Semantic code review:** after preregistration, run `scripts/twin_build_spec.py --review-request <paths>`, use a context-isolated reviewer subagent to inspect behavior against every raw cut-list constraint, and write `mvr/semantic-review.json`. Validate with `--check <paths> --require-semantic-review`. A clear lexical tripwire is not semantic assurance; the subagent result is model-attested, not kernel authority.
+- **Semantic code review:** after preregistration, run `scripts/twin_build_spec.py --review-request <paths>`, use a context-isolated reviewer subagent to read every manifested text file, acknowledge opaque files, inspect behavior against every raw cut-list constraint, and write `mvr/semantic-review.json`. Validate locally with `--require-semantic-review`; PRE-EXPORT/evaluation uses a reviewer distinct from the builder plus `--require-independent-review`. A clear lexical tripwire is not semantic assurance; the result is attestation, not kernel authority.
 - **Knowledge base:** store settled-outcome digests as knowledge items so calibration context
   survives across sessions (never store raw personal passport data as shared knowledge).
 

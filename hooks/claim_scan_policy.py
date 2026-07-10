@@ -43,7 +43,12 @@ PACKAGE_MANAGED_PREFIXES = {
 }
 
 PACKAGE_MANAGED_EXACT = {
+    ("adapters", "agents.md"),
+    ("adapters", "antigravity-knowledge.md"),
+    ("adapters", "cursor-rules.md"),
     ("memory", "decision-log.format.md"),
+    ("reviews", "peer_critique_response_beta32.md"),
+    ("reviews", "peer_critique_response_beta33.md"),
 }
 
 TWIN_ARTIFACTS = {
