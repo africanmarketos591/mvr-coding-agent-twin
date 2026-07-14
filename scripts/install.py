@@ -153,13 +153,14 @@ def main():
     print("NOTE  Interception layers: until your host's write-tool hook is wired (settings-hooks.json / adapters/),")
     print("      claim interception happens at COMMIT time only. Write-time interception (the claim gate firing the")
     print("      moment a claims/ file is drafted) requires the harness hook - wire it for the full partner experience.")
-    print("NEXT  After charter preregistration: run twin_build_spec.py --review-request <product-paths>,")
-    print("      review every listed text file, acknowledge opaque files, then run --check <paths> --require-semantic-review.")
-    print("      PRE-EXPORT/evaluation: use a separate reviewer and --require-independent-review.")
+    print("NEXT  Preserve the complete request as mvr/user-brief.txt and pass --brief-file to twin_committee.py.")
+    print("      After charter preregistration: run twin_build_spec.py --review-request <product-paths>.")
+    print("      Review every text file and record adversarial probes; high-risk export requires two distinct reviewers.")
+    print("      Then run --check <paths> --require-semantic-review; PRE-EXPORT uses --require-independent-review.")
     print("      The deterministic scan is a naive-capability tripwire; a clear scan is not semantic assurance.")
     print("NEXT  Before calling Twin run evidence verified: twin_verify_run.py --root . --stage build --keyfile <key>.")
     print("      Exit 3 means inconclusive (offline/no key), never pass. Do not hand-author missing Twin artifacts.")
-    print("      Exit 0 does not replace app dependency, runtime, security, or production-readiness checks.")
+    print("      Read every output dimension. Runtime assurance remains not_evaluated until separate app checks run.")
 
     # 4. Optional verification
     if args.verify:

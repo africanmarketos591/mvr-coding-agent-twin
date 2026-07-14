@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(PKG, "hooks"))
 
 import preregister as prereg  # noqa: E402
 import twin_build_spec as build_spec  # noqa: E402
+import twin_claim_coverage as claim_coverage  # noqa: E402
 import verify_authorizing_receipt as receipt_verifier  # noqa: E402
 
 
@@ -82,6 +83,18 @@ def _charter_path(root, entry, contract):
 def audit_run(root, keyfile=None, stage="build"):
     root = os.path.abspath(root)
     checks = []
+    dimensions = {
+        "kernel_authority": {"status": "not_evaluated", "detail": "ledger check pending"},
+        "material_claim_coverage": {"status": "not_evaluated", "detail": "committee packet pending"},
+        "authorization_consistency": {"status": "not_evaluated", "detail": "build contract pending"},
+        "export_authorization": {"status": "not_evaluated", "detail": "export stage only"},
+        "semantic_compliance": {"status": "not_evaluated", "detail": "build review pending"},
+        "export_artifacts": {"status": "not_evaluated", "detail": "export stage only"},
+        "runtime_assurance": {
+            "status": "not_evaluated",
+            "detail": "Twin evidence audit does not run product security, accounting, authentication, or browser tests",
+        },
+    }
     rejected = False
     incomplete = False
     authority_inconclusive = False
@@ -91,6 +104,7 @@ def audit_run(root, keyfile=None, stage="build"):
         _record(checks, "decision_log", "missing", "no decision-log.json or decision-log.seed.json")
         return {
             "status": "incomplete", "stage": stage, "checks": checks,
+            "dimensions": dimensions,
             "boundary": "No statement about Twin execution can be made without a decision log.",
         }
     _record(checks, "decision_log", "pass", os.path.relpath(log_path, root).replace("\\", "/"))
@@ -103,6 +117,16 @@ def audit_run(root, keyfile=None, stage="build"):
         packet = {}
     else:
         _record(checks, "committee_packet", "pass", "readable")
+        coverage_errors = claim_coverage.validate_packet(root, packet)
+        if coverage_errors:
+            rejected = True
+            detail = "; ".join(coverage_errors)
+            _record(checks, "material_claim_coverage", "fail", detail)
+            dimensions["material_claim_coverage"] = {"status": "fail", "detail": detail}
+        else:
+            detail = f"{len((packet.get('claim_coverage') or {}).get('material_capabilities') or [])} material capability class(es) bound"
+            _record(checks, "material_claim_coverage", "pass", detail)
+            dimensions["material_claim_coverage"] = {"status": "pass", "detail": detail}
 
     entry_hashes = receipt_verifier.authority_hashes(entry)
     packet_hashes = receipt_verifier.authority_hashes({"kernel_receipts": packet.get("kernel_receipts") or {}})
@@ -143,9 +167,34 @@ def audit_run(root, keyfile=None, stage="build"):
         if errors:
             rejected = True
             _record(checks, "build_contract", "fail", "; ".join(errors))
+            dimensions["authorization_consistency"] = {
+                "status": "fail",
+                "detail": "; ".join((contract or {}).get("authorization_consistency", {}).get("errors") or errors),
+            }
         else:
             contract_valid = True
             _record(checks, "build_contract", "pass", f"{contract.get('format')} spec {contract.get('spec_version')}")
+            consistency = contract.get("authorization_consistency") or {}
+            dimensions["authorization_consistency"] = {
+                "status": consistency.get("status", "not_evaluated"),
+                "detail": (
+                    f"decision={consistency.get('decision_status')} charter={consistency.get('charter_status')}"
+                ),
+            }
+            if stage == "export":
+                ceiling = consistency.get("ceiling_rank")
+                if not isinstance(ceiling, int) or ceiling < 1:
+                    rejected = True
+                    detail = (
+                        "export requires an explicit pilot-or-higher decision authorization; "
+                        f"current ceiling is {consistency.get('decision_status') or 'internal_planning_only'}"
+                    )
+                    _record(checks, "export_authorization", "fail", detail)
+                    dimensions["export_authorization"] = {"status": "fail", "detail": detail}
+                else:
+                    detail = f"decision ceiling rank {ceiling} permits governed export review"
+                    _record(checks, "export_authorization", "pass", detail)
+                    dimensions["export_authorization"] = {"status": "pass", "detail": detail}
 
         charter = _charter_path(root, entry, contract)
         if not charter or not os.path.isfile(charter):
@@ -205,18 +254,34 @@ def audit_run(root, keyfile=None, stage="build"):
                     targets,
                     contract,
                     require_independent=(stage == "export"),
+                    require_second=(stage == "export"),
                 )
                 if review.get("status") == "current_pass":
                     _record(checks, "semantic_review", "pass", review.get("assurance"))
+                    dimensions["semantic_compliance"] = {"status": "pass", "detail": review.get("assurance")}
                 elif review.get("status") == "missing":
                     incomplete = True
                     _record(checks, "semantic_review", "missing", "; ".join(review.get("errors") or []))
+                    dimensions["semantic_compliance"] = {"status": "missing", "detail": "; ".join(review.get("errors") or [])}
                 else:
                     rejected = True
                     _record(checks, "semantic_review", "fail", "; ".join(review.get("errors") or ["review blocked"]))
+                    dimensions["semantic_compliance"] = {"status": "fail", "detail": "; ".join(review.get("errors") or ["review blocked"])}
         else:
             _record(checks, "build_surface_tripwire", "not_required", "contract carries no forbidden constraints")
             _record(checks, "semantic_review", "not_required", "contract carries no forbidden constraints")
+            dimensions["semantic_compliance"] = {"status": "not_required", "detail": "contract carries no forbidden constraints"}
+
+        if stage == "export":
+            missing_exports = [name for name in ("MIRROR.md", "MVR_DELTA_REPORT.md") if not os.path.isfile(os.path.join(root, name))]
+            if missing_exports:
+                incomplete = True
+                detail = "missing doctrine-required export artifact(s): " + ", ".join(missing_exports)
+                _record(checks, "export_artifacts", "missing", detail)
+                dimensions["export_artifacts"] = {"status": "missing", "detail": detail}
+            else:
+                _record(checks, "export_artifacts", "pass", "MIRROR.md and MVR_DELTA_REPORT.md present")
+                dimensions["export_artifacts"] = {"status": "pass", "detail": "MIRROR.md and MVR_DELTA_REPORT.md present"}
 
     old_key = os.environ.get("MVR_API_KEY")
     try:
@@ -233,15 +298,19 @@ def audit_run(root, keyfile=None, stage="build"):
 
     if authority_status == "verified":
         _record(checks, "kernel_authority", "pass", authority_detail)
+        dimensions["kernel_authority"] = {"status": "pass", "detail": authority_detail}
     elif authority_status == "unverified":
         rejected = True
         _record(checks, "kernel_authority", "fail", authority_detail)
+        dimensions["kernel_authority"] = {"status": "fail", "detail": authority_detail}
     elif authority_status in {"no_key", "offline", "no_receipt"}:
         authority_inconclusive = True
         _record(checks, "kernel_authority", "inconclusive", authority_detail)
+        dimensions["kernel_authority"] = {"status": "inconclusive", "detail": authority_detail}
     else:
         incomplete = True
         _record(checks, "kernel_authority", "missing", authority_detail)
+        dimensions["kernel_authority"] = {"status": "missing", "detail": authority_detail}
 
     if rejected:
         status = "rejected"
@@ -255,6 +324,7 @@ def audit_run(root, keyfile=None, stage="build"):
         "status": status,
         "stage": stage,
         "checks": checks,
+        "dimensions": dimensions,
         "boundary": (
             "VERIFIED means live kernel authority and consistency of the governed, hash-bound build surface. "
             "It does not cryptographically prove which host process authored every file, or certify app "
@@ -274,9 +344,12 @@ def main():
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
-        print(f"TWIN RUN EVIDENCE {result['status'].upper()} ({result['stage']})")
+        print(f"TWIN GOVERNANCE EVIDENCE {result['status'].upper()} ({result['stage']})")
         for item in result["checks"]:
             print(f"  [{item['status']}] {item['name']}: {item['detail']}")
+        print("  dimensions:")
+        for name, item in result["dimensions"].items():
+            print(f"    [{item['status']}] {name}: {item['detail']}")
         print("  boundary: " + result["boundary"])
     return EXIT_BY_STATUS[result["status"]]
 

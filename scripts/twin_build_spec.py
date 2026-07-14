@@ -25,13 +25,15 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+import twin_claim_coverage as claim_coverage
 
-SPEC_VERSION = "2.1"
+SPEC_VERSION = "2.2"
 CONTRACT_FORMAT = "mvr_build_contract_v2"
 CONTRACT_PATH = os.path.join("mvr", "build_spec.json")
 HISTORY_PATH = os.path.join("mvr", "build-contract-history.jsonl")
 REVIEW_REQUEST_PATH = os.path.join("mvr", "semantic-review-request.json")
 REVIEW_PATH = os.path.join("mvr", "semantic-review.json")
+SECOND_REVIEW_PATH = os.path.join("mvr", "semantic-review-2.json")
 
 # Semantic-review coverage is deliberately NOT a source-extension allowlist.
 # Known opaque formats are denied by type and all other first-party files are
@@ -60,7 +62,7 @@ RESERVED_ROOT_FILES = {
     "scorer_sheet.md", "transcript.md", "transcript_report.md",
 }
 REVIEW_REQUEST_FORMAT = "mvr_semantic_review_request_v3"
-REVIEW_FORMAT = "mvr_semantic_code_review_v2"
+REVIEW_FORMAT = "mvr_semantic_code_review_v3"
 REVIEW_ATTESTATION = (
     "I reviewed every text file against every forbidden constraint; opaque files "
     "are hash-bound but outside semantic review."
@@ -93,7 +95,8 @@ CAPABILITY_PATTERNS = {
     ),
     "credit_scoring": re.compile(
         r"\bcredit[-_ ]?scor(?:e|es|ing)|savings[-_ ]?scor(?:e|es|ing)|creditworthiness|loan eligibility|"
-        r"eligibility_for_loan\b",
+        r"eligibility_for_loan|reliability[-_ ]?(?:score|index|rating|tier)|"
+        r"trust[-_ ]?(?:score|index|rating|tier)|risk[-_ ]?(?:score|index|rating|tier)\b",
         re.I,
     ),
     "payment_processing": re.compile(
@@ -112,6 +115,19 @@ CAPABILITY_PATTERNS = {
         re.I,
     ),
 }
+
+HIGH_RISK_CAPABILITIES = {
+    "collective_investment", "credit_scoring", "deposit_taking", "digital_lending",
+    "fund_custody", "payment_processing", "self_certification",
+}
+
+PLANNING_ONLY_STATUSES = {
+    "abstain", "abstained", "internal_planning", "internal_planning_only",
+    "permission_not_yet_earned", "provisional", "provisional_not_authorized",
+    "prototype_only", "redirect", "redirected", "uncalibrated", "uncalibrated_lens_only",
+}
+PILOT_STATUSES = {"pilot", "pilot_only", "pilot_ready", "pilot_ready_with_review"}
+BUILD_STATUSES = {"build_authorized", "authorized", "go"}
 
 
 def read_text(path):
@@ -286,6 +302,58 @@ def capability_free_reason(charter):
     return match.group(1).strip() if match else None
 
 
+def _status_rank(value):
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(value or "").strip().lower()).strip("_")
+    if normalized in PLANNING_ONLY_STATUSES:
+        return 0, normalized
+    if normalized in PILOT_STATUSES:
+        return 1, normalized
+    if normalized in BUILD_STATUSES:
+        return 2, normalized
+    return None, normalized
+
+
+def authorization_consistency(entry, packet, charter_status, charter_text=""):
+    decision_rank, decision_status = _status_rank((entry or {}).get("verdict"))
+    authorization = (entry or {}).get("decision_authorization") or {}
+    authorized_use = {
+        re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()).strip("_")
+        for value in authorization.get("authorized_use") or []
+    }
+    ceiling = decision_rank if decision_rank is not None else 0
+    if authorized_use.intersection({"pilot", "pilot_execution", "bounded_pilot"}):
+        ceiling = max(ceiling, 1)
+    if authorized_use.intersection({"build_authorized", "production_build", "deployment"}):
+        ceiling = max(ceiling, 2)
+    if bool((packet or {}).get("provisional")):
+        ceiling = -1
+    charter_rank, normalized_charter = _status_rank(charter_status)
+    errors = []
+    if charter_rank is None:
+        errors.append(f"charter status is missing or unsupported: {charter_status!r}")
+    elif charter_rank > ceiling:
+        errors.append(
+            f"charter status {normalized_charter} exceeds decision ceiling "
+            f"{decision_status or 'internal_planning_only'}"
+        )
+    legal_claim = re.search(
+        r"\b(?:keeps?[^\n.]{0,45}legal|legally?\s+(?:operable|authorized|permitted|compliant)|"
+        r"regulator[- ]approved|fully\s+compliant)\b",
+        charter_text,
+        re.I,
+    )
+    if ceiling <= 0 and legal_claim:
+        errors.append("planning-only authority cannot support a legal-operation or compliance claim")
+    return {
+        "status": "pass" if not errors else "fail",
+        "decision_status": decision_status or None,
+        "charter_status": normalized_charter or None,
+        "ceiling_rank": ceiling,
+        "authorized_use": sorted(authorized_use),
+        "errors": errors,
+    }
+
+
 def capabilities_in(text, honor_negation=False):
     if honor_negation and NEGATED.search(text):
         return {}
@@ -384,6 +452,8 @@ def _valid_constraint_override(entry, dropped_capabilities, dropped_constraints)
 def _active_snapshot(contract):
     return {
         "forbidden_constraints": contract.get("forbidden_constraints") or [],
+        "required_review_count": (contract.get("semantic_review") or {}).get("required_review_count", 1),
+        "review_paths": (contract.get("semantic_review") or {}).get("review_paths", [REVIEW_PATH.replace("\\", "/")]),
         "forbidden_capabilities": contract.get("forbidden_capabilities") or [],
         "contract_level": contract.get("contract_level"),
         "verdict_status": contract.get("verdict_status"),
@@ -399,6 +469,7 @@ def build_contract(root, charter_path=None, previous=None):
     packet = read_json(packet_path, {})
     if not isinstance(packet, dict):
         packet = {}
+    claim_coverage_errors = claim_coverage.validate_packet(root, packet)
     authorization = entry.get("decision_authorization") or {}
     if not isinstance(authorization, dict):
         authorization = {}
@@ -414,6 +485,7 @@ def build_contract(root, charter_path=None, previous=None):
     capability_free = capability_free_reason(charter)
     status_match = re.search(r"\*\*Status:\*\*\s*([^|\n]+)", charter[:1600], re.I)
     verdict_status = status_match.group(1).strip().lower() if status_match else None
+    authority_consistency = authorization_consistency(entry, packet, verdict_status, charter)
 
     previous = previous if isinstance(previous, dict) else None
     prior_constraints = {
@@ -490,7 +562,11 @@ def build_contract(root, charter_path=None, previous=None):
         "status": "not_verified", "reason": charter_error or "charter_missing"
     }
     provisional = bool(packet.get("provisional")) or not receipt_hashes
-    if extraction_suspect:
+    if authority_consistency["status"] == "fail":
+        contract_level = "authorization_contradiction"
+    elif claim_coverage_errors:
+        contract_level = "claim_coverage_incomplete"
+    elif extraction_suspect:
         contract_level = "extraction_suspect"
     elif weakening_blocked:
         contract_level = "constraint_weakening_blocked"
@@ -506,6 +582,11 @@ def build_contract(root, charter_path=None, previous=None):
         "decision_log": decision_path,
         "committee_packet": packet_path if os.path.exists(packet_path) else None,
     }
+    brief_ref = (((packet.get("claim_coverage") or {}).get("brief_source") or {}).get("path"))
+    if brief_ref:
+        brief_path = os.path.abspath(os.path.join(root, str(brief_ref)))
+        if _inside(root, brief_path) and os.path.isfile(brief_path):
+            source_paths["user_brief"] = brief_path
     source_fingerprints = {
         name: {"path": os.path.relpath(path, root).replace("\\", "/"), "sha256": sha256_file(path)}
         for name, path in source_paths.items()
@@ -529,6 +610,10 @@ def build_contract(root, charter_path=None, previous=None):
         blocking_reasons.append("redirect-like charter has no extracted cut-list and no explicit capability-free disposition")
     if weakening_blocked:
         blocking_reasons.append("previous constraints were removed without a complete named-human override")
+    blocking_reasons.extend(authority_consistency["errors"])
+    blocking_reasons.extend(claim_coverage_errors)
+
+    high_risk = bool(current_capabilities.intersection(HIGH_RISK_CAPABILITIES))
 
     return {
         "format": CONTRACT_FORMAT,
@@ -536,6 +621,12 @@ def build_contract(root, charter_path=None, previous=None):
         "contract_level": contract_level,
         "verdict_status": verdict_status,
         "blocking_reasons": blocking_reasons,
+        "authorization_consistency": authority_consistency,
+        "claim_coverage": {
+            "status": "pass" if not claim_coverage_errors else "fail",
+            "errors": claim_coverage_errors,
+            "record": packet.get("claim_coverage") if isinstance(packet, dict) else None,
+        },
         "extraction": {
             "status": "suspect" if extraction_suspect else "complete",
             "capability_free_reason": capability_free,
@@ -565,8 +656,12 @@ def build_contract(root, charter_path=None, previous=None):
         "required_instrumentation": required_instrumentation,
         "semantic_review": {
             "required": bool(constraints),
+            "required_review_count": 2 if high_risk and constraints else (1 if constraints else 0),
             "request_path": REVIEW_REQUEST_PATH.replace("\\", "/"),
-            "review_path": REVIEW_PATH.replace("\\", "/"),
+            "review_paths": [
+                REVIEW_PATH.replace("\\", "/"),
+                SECOND_REVIEW_PATH.replace("\\", "/"),
+            ] if high_risk and constraints else [REVIEW_PATH.replace("\\", "/")],
             "coverage": "all_first_party_non_binary_text_by_content",
             "assurance": "reviewer_attested_not_deterministic_proof",
         },
@@ -823,6 +918,10 @@ def write_review_request(root, targets, contract=None):
         "contract_sha256": canonical_json_digest(contract),
         "contract_level": contract.get("contract_level"),
         "targets": normalize_review_targets(root, targets),
+        "required_review_count": int((contract.get("semantic_review") or {}).get("required_review_count", 1)),
+        "review_paths": (contract.get("semantic_review") or {}).get("review_paths") or [
+            REVIEW_PATH.replace("\\", "/")
+        ],
         "forbidden_constraints": contract.get("forbidden_constraints") or [],
         "scope_policy": {
             "text_coverage": "all_first_party_non_binary_text_classified_by_content",
@@ -833,7 +932,9 @@ def write_review_request(root, targets, contract=None):
         "opaque_files": scope["opaque_files"],
         "excluded_paths": scope["excluded_paths"],
         "question": (
-            "Read every listed text file and review it semantically, not by keyword. Does any file implement, enable, "
+            "Attempt to falsify compliance before considering a pass. Read every listed text file and review it "
+            "semantically, not by keyword. For every forbidden constraint, record at least one adversarial probe "
+            "covering an alias, indirection, data flow, or decision-use path. Does any file implement, enable, "
             "or scaffold a forbidden constraint despite renaming, indirection, configuration, data flow, "
             "or another file type? Cite file and line for every finding. Explicitly acknowledge every "
             "opaque file; its bytes are bound for freshness but are not covered by text review."
@@ -849,6 +950,11 @@ def write_review_request(root, targets, contract=None):
             "findings": [{
                 "path": "relative path", "line": 1, "constraint_id": "id",
                 "reason": "behavioral explanation",
+            }],
+            "adversarial_probes": [{
+                "constraint_id": "one probe required for every forbidden constraint",
+                "alias_or_data_flow": "what semantic evasion was inspected",
+                "outcome": "not_found | finding:<path>:<line>",
             }],
             "opaque_file_acknowledgements": ["every path in request.opaque_files"],
             "attestation": REVIEW_ATTESTATION,
@@ -867,42 +973,8 @@ def write_review_request(root, targets, contract=None):
     return request, path
 
 
-def validate_semantic_review(root, targets, contract=None, require_independent=False):
-    root = os.path.abspath(root)
-    contract = contract or load_contract(root)
-    if not (contract.get("semantic_review") or {}).get("required"):
-        return {"status": "not_required", "errors": [], "verdict": "pass"}
-    request = read_json(os.path.join(root, REVIEW_REQUEST_PATH), None)
-    review = read_json(os.path.join(root, REVIEW_PATH), None)
+def _validate_review_document(review, request, expected_request_hash, require_independent):
     errors = []
-    if not isinstance(request, dict):
-        errors.append("semantic review request is missing")
-        return {"status": "missing", "errors": errors, "verdict": None}
-    if request.get("format") != REVIEW_REQUEST_FORMAT:
-        errors.append("semantic review request format is invalid")
-    expected_request_hash = review_request_digest(request)
-    if request.get("request_sha256") != expected_request_hash:
-        errors.append("semantic review request hash is invalid")
-    if request.get("contract_sha256") != canonical_json_digest(contract):
-        errors.append("semantic review request targets a different contract")
-    try:
-        normalized_targets = normalize_review_targets(root, targets)
-    except ValueError as exc:
-        normalized_targets = []
-        errors.append(str(exc))
-    if request.get("targets") != normalized_targets:
-        errors.append("semantic review request targets do not match the checked paths")
-    try:
-        current_scope = review_scope(root, targets)
-    except ValueError as exc:
-        current_scope = {"files": [], "opaque_files": [], "excluded_paths": []}
-        errors.append(str(exc))
-    for field in ("files", "opaque_files", "excluded_paths"):
-        if request.get(field) != current_scope[field]:
-            errors.append(f"semantic review request is stale for current {field.replace('_', ' ')}")
-    if not isinstance(review, dict):
-        errors.append("semantic review is missing")
-        return {"status": "missing", "errors": errors, "verdict": None}
     if review.get("format") != REVIEW_FORMAT:
         errors.append("semantic review format is invalid")
     if review.get("request_sha256") != expected_request_hash:
@@ -939,20 +1011,97 @@ def validate_semantic_review(root, targets, contract=None, require_independent=F
         errors.append("semantic review findings must be a list")
     elif review.get("verdict") == "block" and not findings:
         errors.append("blocking semantic review requires at least one finding")
-    status = "invalid" if errors else ("current_block" if review.get("verdict") == "block" else "current_pass")
+    probes = review.get("adversarial_probes")
+    constraint_ids = {
+        item.get("constraint_id")
+        for item in request.get("forbidden_constraints") or []
+        if isinstance(item, dict) and item.get("constraint_id")
+    }
+    probed_ids = {
+        item.get("constraint_id")
+        for item in probes or []
+        if isinstance(item, dict) and item.get("alias_or_data_flow") and item.get("outcome")
+    }
+    if not isinstance(probes, list) or not constraint_ids.issubset(probed_ids):
+        errors.append("semantic review requires an adversarial alias/data-flow probe for every constraint")
+    return errors
+
+
+def validate_semantic_review(
+    root,
+    targets,
+    contract=None,
+    require_independent=False,
+    require_second=False,
+):
+    root = os.path.abspath(root)
+    contract = contract or load_contract(root)
+    if not (contract.get("semantic_review") or {}).get("required"):
+        return {"status": "not_required", "errors": [], "verdict": "pass", "reviews": []}
+    request = read_json(os.path.join(root, REVIEW_REQUEST_PATH), None)
+    errors = []
+    if not isinstance(request, dict):
+        return {"status": "missing", "errors": ["semantic review request is missing"], "verdict": None, "reviews": []}
+    if request.get("format") != REVIEW_REQUEST_FORMAT:
+        errors.append("semantic review request format is invalid")
+    expected_request_hash = review_request_digest(request)
+    if request.get("request_sha256") != expected_request_hash:
+        errors.append("semantic review request hash is invalid")
+    if request.get("contract_sha256") != canonical_json_digest(contract):
+        errors.append("semantic review request targets a different contract")
+    try:
+        normalized_targets = normalize_review_targets(root, targets)
+    except ValueError as exc:
+        normalized_targets = []
+        errors.append(str(exc))
+    if request.get("targets") != normalized_targets:
+        errors.append("semantic review request targets do not match the checked paths")
+    try:
+        current_scope = review_scope(root, targets)
+    except ValueError as exc:
+        current_scope = {"files": [], "opaque_files": [], "excluded_paths": []}
+        errors.append(str(exc))
+    for field in ("files", "opaque_files", "excluded_paths"):
+        if request.get(field) != current_scope[field]:
+            errors.append(f"semantic review request is stale for current {field.replace('_', ' ')}")
+
+    required_count = 1
+    if require_second:
+        required_count = max(1, int((contract.get("semantic_review") or {}).get("required_review_count", 1)))
+    paths = [REVIEW_PATH] + ([SECOND_REVIEW_PATH] if required_count > 1 else [])
+    reviews = []
+    missing = []
+    for path in paths:
+        review = read_json(os.path.join(root, path), None)
+        if not isinstance(review, dict):
+            missing.append(path.replace("\\", "/"))
+            continue
+        review_errors = _validate_review_document(review, request, expected_request_hash, require_independent)
+        errors.extend(f"{path.replace('\\', '/')}: {item}" for item in review_errors)
+        reviews.append(review)
+    if missing:
+        return {
+            "status": "invalid" if errors else "missing",
+            "errors": errors + ["missing required semantic review(s): " + ", ".join(missing)],
+            "verdict": None,
+            "reviews": reviews,
+        }
+    reviewer_ids = [str(item.get("reviewer_id", "")).strip() for item in reviews]
+    if len(reviewer_ids) > 1 and len(set(reviewer_ids)) != len(reviewer_ids):
+        errors.append("high-risk second review must use a distinct reviewer_id")
+    verdict = "block" if any(item.get("verdict") == "block" for item in reviews) else "pass"
+    findings = [finding for item in reviews for finding in (item.get("findings") or [])]
+    status = "invalid" if errors else ("current_block" if verdict == "block" else "current_pass")
     return {
         "status": status,
         "errors": errors,
-        "verdict": review.get("verdict"),
-        "reviewer_kind": review.get("reviewer_kind"),
-        "reviewer_id": review.get("reviewer_id"),
-        "model_id": review.get("model_id"),
-        "findings": findings if isinstance(findings, list) else [],
-        "assurance": (
-            "host_model_self_attested_not_independent_assurance"
-            if review.get("reviewer_kind") == "host_model"
-            else "independent_reviewer_attested_not_deterministic_proof"
-        ),
+        "verdict": verdict,
+        "reviewer_kind": ",".join(str(item.get("reviewer_kind")) for item in reviews),
+        "reviewer_id": ",".join(reviewer_ids),
+        "model_id": ",".join(str(item.get("model_id") or "") for item in reviews),
+        "findings": findings,
+        "reviews": reviews,
+        "assurance": "reviewer_attested_adversarial_review_not_deterministic_proof",
         "text_file_count": len(request.get("files") or []),
         "opaque_file_count": len(request.get("opaque_files") or []),
     }
@@ -994,7 +1143,8 @@ def main():
             f"  text files: {len(request['files'])} | opaque files: {len(request['opaque_files'])} "
             f"| request_sha256: {request['request_sha256']}"
         )
-        print("  Reviewer: read every listed text file, acknowledge opaque files, then write mvr/semantic-review.json.")
+        paths = ", ".join(request.get("review_paths") or [REVIEW_PATH.replace("\\", "/")])
+        print(f"  Reviewers: attempt adversarial probes, then write {paths} as required.")
 
     if args.check:
         try:
@@ -1029,6 +1179,7 @@ def main():
                 args.check,
                 contract,
                 require_independent=args.require_independent_review,
+                require_second=args.require_independent_review,
             )
             if review["status"] != "current_pass":
                 print("MVR SEMANTIC REVIEW BLOCK:", file=sys.stderr)

@@ -12,7 +12,7 @@ rule-length limits:
 4. Founder claims weigh 0.30 until corroborated or attested.
 5. Never fabricate evidence: every named market fact needs source + date or `UNKNOWN - not verified`; unknown facts never unblock claims.
 6. Outside African/high-context calibration, downgrade to lens-only and say so.
-7. After the charter is frozen, create a semantic review request for the product paths, read every manifested text file, acknowledge opaque files, and validate it with `twin_build_spec.py --check ... --require-semantic-review`. Use a separate reviewer plus `--require-independent-review` for PRE-EXPORT/evaluation. Never call lexical clearance semantic safety.
+7. After the charter is frozen, create a semantic review request for the product paths, read every manifested text file, acknowledge opaque files, and record an adversarial alias/data-flow probe per constraint. Validate with `twin_build_spec.py --check ... --require-semantic-review`. PRE-EXPORT uses `--require-independent-review`; high-risk contracts require two distinct reviewers. Never call lexical clearance semantic safety.
 8. Before export run `twin_verify_run.py --stage export --keyfile <key>`; exit 3 is inconclusive, not a pass.
 
 Cursor enforcement has two layers:
@@ -20,6 +20,6 @@ Cursor enforcement has two layers:
 1. **Write-time layer (best effort, Cursor-version dependent):** `.cursor/hooks.json` should wire `preToolUse` to `adapters/cursor-hooks/pretooluse_claim_gate.py` and `beforeSubmitPrompt` to `adapters/cursor-hooks/before_submit_heartbeat.py`.
 2. **Commit-time layer (mandatory floor):** the git pre-commit gate (`hooks/pre_commit_claim_gate.py`) blocks claim artifacts and obvious claim-shaped docs without decision-log authorization.
 3. **MCP layer:** `.cursor/mcp.json` should expose the AfricanMarketOS MCP server and read `${MVR_API_KEY}` from the environment. Never paste keys into rules or repo files.
-4. **Code-constraint layer:** the git gate requires a current `mvr/semantic-review.json` when the build contract carries cut-list constraints. This is a host-model attestation, not deterministic proof.
+4. **Code-constraint layer:** preserve the complete request in `mvr/user-brief.txt` and bind the committee with `--brief-file`. The git gate requires current semantic review when the build contract carries cut-list constraints. Every review records an adversarial probe; high-risk export requires two distinct independent reviews. This is reviewer attestation, not deterministic proof.
 
 Read `mvr/state.json` each turn when the heartbeat hook is unavailable; staleness >30d = authorization void. Use `adapters/cursor-browser-research.md` when browser tooling exists; unsupported facts remain `UNKNOWN - not verified`.

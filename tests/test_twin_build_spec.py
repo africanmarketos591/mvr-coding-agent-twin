@@ -39,6 +39,25 @@ def write_decision(root, override=None, charter_ref="charter.md"):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         json.dump([entry], handle)
+    brief_path = os.path.join(root, "mvr", "user-brief.txt")
+    if not os.path.exists(brief_path):
+        write(brief_path, "Build an employer wage ledger. Do not build lending, credit scoring, or a wallet.")
+    brief = open(brief_path, encoding="utf-8").read()
+    claims, coverage = bs.claim_coverage.build_coverage(
+        brief,
+        {"kind": "file", "path": "mvr/user-brief.txt"},
+        ["employer wage ledger"],
+        "wage-ledger",
+    )
+    packet_path = os.path.join(root, "mvr", "committee_packet.json")
+    if not os.path.exists(packet_path):
+        with open(packet_path, "w", encoding="utf-8") as handle:
+            json.dump({
+                "provisional": False,
+                "claims_sent": claims,
+                "claim_coverage": coverage,
+                "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+            }, handle)
 
 
 def charter(cut="a consumer loan book or credit scoring; no wallet holding funds", status="redirect"):
@@ -65,6 +84,14 @@ def write_semantic_review(root, targets, contract, verdict="pass", findings=None
         "reviewed_at": "2026-07-10T00:00:00Z",
         "verdict": verdict,
         "findings": findings or [],
+        "adversarial_probes": [
+            {
+                "constraint_id": item["constraint_id"],
+                "alias_or_data_flow": "renamed function and downstream balance/eligibility use",
+                "outcome": "not_found" if verdict == "pass" else "finding:src/loans.py:1",
+            }
+            for item in contract["forbidden_constraints"]
+        ],
         "opaque_file_acknowledgements": [item["path"] for item in request["opaque_files"]],
         "attestation": bs.REVIEW_ATTESTATION,
     }
@@ -77,9 +104,17 @@ def main():
     with tempfile.TemporaryDirectory() as root:
         write(os.path.join(root, "charter.md"), charter())
         write_decision(root)
+        brief = open(os.path.join(root, "mvr", "user-brief.txt"), encoding="utf-8").read()
+        claims, coverage = bs.claim_coverage.build_coverage(
+            brief,
+            {"kind": "file", "path": "mvr/user-brief.txt"},
+            ["consumer credit scoring and a digital loan advance"],
+            "wage-ledger",
+        )
         packet = {
             "provisional": False,
-            "claims_sent": ["consumer credit scoring and a digital loan advance"],
+            "claims_sent": claims,
+            "claim_coverage": coverage,
             "evidence_bill": [{"stakeholder_class": "worker", "minimum_signal_count": 25, "required_fields": ["trust"]}],
         }
         with open(os.path.join(root, "mvr", "committee_packet.json"), "w", encoding="utf-8") as handle:
@@ -150,7 +185,7 @@ def main():
         reworded, _ = bs.write_contract(root)
         check("rewording that preserves all capability cuts is not laundering", not reworded["blocking_reasons"])
 
-        write(os.path.join(root, "charter.md"), charter(cut="", status="build_authorized"))
+        write(os.path.join(root, "charter.md"), charter(cut="", status="redirect"))
         weakened, _ = bs.write_contract(root)
         check("constraint removal without signature blocks", weakened["contract_level"] == "constraint_weakening_blocked")
         check("old lending constraint carried forward", "digital_lending" in {item["capability"] for item in weakened["forbidden_capabilities"]})
@@ -165,9 +200,14 @@ def main():
             "allow_removed_capabilities": dropped_caps,
             "allow_removed_constraint_ids": dropped_ids,
         }
+        write(
+            os.path.join(root, "charter.md"),
+            charter(cut="", status="redirect")
+            + "\nCode capability disposition: capability-free - no regulated capability remains in the fitted build.\n",
+        )
         write_decision(root, override=override)
         released, _ = bs.write_contract(root)
-        check("complete named-human override can release old constraint", not released["blocking_reasons"])
+        check("complete named-human override can release old constraint", not released["blocking_reasons"], released["blocking_reasons"])
 
     with tempfile.TemporaryDirectory() as root:
         write(os.path.join(root, "charter.md"), "# Charter\n**Status:** redirect\n## 5. THE BUILD\nA ledger.\n")

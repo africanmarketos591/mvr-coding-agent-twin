@@ -55,7 +55,7 @@ def main():
 
     # --- preregister --in-place ---
     with tempfile.TemporaryDirectory() as d:
-        ch = os.path.join(d, "charter.md")
+        ch = os.path.join(d, "draft.md")
         open(ch, "w", encoding="utf-8").write(
             "# CH\n**Preregistration hash:** {{sha256}} (anchors: {{anchor_refs}})\n\nprediction text\n")
         rc, out = run([os.path.join(PKG, "scripts", "preregister.py"), "--in-place", ch])

@@ -1,4 +1,5 @@
 """Offline tests for canonical preregistration hashing."""
+import json
 import os
 import subprocess
 import sys
@@ -6,6 +7,7 @@ import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 import preregister
+import twin_claim_coverage
 
 
 FAILS = []
@@ -65,7 +67,32 @@ def main():
         ))
 
         auto = os.path.join(d, "charter.md")
-        write(auto, template)
+        auto_template = template.replace("build_authorized", "internal_planning_only")
+        write(auto, auto_template)
+        mvr_dir = os.path.join(d, "mvr")
+        os.makedirs(mvr_dir, exist_ok=True)
+        brief = "Build an internal planning prototype for a simple record ledger."
+        write(os.path.join(mvr_dir, "user-brief.txt"), brief)
+        claims, coverage = twin_claim_coverage.build_coverage(
+            brief,
+            {"kind": "file", "path": "mvr/user-brief.txt"},
+            ["simple record ledger"],
+            "record-ledger",
+        )
+        with open(os.path.join(mvr_dir, "committee_packet.json"), "w", encoding="utf-8") as handle:
+            json.dump({
+                "provisional": False,
+                "claims_sent": claims,
+                "claim_coverage": coverage,
+                "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+            }, handle)
+        with open(os.path.join(mvr_dir, "decision-log.json"), "w", encoding="utf-8") as handle:
+            json.dump([{
+                "charter_ref": "charter.md",
+                "verdict": "internal_planning_only",
+                "decision_authorization": {"authorized_use": ["internal_planning"]},
+                "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+            }], handle)
         proc = subprocess.run(
             [sys.executable, preregister.__file__, "--in-place", auto],
             capture_output=True,

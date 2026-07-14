@@ -5,4 +5,5 @@ state.json
 .twin-nudge-*
 # ALWAYS committed (the audit trail — do not add these here):
 #   decision-log.json, build_spec.json, build-contract-history.jsonl,
-#   semantic-review-request.json, semantic-review.json, gate-events.jsonl, charters, mirrors
+#   user-brief.txt, semantic-review-request.json, semantic-review.json,
+#   semantic-review-2.json, gate-events.jsonl, charters, mirrors

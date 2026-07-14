@@ -40,9 +40,23 @@ def setup(root, body):
     with open(os.path.join(root, "mvr", "decision-log.json"), "w", encoding="utf-8") as handle:
         json.dump([{
             "charter_ref": "charter.md",
+            "verdict": "redirected",
             "decision_authorization": {"authorized_use": ["internal_planning"]},
             "kernel_receipts": {"immutable_audit_hash": "a" * 64},
         }], handle)
+    brief = "Build a repayment ledger without digital lending, credit scoring, or custody of customer funds."
+    with open(os.path.join(root, "mvr", "user-brief.txt"), "w", encoding="utf-8") as handle:
+        handle.write(brief)
+    claims, coverage = bs.claim_coverage.build_coverage(
+        brief, {"kind": "file", "path": "mvr/user-brief.txt"}, [], "repayment-ledger"
+    )
+    with open(os.path.join(root, "mvr", "committee_packet.json"), "w", encoding="utf-8") as handle:
+        json.dump({
+            "provisional": False,
+            "claims_sent": claims,
+            "claim_coverage": coverage,
+            "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+        }, handle)
     return bs.write_contract(root)[0]
 
 
@@ -57,6 +71,14 @@ def write_model_pass(root, target, contract):
         "reviewed_at": "2026-07-10T00:00:00Z",
         "verdict": "pass",
         "findings": [],
+        "adversarial_probes": [
+            {
+                "constraint_id": item["constraint_id"],
+                "alias_or_data_flow": "renamed advance and balance flow",
+                "outcome": "not_found",
+            }
+            for item in contract["forbidden_constraints"]
+        ],
         "opaque_file_acknowledgements": [item["path"] for item in request["opaque_files"]],
         "attestation": bs.REVIEW_ATTESTATION,
     }

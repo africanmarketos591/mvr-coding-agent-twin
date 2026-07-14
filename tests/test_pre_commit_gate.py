@@ -37,11 +37,38 @@ def semantic_pass(repo, targets):
         "reviewed_at": datetime.now(timezone.utc).isoformat(),
         "verdict": "pass",
         "findings": [],
+        "adversarial_probes": [
+            {
+                "constraint_id": item["constraint_id"],
+                "alias_or_data_flow": "renamed advance and eligibility flow",
+                "outcome": "not_found",
+            }
+            for item in contract["forbidden_constraints"]
+        ],
         "opaque_file_acknowledgements": [item["path"] for item in request["opaque_files"]],
         "attestation": build_spec.REVIEW_ATTESTATION,
     }
     with open(os.path.join(repo, build_spec.REVIEW_PATH), "w", encoding="utf-8") as handle:
         json.dump(review, handle)
+
+
+def write_coverage_packet(repo, brief, supplied_claims):
+    os.makedirs(os.path.join(repo, "mvr"), exist_ok=True)
+    with open(os.path.join(repo, "mvr", "user-brief.txt"), "w", encoding="utf-8") as handle:
+        handle.write(brief)
+    claims, coverage = build_spec.claim_coverage.build_coverage(
+        brief,
+        {"kind": "file", "path": "mvr/user-brief.txt"},
+        supplied_claims,
+        "test-ledger",
+    )
+    with open(os.path.join(repo, "mvr", "committee_packet.json"), "w", encoding="utf-8") as handle:
+        json.dump({
+            "provisional": False,
+            "claims_sent": claims,
+            "claim_coverage": coverage,
+            "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+        }, handle)
 
 
 def main():
@@ -155,14 +182,14 @@ def main():
         open(os.path.join(d, "src", "app.py"), "w").write("def ledger(): return True\n")
         json.dump([{
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "verdict": "redirected",
             "decision_authorization": {
                 "authorized_use": ["internal_planning"],
                 "not_authorized_use": ["national_rollout"],
             },
             "kernel_receipts": {"immutable_audit_hash": "a" * 64},
         }], open(os.path.join(d, "mvr", "decision-log.json"), "w"))
-        json.dump({"provisional": False, "claims_sent": ["digital loans"]},
-                  open(os.path.join(d, "mvr", "committee_packet.json"), "w"))
+        write_coverage_packet(d, "Build a wage ledger without digital loans.", ["digital loans"])
         git(d, "add", "charter.md", "src/app.py", "mvr/decision-log.json", "mvr/committee_packet.json")
         rc, err = run_gate(d)
         check("code plus charter requires build contract", rc == 1 and "build_spec.json is missing" in err)
@@ -204,11 +231,11 @@ def main():
         open(os.path.join(d, "src", "app.dart"), "w").write("void ledger() {}\n")
         json.dump([{
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "verdict": "redirected",
             "decision_authorization": {"authorized_use": ["internal_planning"]},
             "kernel_receipts": {"immutable_audit_hash": "a" * 64},
         }], open(os.path.join(d, "mvr", "decision-log.json"), "w"))
-        json.dump({"provisional": False, "claims_sent": ["digital loans"]},
-                  open(os.path.join(d, "mvr", "committee_packet.json"), "w"))
+        write_coverage_packet(d, "Build a wage ledger without digital loans.", ["digital loans"])
         subprocess.run([sys.executable, BUILD_SPEC, "--root", d, "--emit"], check=True, capture_output=True)
         semantic_pass(d, ["src/app.dart"])
         git(d, "add", ".")

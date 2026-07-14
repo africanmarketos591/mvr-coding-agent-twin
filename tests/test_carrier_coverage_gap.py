@@ -26,7 +26,7 @@ def write(path, value, binary=False):
         handle.write(value)
 
 
-def review(root, request, kind="host_model"):
+def review(root, request, contract, kind="host_model"):
     payload = {
         "format": bs.REVIEW_FORMAT,
         "request_sha256": request["request_sha256"],
@@ -36,6 +36,14 @@ def review(root, request, kind="host_model"):
         "reviewed_at": "2026-07-10T00:00:00Z",
         "verdict": "pass",
         "findings": [],
+        "adversarial_probes": [
+            {
+                "constraint_id": item["constraint_id"],
+                "alias_or_data_flow": "renamed advance and cross-file schema flow",
+                "outcome": "not_found",
+            }
+            for item in contract["forbidden_constraints"]
+        ],
         "opaque_file_acknowledgements": [item["path"] for item in request["opaque_files"]],
         "attestation": bs.REVIEW_ATTESTATION,
     }
@@ -66,9 +74,24 @@ def main():
             os.path.join(root, "mvr", "decision-log.json"),
             json.dumps([{
                 "charter_ref": "charter.md",
+                "verdict": "redirected",
                 "decision_authorization": {"authorized_use": ["internal_planning"]},
                 "kernel_receipts": {"immutable_audit_hash": "a" * 64},
             }]),
+        )
+        brief = "Build a repayment ledger without digital lending or custody of customer funds."
+        write(os.path.join(root, "mvr", "user-brief.txt"), brief)
+        claims, coverage = bs.claim_coverage.build_coverage(
+            brief, {"kind": "file", "path": "mvr/user-brief.txt"}, [], "repayment-ledger"
+        )
+        write(
+            os.path.join(root, "mvr", "committee_packet.json"),
+            json.dumps({
+                "provisional": False,
+                "claims_sent": claims,
+                "claim_coverage": coverage,
+                "kernel_receipts": {"immutable_audit_hash": "a" * 64},
+            }),
         )
         for relative, body in carriers.items():
             write(os.path.join(root, relative), body)
@@ -88,12 +111,12 @@ def main():
         check("known binary is disclosed and hash-bound", "app/logo.png" in opaque, sorted(opaque))
         check("review policy is content-classified", request["scope_policy"]["text_coverage"].endswith("by_content"))
 
-        review(root, request, "host_model")
+        review(root, request, contract, "host_model")
         check("host self-review supports local accountability", bs.validate_semantic_review(root, targets, contract)["status"] == "current_pass")
         independent = bs.validate_semantic_review(root, targets, contract, require_independent=True)
         check("host self-review cannot satisfy independent assurance", independent["status"] == "invalid")
 
-        review(root, request, "independent_model")
+        review(root, request, contract, "independent_model")
         check(
             "separate reviewer satisfies independent mode",
             bs.validate_semantic_review(root, targets, contract, require_independent=True)["status"] == "current_pass",

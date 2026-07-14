@@ -26,6 +26,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(PKG, "spine"))
 
 import mvr_client as c  # noqa: E402
+import twin_claim_coverage as claim_coverage  # noqa: E402
 
 
 def load_key(keyfile):
@@ -143,8 +144,11 @@ def draft_charter(args, packet, seed_entry_id):
         status_line = "Spine sat, but the market is outside calibrated scope; Law 6 requires lens-only reasoning."
         status_choices = "uncalibrated_lens_only"
     else:
-        status_line = "Spine sat; abstention codes below are evidence requirements, not approval."
-        status_choices = "{pilot_only|build_authorized|redirected}"
+        status_line = (
+            "Spine sat, but this committee seed authorizes internal planning only. "
+            "A later decision entry is required before any pilot or build-authorized status."
+        )
+        status_choices = "{internal_planning_only|redirected}"
     provisional_rule = (
         "\n> PROVISIONAL RULE: do not change Status to build_authorized, and do not place regulated "
         "implementation details in scaffold/export surfaces until a non-empty kernel receipt exists."
@@ -178,6 +182,7 @@ Board questions:
 Source ledger requirement: every named incumbent, regulation, licensing claim, figure, failure precedent, capital number, or health/credit/legal constraint must carry source/date or be marked `UNKNOWN - not verified`.
 
 ## 3. What the evidence machine said (quoted, not paraphrased)
+- claim_coverage: {json.dumps(packet.get('claim_coverage', {}), ensure_ascii=False)}
 - calibration_scope: {json.dumps(calibration, ensure_ascii=False)}
 - unsafe_claims: {json.dumps(packet['sparring'].get('unsafe_claims', []), ensure_ascii=False)}
 - evidence_required: {json.dumps(packet['sparring'].get('evidence_required', []), ensure_ascii=False)}
@@ -209,6 +214,10 @@ Unless a later decision-log entry authorizes them, the default non-authorized cl
 def main():
     parser = argparse.ArgumentParser(description="Run the PRE-CHARTER MVR Twin committee.")
     parser.add_argument("--idea", required=True)
+    parser.add_argument(
+        "--brief-file",
+        help="Preserved verbatim user brief inside --root; required for audit-ready export.",
+    )
     parser.add_argument("--archetype", action="append", required=True, default=[])
     parser.add_argument("--subject", required=True)
     parser.add_argument("--market", required=True)
@@ -220,17 +229,39 @@ def main():
 
     load_key(args.keyfile)
 
-    claims = list(args.claim)
+    supplied_claims = list(args.claim)
     if args.claims_file:
         with open(args.claims_file, encoding="utf-8-sig") as handle:
-            claims.extend(line.strip() for line in handle if line.strip())
-    if not claims:
-        claims = [args.subject]
+            supplied_claims.extend(line.strip() for line in handle if line.strip())
 
     root = os.path.abspath(args.root)
     os.environ["CLAUDE_PROJECT_DIR"] = root
     mvr_dir = os.path.join(root, "mvr")
     checkpoints_dir = os.path.join(mvr_dir, "checkpoints")
+    brief_text = args.idea
+    brief_source = {"kind": "inline_unverified", "path": None}
+    if args.brief_file:
+        brief_path = os.path.abspath(
+            args.brief_file if os.path.isabs(args.brief_file) else os.path.join(root, args.brief_file)
+        )
+        try:
+            brief_inside = os.path.commonpath([root, brief_path]) == root
+        except ValueError:
+            brief_inside = False
+        if not brief_inside or not os.path.isfile(brief_path):
+            raise SystemExit("--brief-file must exist inside --root")
+        with open(brief_path, encoding="utf-8-sig") as handle:
+            brief_text = handle.read()
+        brief_source = {
+            "kind": "file",
+            "path": os.path.relpath(brief_path, root).replace("\\", "/"),
+        }
+    claims, coverage = claim_coverage.build_coverage(
+        brief_text,
+        brief_source,
+        supplied_claims,
+        args.subject,
+    )
     os.makedirs(checkpoints_dir, exist_ok=True)
 
     _latency, schema_status, schema = safe_call(c.schema)
@@ -277,7 +308,7 @@ def main():
         else:
             provisional = True
 
-    _latency, sparring_status, sparring = safe_call(c.strategy_sparring, claims[:10], args.subject, args.market)
+    _latency, sparring_status, sparring = safe_call(c.strategy_sparring, claims, args.subject, args.market)
     if sparring_status == 200 and isinstance(sparring, dict):
         write_json(os.path.join(checkpoints_dir, "strategy_sparring.json"), sparring)
     else:
@@ -293,7 +324,8 @@ def main():
         "subject": args.subject,
         "market_scope": args.market,
         "calibration_scope": calibration_scope,
-        "claims_sent": claims[:10],
+        "claims_sent": claims,
+        "claim_coverage": coverage,
         "guardian_map": guardian_map,
         "evidence_bill": union_evidence(playbooks),
         "sparring": {

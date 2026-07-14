@@ -59,6 +59,10 @@ def main():
     T.c.strategy_sparring = lambda claims, subject, market: (0.1, 200, SPARRING)
 
     with tempfile.TemporaryDirectory() as tempdir:
+        brief_path = os.path.join(tempdir, "mvr", "user-brief.txt")
+        os.makedirs(os.path.dirname(brief_path), exist_ok=True)
+        with open(brief_path, "w", encoding="utf-8") as handle:
+            handle.write("Build a member contribution ledger without lending or payment processing.")
         old_argv = sys.argv[:]
         sys.argv = [
             "twin_committee.py",
@@ -66,6 +70,8 @@ def main():
             tempdir,
             "--idea",
             "test idea",
+            "--brief-file",
+            brief_path,
             "--archetype",
             "a",
             "--archetype",
@@ -98,7 +104,8 @@ def main():
         check("seed carries priors dims", seed["market_scope"] == "UG-KE" and seed["archetype"] == "a")
         check("seed remains internal planning only", seed["decision_authorization"]["authorized_use"] == ["internal_planning"])
         check("draft leaves judgment to model", "{MODEL" in draft and "test idea" in draft)
-        check("live draft exposes normal statuses", "{pilot_only|build_authorized|redirected}" in draft)
+        check("committee draft preserves planning ceiling", "{internal_planning_only|redirected}" in draft and "pilot_only" not in draft)
+        check("brief-bound material claim coverage passes", packet["claim_coverage"]["status"] == "complete")
         check("evidence bill takes higher lane", ">=100 signals" in draft)
 
     # Outage path: no exception, provisional packet, still no claim authorization.
@@ -107,6 +114,10 @@ def main():
     T.c.category_playbook = lambda archetype: (0.1, 0, {"error": "kernel_unreachable"})
     T.c.strategy_sparring = lambda claims, subject, market: (0.1, 0, {"error": "kernel_unreachable"})
     with tempfile.TemporaryDirectory() as tempdir:
+        brief_path = os.path.join(tempdir, "mvr", "user-brief.txt")
+        os.makedirs(os.path.dirname(brief_path), exist_ok=True)
+        with open(brief_path, "w", encoding="utf-8") as handle:
+            handle.write("Build an offline ledger.")
         old_argv = sys.argv[:]
         sys.argv = [
             "twin_committee.py",
@@ -114,6 +125,7 @@ def main():
             tempdir,
             "--idea",
             "offline idea",
+            "--brief-file", brief_path,
             "--archetype",
             "a",
             "--subject",
@@ -143,9 +155,14 @@ def main():
     T.c.category_playbook = lambda archetype: (0.1, 200, PLAYBOOK_A)
     T.c.strategy_sparring = lambda claims, subject, market: (0.1, 200, SPARRING)
     with tempfile.TemporaryDirectory() as tempdir:
+        brief_path = os.path.join(tempdir, "mvr", "user-brief.txt")
+        os.makedirs(os.path.dirname(brief_path), exist_ok=True)
+        with open(brief_path, "w", encoding="utf-8") as handle:
+            handle.write("Build a German fleet tool.")
         old_argv = sys.argv[:]
         sys.argv = [
             "twin_committee.py", "--root", tempdir, "--idea", "German fleet tool",
+            "--brief-file", brief_path,
             "--archetype", "a", "--subject", "subject", "--market", "DE/Berlin",
         ]
         try:

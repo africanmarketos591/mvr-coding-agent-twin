@@ -26,9 +26,22 @@ def write_json(path, value):
 
 
 def committee_tree(root, receipt="a" * 64, provisional=False):
+    brief_path = os.path.join(root, "mvr", "user-brief.txt")
+    os.makedirs(os.path.dirname(brief_path), exist_ok=True)
+    with open(brief_path, "w", encoding="utf-8") as handle:
+        handle.write("Build a contribution ledger without a savings score or loan book.")
+    brief = open(brief_path, encoding="utf-8").read()
+    claims, coverage = bs.claim_coverage.build_coverage(
+        brief,
+        {"kind": "file", "path": "mvr/user-brief.txt"},
+        ["contribution ledger"],
+        "contribution-ledger",
+    )
     entry = {
         "entry_id": "DL-test",
         "charter_ref": "charter.md",
+        "verdict": "redirected",
+        "decision_authorization": {"authorized_use": ["internal_planning"]},
         "kernel_receipts": {"immutable_audit_hash": receipt} if receipt else {},
     }
     write_json(os.path.join(root, "mvr", "decision-log.seed.json"), [entry])
@@ -36,6 +49,8 @@ def committee_tree(root, receipt="a" * 64, provisional=False):
         "provisional": provisional,
         "seats_sat": {"spine": not provisional},
         "kernel_receipts": entry["kernel_receipts"],
+        "claims_sent": claims,
+        "claim_coverage": coverage,
     })
 
 
@@ -108,6 +123,14 @@ def main():
                 "reviewed_at": "2026-07-10T00:00:00Z",
                 "verdict": "pass",
                 "findings": [],
+                "adversarial_probes": [
+                    {
+                        "constraint_id": item["constraint_id"],
+                        "alias_or_data_flow": "renamed eligibility and balance flow",
+                        "outcome": "not_found",
+                    }
+                    for item in contract["forbidden_constraints"]
+                ],
                 "opaque_file_acknowledgements": [],
                 "attestation": bs.REVIEW_ATTESTATION,
             })
@@ -117,6 +140,45 @@ def main():
             check("coherent build evidence verifies", result["status"] == "verified", result["status"])
             result = verifier.audit_run(root, stage="export")
             check("host self-review cannot verify export", result["status"] == "rejected", result["status"])
+            first = json.load(open(os.path.join(root, bs.REVIEW_PATH), encoding="utf-8"))
+            first["reviewer_kind"] = "independent_model"
+            first["reviewer_id"] = "independent-reviewer-one"
+            write_json(os.path.join(root, bs.REVIEW_PATH), first)
+            second = dict(first)
+            second["reviewer_id"] = "independent-reviewer-two"
+            write_json(os.path.join(root, bs.SECOND_REVIEW_PATH), second)
+            with open(os.path.join(root, "MIRROR.md"), "w", encoding="utf-8") as handle:
+                handle.write("# MIRROR\nTest assumptions.\n")
+            with open(os.path.join(root, "MVR_DELTA_REPORT.md"), "w", encoding="utf-8") as handle:
+                handle.write("# MVR DELTA REPORT\nTest-only counterfactual.\n")
+            result = verifier.audit_run(root, stage="export")
+            check(
+                "planning-only authority cannot verify export even after review",
+                result["status"] == "rejected"
+                and result["dimensions"]["export_authorization"]["status"] == "fail",
+                result,
+            )
+            log_path = os.path.join(root, "mvr", "decision-log.seed.json")
+            entries = json.load(open(log_path, encoding="utf-8"))
+            entries[0]["decision_authorization"]["authorized_use"] = ["internal_planning", "bounded_pilot"]
+            write_json(log_path, entries)
+            contract, _ = bs.write_contract(root)
+            request, _ = bs.write_review_request(root, ["src"], contract)
+            for path, reviewer_id in (
+                (bs.REVIEW_PATH, "independent-reviewer-one"),
+                (bs.SECOND_REVIEW_PATH, "independent-reviewer-two"),
+            ):
+                review = dict(first)
+                review["request_sha256"] = request["request_sha256"]
+                review["reviewer_id"] = reviewer_id
+                write_json(os.path.join(root, path), review)
+            result = verifier.audit_run(root, stage="export")
+            check("pilot-authorized export with two distinct reviews verifies", result["status"] == "verified", result["status"])
+            check(
+                "runtime remains a separate unevaluated dimension",
+                result["dimensions"]["runtime_assurance"]["status"] == "not_evaluated",
+                result["dimensions"],
+            )
 
         with tempfile.TemporaryDirectory() as root:
             # Cursor beta.35 failure shape: a live receipt and self-review existed, but
@@ -144,6 +206,14 @@ def main():
                 "reviewed_at": "2026-07-10T00:00:00Z",
                 "verdict": "pass",
                 "findings": [],
+                "adversarial_probes": [
+                    {
+                        "constraint_id": item["constraint_id"],
+                        "alias_or_data_flow": "renamed eligibility and balance flow",
+                        "outcome": "not_found",
+                    }
+                    for item in contract["forbidden_constraints"]
+                ],
                 "opaque_file_acknowledgements": [],
                 "attestation": bs.REVIEW_ATTESTATION,
             })

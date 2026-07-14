@@ -1,5 +1,5 @@
 {
-  "format": "mvr_semantic_code_review_v2",
+  "format": "mvr_semantic_code_review_v3",
   "request_sha256": "<copy from mvr/semantic-review-request.json>",
   "reviewer_kind": "<host_model | independent_model | human>",
   "reviewer_id": "<stable agent/session or human reviewer id>",
@@ -7,6 +7,13 @@
   "reviewed_at": "<ISO-8601 timestamp>",
   "verdict": "pass",
   "findings": [],
+  "adversarial_probes": [
+    {
+      "constraint_id": "<one entry for every forbidden constraint>",
+      "alias_or_data_flow": "<semantic rename, indirection, or decision-use path inspected>",
+      "outcome": "not_found"
+    }
+  ],
   "opaque_file_acknowledgements": [],
   "attestation": "I reviewed every text file against every forbidden constraint; opaque files are hash-bound but outside semantic review."
 }
