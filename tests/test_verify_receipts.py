@@ -59,12 +59,13 @@ def main():
         )
         check("tampered authority hash fails", run({"immutable_audit_hash": "f" * 64}) == 1)
         check("content-only receipt has no authority", run({"stable_content_hash": "a" * 64}) == 2)
+        os.environ.pop("MVR_API_KEY", None)
+        check("missing key exits unavailable", run({"immutable_audit_hash": "a" * 64}) == 3)
     finally:
         if old_key is None:
             os.environ.pop("MVR_API_KEY", None)
         else:
             os.environ["MVR_API_KEY"] = old_key
-    check("missing key exits unavailable", run({"immutable_audit_hash": "a" * 64}) == 3)
 
     print()
     if FAILS:

@@ -113,12 +113,13 @@ def main():
         check("online-strict helper never exits 0 without a receipt", no_receipt_exit == 2)
         verifier.c.call = lambda path, **kwargs: (0.0, 0, {"error": "kernel_unreachable"})
         check("offline is a distinct state", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "offline")
+        os.environ.pop("MVR_API_KEY", None)
+        check("missing key is a clean state", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "no_key")
     finally:
         if old_key is None:
             os.environ.pop("MVR_API_KEY", None)
         else:
             os.environ["MVR_API_KEY"] = old_key
-    check("missing key is a clean state", verifier.authorizing_receipt_status(mk({"immutable_audit_hash": "a" * 64}))[0] == "no_key")
 
     import egress_scanner as egress  # noqa: E402
 
