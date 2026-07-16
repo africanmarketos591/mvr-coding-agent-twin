@@ -158,6 +158,20 @@ def main():
                 and result["dimensions"]["export_authorization"]["status"] == "fail",
                 result,
             )
+            check(
+                "rejected planning export carries the mandatory response banner",
+                result["final_response_banner"]
+                == "INTERNAL-PLANNING PROTOTYPE ONLY. EXPORT REJECTED. NOT PILOT- OR DEPLOYMENT-AUTHORIZED.",
+                result["final_response_banner"],
+            )
+            status_path = verifier.write_status(root, result)
+            status_doc = json.load(open(status_path, encoding="utf-8"))
+            check(
+                "machine-readable final status preserves rejection and runtime boundary",
+                status_doc["exit_code"] == 1
+                and status_doc["dimensions"]["runtime_assurance"]["status"] == "not_evaluated",
+                status_doc,
+            )
             log_path = os.path.join(root, "mvr", "decision-log.seed.json")
             entries = json.load(open(log_path, encoding="utf-8"))
             entries[0]["decision_authorization"]["authorized_use"] = ["internal_planning", "bounded_pilot"]
