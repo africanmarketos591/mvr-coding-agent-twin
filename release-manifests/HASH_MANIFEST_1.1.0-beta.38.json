@@ -8,7 +8,7 @@
   ".mcp.json": "3305393bdbf013895780e270674cdb38e8cd72ac37e3fafffba43060c1d572c7",
   "AGENTS.md": "45d8e4384faa326eb213270f7da567180c1390865603beacdc5b5010dc18863c",
   "CAPABILITY_CLAIM.md": "523434959a609b71aba448ade33ee40b2ab4a134f53e110f07ee4aad25295a97",
-  "CHANGELOG.md": "3df9d5d4f05c4cc3fc38c4c3bfe57b6c4a177130394f3684858ff5960d0352b6",
+  "CHANGELOG.md": "6c0e3b9a0f18777989975ab52f5e445d0e8d91412ed539b0401cf3b97ec3b2ca",
   "CLAUDE.md": "0e69c5a2cc94d2b90dabb80a4a9c0e19dbc33a420e238c30e99f1c314654f6b3",
   "LICENSE": "bc53209277fc30d4ee8987defd2fd95cc4ea4605d1f9dc23a0bd65c225c98b69",
   "README.md": "036d1d83cfe9d9a13f73412d42a95959255ebefc2d03fcdb2b6c11313e476637",
@@ -210,7 +210,7 @@
   "tests\\test_keyfile_loader.py": "d115b5f7ab403b6260ae83c483c86fffb2cc99d830f81b1afc9643aa692db693",
   "tests\\test_ledger_audit.py": "bc9fcb108e0c2eccda0f66442cd3a1eded27041956df2e4640c97d44d8c44a53",
   "tests\\test_manifest.py": "0f4fe4fa870098f08f78808e4ac8af6f0acc51ff1b6f6d030e9569e27d338dc4",
-  "tests\\test_outcome_feedback_bridge.py": "dc67687d7eb4748c349d7c60ab789c78504120ce02c2e41abf9bc3ecbfed0247",
+  "tests\\test_outcome_feedback_bridge.py": "dc98384d42d94e9dc48ad228801ae9c2b8d4d4ca328d1c68e469eff922022b37",
   "tests\\test_passport_check.py": "ad09bb74b36f27152c8a597b2dc790efa746e75181c47022ecaac838aa8e7f04",
   "tests\\test_pre_commit_gate.py": "4bee17343ca4baae6344c5011ec6bdb990c6e395ea09e912483bce8c0b408f83",
   "tests\\test_preregister.py": "292794b048dd6b7c937d8d0ac8c9fab40d8a8825e96ba809d8d972647e4b9d05",
@@ -230,6 +230,6 @@
   "tests\\test_twin_public_research.py": "eb75f981526bf867d507649288e4b5fbf71c671d4c5b16a92737870e44f453b8",
   "tests\\test_twin_scorecard.py": "7024eb53326d71e82b244f44465ab9cda6d0853ae6f9978622adabfa651a57eb",
   "tests\\test_twin_verify_run.py": "d57d985f10c8eea9675ddbaadd5d5a1e8648d84acd89d3793160ffaa3326e8a4",
-  "tests\\test_verify_receipts.py": "7c1c123643236273becc064e48ff2f24800a599a1c837e3c973a75deaa465bc5"
+  "tests\\test_verify_receipts.py": "57059a1773c7ded17de1b5318fb90f3066ed6acc079a9db9634e0b79995fb936"
  }
 }
