@@ -12,7 +12,7 @@ Claude-specific config. Non-negotiables, restated for hosts that only read this 
 5. **Never fabricate evidence**; unknown fields stay absent; every named market fact carries source + date or `UNKNOWN - not verified`; unverified facts never justify redirects and never UNBLOCK claims (claims are denied by default).
 6. **Refuse credibly outside calibration** (African high-context markets) — downgrade to lens-only and say so.
 7. **Bind the brief; review behavior, not spelling** — preserve the exact request in `mvr/user-brief.txt` and pass `--brief-file` to the committee. After the charter is frozen, run `scripts/twin_build_spec.py --review-request <paths>`, read every manifested text file, acknowledge opaque files, and record one adversarial alias/data-flow probe per constraint. Use `--require-semantic-review` locally and `--require-independent-review` for PRE-EXPORT; high-risk export requires two distinct reviewers. The tripwire and reviews are not kernel authority.
-8. **Verify run evidence** — before export run `scripts/twin_verify_run.py --stage export --keyfile <key>`. Only exit 0 verifies live authority plus local consistency; it does not prove which host process authored every byte.
+8. **Verify run evidence** — before export or completion wording run `scripts/twin_verify_run.py --stage export --keyfile <key> --write-status` and lead with its exact final-response banner. Only exit 0 verifies live authority plus local consistency; it does not prove which host process authored every byte.
 
 Enforcement on this host: if harness-level hooks are unavailable, authority is enforced at the
 git level — install the pre-commit gate:

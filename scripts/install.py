@@ -158,9 +158,10 @@ def main():
     print("      Review every text file and record adversarial probes; high-risk export requires two distinct reviewers.")
     print("      Then run --check <paths> --require-semantic-review; PRE-EXPORT uses --require-independent-review.")
     print("      The deterministic scan is a naive-capability tripwire; a clear scan is not semantic assurance.")
-    print("NEXT  Before calling Twin run evidence verified: twin_verify_run.py --root . --stage build --keyfile <key>.")
+    print("NEXT  Before completion/delivery wording: twin_verify_run.py --root . --stage export --keyfile <key> --write-status.")
     print("      Exit 3 means inconclusive (offline/no key), never pass. Do not hand-author missing Twin artifacts.")
-    print("      Read every output dimension. Runtime assurance remains not_evaluated until separate app checks run.")
+    print("      Lead the final response with final_response_banner. Runtime remains not_evaluated until separate app checks run.")
+    print("NEXT  Reviewer handoff: twin_audit_pack.py --root . --output <audit.zip> --keyfile <key> --stage export.")
 
     # 4. Optional verification
     if args.verify:

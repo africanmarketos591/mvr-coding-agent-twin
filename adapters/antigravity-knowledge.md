@@ -15,7 +15,7 @@ the FULL Twin experience — map these host features:
   screenshots as source-ledger evidence.
 - **Brief and claim coverage:** preserve the exact user request as `mvr/user-brief.txt` and pass it to `twin_committee.py --brief-file`. Do not substitute a product label; audit-ready export verifies the file hash and material-capability inventory.
 - **Semantic code review:** after preregistration, run `scripts/twin_build_spec.py --review-request <paths>`. Each context-isolated reviewer must inspect every manifested text file, acknowledge opaque files, and record an adversarial alias/data-flow probe for every cut-list constraint. Write every review file named by the request; high-risk PRE-EXPORT requires two distinct independent reviewer sessions. A clear lexical tripwire is not semantic assurance; the result is attestation, not kernel authority.
-- **Provenance before polish:** if package installation or a checkpoint fails, mark the run lens-only and do not synthesize expected JSON. Before export, `scripts/twin_verify_run.py --stage export --keyfile <key>` must exit 0; offline/no-key exit 3 is inconclusive.
+- **Provenance before polish:** if package installation or a checkpoint fails, mark the run lens-only and do not synthesize expected JSON. Before export or completion wording, `scripts/twin_verify_run.py --stage export --keyfile <key> --write-status` must exit 0 and its exact final-response banner must lead; offline/no-key exit 3 is inconclusive.
 - **Knowledge base:** store settled-outcome digests as knowledge items so calibration context
   survives across sessions (never store raw personal passport data as shared knowledge).
 

@@ -135,6 +135,17 @@ def draft_charter(args, packet, seed_entry_id):
     if not rows:
         rows.append("| kernel_unavailable_or_no_lanes | unknown | rerun committee when spine is reachable |")
 
+    capability_rows = []
+    for item in ((packet.get("claim_coverage") or {}).get("material_capabilities") or []):
+        if not isinstance(item, dict) or not item.get("capability"):
+            continue
+        capability_rows.append(
+            "| `{capability}` | pending_evidence | Replace this placeholder with the exact build boundary; "
+            "pending_evidence means do not implement it. | |".format(capability=item["capability"])
+        )
+    if not capability_rows:
+        capability_rows.append("| - | - | No material capability recognized from the brief. | |")
+
     calibration = packet.get("calibration_scope") or {}
     uncalibrated = calibration.get("verdict") == "uncalibrated"
     if packet["provisional"]:
@@ -194,6 +205,16 @@ Operator seat: {packet['seats_sat']['operator']}. Self-reported reach remains at
 
 ## 5. THE BUILD (model writes the fitted, smallest falsifiable wedge)
 {{MODEL}}
+
+### 5A. Material capability disposition (complete every recognized row before code)
+Allowed dispositions: `internal_simulation_only`, `redirected`, `forbidden`, `pending_evidence`, or
+`separately_authorized`. An internal simulation must name its synthetic-data/live-action boundary.
+Separately authorized work must cite the exact reference bound in the decision log's
+`decision_authorization.capability_authorizations`; the charter cannot authorize itself.
+
+| Capability | Disposition | Exact boundary | Authorization ref |
+|---|---|---|---|
+{chr(10).join(capability_rows)}
 
 ## 6. Redirect (only if the original idea did not survive)
 {{MODEL}}

@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 import twin_claim_coverage as claim_coverage
 
-SPEC_VERSION = "2.2"
+SPEC_VERSION = "2.3"
 CONTRACT_FORMAT = "mvr_build_contract_v2"
 CONTRACT_PATH = os.path.join("mvr", "build_spec.json")
 HISTORY_PATH = os.path.join("mvr", "build-contract-history.jsonl")
@@ -128,6 +128,49 @@ PLANNING_ONLY_STATUSES = {
 }
 PILOT_STATUSES = {"pilot", "pilot_only", "pilot_ready", "pilot_ready_with_review"}
 BUILD_STATUSES = {"build_authorized", "authorized", "go"}
+CAPABILITY_DISPOSITIONS = {
+    "internal_simulation_only", "redirected", "forbidden", "pending_evidence",
+    "separately_authorized",
+}
+
+UNEARNED_LEGAL_CLAIM_PATTERNS = {
+    "regulatory_compliance_asserted": re.compile(
+        r"\b(?:ensur(?:e|es|ed|ing)|guarantee(?:s|d|ing)?|maintain(?:s|ed|ing)?)\s+"
+        r"(?:full\s+)?(?:legal|regulatory)\s+compliance\b",
+        re.I,
+    ),
+    "legal_operation_asserted": re.compile(
+        r"\b(?:keeps?|makes?|renders?)\b[^\n.]{0,60}\b(?:legal|legally compliant)\b|"
+        r"\blegally?\s+(?:operable|authorized|permitted|compliant)\b",
+        re.I,
+    ),
+    "compliance_design_asserted": re.compile(
+        r"\b(?:designed|built|structured|configured)\s+to\s+compl(?:y|y with|iance)\b|"
+        r"\bcompliant\s+as\s+(?:an?\s+)?[a-z]",
+        re.I,
+    ),
+    "licensing_exemption_asserted": re.compile(
+        r"\b(?:does|do|would)\s+not\s+require\s+(?:an?\s+)?(?:licen[cs](?:e|ing)|regulatory approval)\b|"
+        r"\b(?:outside|beyond)\s+(?:the\s+)?(?:scope\s+of\s+)?(?:regulated activity|regulation|"
+        r"[A-Z]{2,8}\s+jurisdiction)\b",
+        re.I,
+    ),
+    "regulatory_avoidance_asserted": re.compile(
+        r"\bavoid(?:s|ed|ing)?\b[^\n.]{0,55}\b(?:licen[cs]ing|regulation|regulatory oversight|"
+        r"[A-Z]{2,8}\s+jurisdiction)\b",
+        re.I,
+    ),
+    "approval_or_full_compliance_asserted": re.compile(
+        r"\bregulator[- ]approved\b|\bfully\s+(?:legal|compliant)\b",
+        re.I,
+    ),
+}
+LEGAL_CLAIM_HEDGES = re.compile(
+    r"^\s*(?:[-*>]\s*)?(?:unknown|not verified|unverified|does not prove|do not claim|must not claim|"
+    r"cannot claim|pending (?:legal|regulatory|counsel)|requires? (?:qualified|legal|regulatory) "
+    r"(?:review|confirmation))\b",
+    re.I,
+)
 
 
 def read_text(path):
@@ -302,6 +345,174 @@ def capability_free_reason(charter):
     return match.group(1).strip() if match else None
 
 
+def unearned_legal_claims(text):
+    """Return affirmative legal/compliance claims that need authority beyond planning."""
+    findings = []
+    for line_number, line in enumerate(str(text or "").splitlines(), 1):
+        if LEGAL_CLAIM_HEDGES.search(line):
+            continue
+        for reason_code, pattern in UNEARNED_LEGAL_CLAIM_PATTERNS.items():
+            match = pattern.search(line)
+            if match:
+                findings.append({
+                    "line": line_number,
+                    "reason_code": reason_code,
+                    "text": match.group(0)[:240],
+                })
+    return findings
+
+
+def legal_claim_findings_for_paths(root, paths):
+    """Scan explicit first-party text paths without trusting a saved contract verdict."""
+    root = os.path.abspath(root)
+    findings = []
+    seen = set()
+    for value in paths:
+        path = os.path.abspath(value if os.path.isabs(str(value)) else os.path.join(root, str(value)))
+        if path in seen or not _inside(root, path) or not os.path.isfile(path):
+            continue
+        seen.add(path)
+        if review_file_kind(path)[0] != "text":
+            continue
+        relative = os.path.relpath(path, root).replace("\\", "/")
+        for item in unearned_legal_claims(read_text(path)):
+            findings.append({"path": relative, **item})
+    return findings
+
+
+def _normalized_capability(value):
+    return re.sub(r"[^a-z0-9]+", "_", str(value or "").strip().strip("`").lower()).strip("_")
+
+
+def capability_disposition_rows(charter):
+    """Parse the explicit four-column capability-disposition table from a charter."""
+    rows = {}
+    duplicates = set()
+    section = heading_section(
+        str(charter or ""),
+        lambda heading: "material capability disposition" in heading,
+    )
+    for line in section:
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 3:
+            continue
+        capability = _normalized_capability(cells[0])
+        disposition = _normalized_capability(cells[1])
+        if capability in {"capability", "capability_free", "_", ""} or disposition in {"disposition", "_", ""}:
+            continue
+        if capability in rows:
+            duplicates.add(capability)
+        rows[capability] = {
+            "capability": capability,
+            "disposition": disposition,
+            "boundary": cells[2].strip(),
+            "authorization_ref": cells[3].strip() if len(cells) >= 4 else "",
+            "source": "charter:material_capability_disposition",
+        }
+    return rows, sorted(duplicates)
+
+
+def material_capability_dispositions(packet, charter, cut_capabilities=None, authorization=None):
+    material = []
+    for item in ((packet or {}).get("claim_coverage") or {}).get("material_capabilities") or []:
+        capability = _normalized_capability(item.get("capability") if isinstance(item, dict) else item)
+        if capability and capability not in material:
+            material.append(capability)
+
+    supplied, duplicates = capability_disposition_rows(charter)
+    cut_capabilities = set(cut_capabilities or [])
+    records = []
+    errors = []
+    constraints = []
+    if duplicates:
+        errors.append("material capability dispositions are duplicated: " + ", ".join(duplicates))
+    capability_authorizations = {}
+    raw_authorizations = (authorization or {}).get("capability_authorizations") or []
+    if isinstance(raw_authorizations, dict):
+        capability_authorizations = {
+            _normalized_capability(key): str(value).strip()
+            for key, value in raw_authorizations.items()
+            if _normalized_capability(key) and str(value).strip()
+        }
+    elif isinstance(raw_authorizations, list):
+        for item in raw_authorizations:
+            if not isinstance(item, dict):
+                continue
+            name = _normalized_capability(item.get("capability"))
+            reference = str(item.get("authorization_ref") or "").strip()
+            if name and reference:
+                capability_authorizations[name] = reference
+    for capability in material:
+        row = supplied.get(capability)
+        if not row:
+            if capability in cut_capabilities:
+                records.append({
+                    "capability": capability,
+                    "disposition": "forbidden",
+                    "boundary": "explicit charter cut-list",
+                    "authorization_ref": "",
+                    "source": "charter:explicit_cut_list",
+                })
+                continue
+            records.append({
+                "capability": capability,
+                "disposition": "missing",
+                "boundary": "",
+                "authorization_ref": "",
+                "source": "missing",
+            })
+            errors.append(f"material capability {capability} has no explicit charter disposition")
+            continue
+        records.append(row)
+        disposition = row["disposition"]
+        if disposition not in CAPABILITY_DISPOSITIONS:
+            errors.append(f"material capability {capability} has unsupported disposition {disposition!r}")
+            continue
+        if not row["boundary"]:
+            errors.append(f"material capability {capability} disposition has no boundary")
+            continue
+        if disposition == "separately_authorized":
+            expected_ref = capability_authorizations.get(capability)
+            if not row["authorization_ref"]:
+                errors.append(f"material capability {capability} needs an authorization reference")
+                continue
+            if not expected_ref or row["authorization_ref"] != expected_ref:
+                errors.append(
+                    f"material capability {capability} authorization reference is not bound in the decision log"
+                )
+                continue
+        if disposition in {"forbidden", "redirected", "pending_evidence"}:
+            reason = (
+                f"Material capability {capability} is {disposition}; it must not be implemented. "
+                f"Boundary: {row['boundary']}"
+            )
+            item = constraint_record(reason, source="charter:material_capability_disposition")
+            item["capabilities"] = [capability]
+            constraints.append(item)
+        elif disposition == "internal_simulation_only":
+            reason = (
+                f"Material capability {capability} is limited to an internal synthetic simulation. "
+                f"It must not touch live money, live personal data, external rails, or real decision use. "
+                f"Boundary: {row['boundary']}"
+            )
+            item = constraint_record(reason, source="charter:material_capability_disposition")
+            item["capabilities"] = []
+            item["simulation_capability"] = capability
+            constraints.append(item)
+
+    extras = sorted(set(supplied) - set(material))
+    if extras:
+        errors.append("charter dispositions name capabilities not recognized from the brief: " + ", ".join(extras))
+    return {
+        "status": "complete" if not errors else "incomplete",
+        "recognized_count": len(material),
+        "records": records,
+        "errors": errors,
+    }, constraints
+
+
 def _status_rank(value):
     normalized = re.sub(r"[^a-z0-9]+", "_", str(value or "").strip().lower()).strip("_")
     if normalized in PLANNING_ONLY_STATUSES:
@@ -336,20 +547,19 @@ def authorization_consistency(entry, packet, charter_status, charter_text=""):
             f"charter status {normalized_charter} exceeds decision ceiling "
             f"{decision_status or 'internal_planning_only'}"
         )
-    legal_claim = re.search(
-        r"\b(?:keeps?[^\n.]{0,45}legal|legally?\s+(?:operable|authorized|permitted|compliant)|"
-        r"regulator[- ]approved|fully\s+compliant)\b",
-        charter_text,
-        re.I,
-    )
-    if ceiling <= 0 and legal_claim:
-        errors.append("planning-only authority cannot support a legal-operation or compliance claim")
+    legal_claims = unearned_legal_claims(charter_text)
+    if ceiling <= 0 and legal_claims:
+        codes = ", ".join(sorted({item["reason_code"] for item in legal_claims}))
+        errors.append(
+            "planning-only authority cannot support affirmative legal/compliance claims: " + codes
+        )
     return {
         "status": "pass" if not errors else "fail",
         "decision_status": decision_status or None,
         "charter_status": normalized_charter or None,
         "ceiling_rank": ceiling,
         "authorized_use": sorted(authorized_use),
+        "legal_claim_findings": legal_claims,
         "errors": errors,
     }
 
@@ -457,6 +667,7 @@ def _active_snapshot(contract):
         "forbidden_capabilities": contract.get("forbidden_capabilities") or [],
         "contract_level": contract.get("contract_level"),
         "verdict_status": contract.get("verdict_status"),
+        "material_capability_dispositions": contract.get("material_capability_dispositions") or {},
     }
 
 
@@ -482,6 +693,15 @@ def build_contract(root, charter_path=None, previous=None):
 
     features, cut_lines = charter_constraints(charter)
     constraints = [constraint_record(value) for value in cut_lines]
+    explicit_cut_capabilities = {
+        capability
+        for item in constraints
+        for capability in item.get("capabilities") or []
+    }
+    disposition_record, disposition_constraints = material_capability_dispositions(
+        packet, charter, explicit_cut_capabilities, authorization
+    )
+    constraints.extend(disposition_constraints)
     capability_free = capability_free_reason(charter)
     status_match = re.search(r"\*\*Status:\*\*\s*([^|\n]+)", charter[:1600], re.I)
     verdict_status = status_match.group(1).strip().lower() if status_match else None
@@ -611,9 +831,15 @@ def build_contract(root, charter_path=None, previous=None):
     if weakening_blocked:
         blocking_reasons.append("previous constraints were removed without a complete named-human override")
     blocking_reasons.extend(authority_consistency["errors"])
+    blocking_reasons.extend(disposition_record["errors"])
     blocking_reasons.extend(claim_coverage_errors)
 
-    high_risk = bool(current_capabilities.intersection(HIGH_RISK_CAPABILITIES))
+    recognized_material = {
+        item.get("capability")
+        for item in disposition_record.get("records") or []
+        if isinstance(item, dict)
+    }
+    high_risk = bool(recognized_material.intersection(HIGH_RISK_CAPABILITIES))
 
     return {
         "format": CONTRACT_FORMAT,
@@ -644,6 +870,7 @@ def build_contract(root, charter_path=None, previous=None):
         "source_fingerprints": source_fingerprints,
         "build_features": features,
         "proposed_regulated_capabilities": proposed,
+        "material_capability_dispositions": disposition_record,
         "forbidden_constraints": constraints,
         "forbidden_capabilities": forbidden,
         "constraint_history": {

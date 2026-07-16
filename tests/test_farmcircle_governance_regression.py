@@ -78,6 +78,16 @@ def base_tree(root, status):
         "## 5. THE BUILD\n"
         "- **Build:** a cooperative contribution ledger and input-request prototype.\n"
         "- **Explicitly NOT building:** live mobile money, open lending, or credit scoring.\n"
+        "### 5A. Material capability disposition\n"
+        "| Capability | Disposition | Exact boundary | Authorization ref |\n"
+        "|---|---|---|---|\n"
+        "| `fund_custody` | internal_simulation_only | synthetic balances; no live funds | |\n"
+        "| `digital_lending` | internal_simulation_only | synthetic requests; no disbursement | |\n"
+        "| `credit_scoring` | forbidden | no score may determine eligibility | |\n"
+        "| `payment_processing` | internal_simulation_only | event labels only; no external rail | |\n"
+        "| `repayment_recovery` | internal_simulation_only | synthetic ledger only | |\n"
+        "| `role_based_access` | internal_simulation_only | role views only; not authentication | |\n"
+        "| `personal_financial_records` | internal_simulation_only | synthetic people and values only | |\n"
         "The member-only structure keeps the build legal today.\n",
     )
     os.makedirs(os.path.join(root, "src"), exist_ok=True)
@@ -124,6 +134,12 @@ def main():
         check("all derived material claims reach sparring", len(packet["claims_sent"]) >= len(expected), len(packet["claims_sent"]))
         contract, _ = bs.write_contract(root)
         check(
+            "every material capability has an explicit disposition",
+            contract["material_capability_dispositions"]["status"] == "complete"
+            and contract["material_capability_dispositions"]["recognized_count"] == 7,
+            contract["material_capability_dispositions"],
+        )
+        check(
             "abstained decision cannot become pilot_only",
             contract["contract_level"] == "authorization_contradiction"
             and any("exceeds decision ceiling" in item for item in contract["blocking_reasons"]),
@@ -134,6 +150,80 @@ def main():
             "reliability-score alias feeding approval trips credit scoring",
             any(item["capability"] == "credit_scoring" for item in findings),
             findings,
+        )
+
+    legal_phrases = {
+        "ensuring regulatory compliance as a bookkeeping tool": "regulatory_compliance_asserted",
+        "designed to comply with the law": "compliance_design_asserted",
+        "compliant as a bookkeeping tool": "compliance_design_asserted",
+        "outside regulated activity": "licensing_exemption_asserted",
+        "does not require licensing": "licensing_exemption_asserted",
+        "avoids UMRA jurisdiction": "regulatory_avoidance_asserted",
+    }
+    for phrase, reason_code in legal_phrases.items():
+        findings = bs.unearned_legal_claims(phrase)
+        check(
+            f"planning-only detector catches {phrase!r}",
+            any(item["reason_code"] == reason_code for item in findings),
+            findings,
+        )
+    check(
+        "explicit uncertainty is not converted into a legal claim",
+        not bs.unearned_legal_claims("UNKNOWN - not verified whether this requires licensing"),
+    )
+    check(
+        "generic disclaimer cannot launder an affirmative legal claim",
+        bool(bs.unearned_legal_claims("Not legal advice; this keeps the operator legal.")),
+    )
+    check(
+        "explicit instruction not to claim compliance remains allowed",
+        not bs.unearned_legal_claims("Do not claim this is designed to comply with the law."),
+    )
+
+    with tempfile.TemporaryDirectory() as root:
+        base_tree(root, "internal_planning_only")
+        charter_path = os.path.join(root, "charter.md")
+        text = open(charter_path, encoding="utf-8").read()
+        text = text.replace("| `credit_scoring` | forbidden | no score may determine eligibility | |\n", "")
+        text = text.replace("live mobile money, open lending, or credit scoring", "live mobile money or open lending")
+        text = text.replace("The member-only structure keeps the build legal today.\n", "")
+        write(charter_path, text)
+        contract, _ = bs.write_contract(root)
+        check(
+            "one missing material capability disposition blocks the contract",
+            any("credit_scoring has no explicit charter disposition" in item for item in contract["blocking_reasons"]),
+            contract["blocking_reasons"],
+        )
+
+    with tempfile.TemporaryDirectory() as root:
+        base_tree(root, "internal_planning_only")
+        charter_path = os.path.join(root, "charter.md")
+        text = open(charter_path, encoding="utf-8").read().replace(
+            "The member-only structure keeps the build legal today.\n",
+            "| `credit_scoring` | internal_simulation_only | second conflicting row | |\n",
+        )
+        write(charter_path, text)
+        contract, _ = bs.write_contract(root)
+        check(
+            "duplicate disposition rows cannot silently override each other",
+            any("dispositions are duplicated: credit_scoring" in item for item in contract["blocking_reasons"]),
+            contract["blocking_reasons"],
+        )
+
+    with tempfile.TemporaryDirectory() as root:
+        base_tree(root, "internal_planning_only")
+        charter_path = os.path.join(root, "charter.md")
+        text = open(charter_path, encoding="utf-8").read()
+        text = text.replace(
+            "| `credit_scoring` | forbidden | no score may determine eligibility | |",
+            "| `credit_scoring` | separately_authorized | score may determine eligibility | AUTH-self-written |",
+        ).replace("The member-only structure keeps the build legal today.\n", "")
+        write(charter_path, text)
+        contract, _ = bs.write_contract(root)
+        check(
+            "charter cannot self-authorize a separately-authorized capability",
+            any("authorization reference is not bound in the decision log" in item for item in contract["blocking_reasons"]),
+            contract["blocking_reasons"],
         )
 
     with tempfile.TemporaryDirectory() as root:

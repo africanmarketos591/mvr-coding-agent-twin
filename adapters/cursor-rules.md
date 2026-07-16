@@ -13,7 +13,7 @@ rule-length limits:
 5. Never fabricate evidence: every named market fact needs source + date or `UNKNOWN - not verified`; unknown facts never unblock claims.
 6. Outside African/high-context calibration, downgrade to lens-only and say so.
 7. After the charter is frozen, create a semantic review request for the product paths, read every manifested text file, acknowledge opaque files, and record an adversarial alias/data-flow probe per constraint. Validate with `twin_build_spec.py --check ... --require-semantic-review`. PRE-EXPORT uses `--require-independent-review`; high-risk contracts require two distinct reviewers. Never call lexical clearance semantic safety.
-8. Before export run `twin_verify_run.py --stage export --keyfile <key>`; exit 3 is inconclusive, not a pass.
+8. Before export or completion wording run `twin_verify_run.py --stage export --keyfile <key> --write-status`, then lead with its exact final-response banner; exit 3 is inconclusive, not a pass.
 
 Cursor enforcement has two layers:
 
